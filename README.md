@@ -1353,3 +1353,125 @@ The ALN Platform is designed to operate with the highest standards of compliance
 **ALN (Alien Language Notion) - The Future of Compliant, Quantum-Ready Programming**
 
 *Virta-Sys Inc. and Jacob Scott Corey Farmer*
+# ALN Safeguards with Attribution
+
+This file (`src/Main/aln_safeguards_with_attribution.aln`) implements a sophisticated safeguards system for the ALN (Alien Language Notion) ecosystem with a unique attribution protection mechanism. The system enforces compliance with multiple regulatory frameworks while embedding and protecting author attribution for legal and ethical compliance.
+
+## 🔐 Key Features
+
+### Attribution Protection System
+- **Embedded attribution** for "Jacob Scott Corey Farmer" with GPG key verification
+- **Automatic system halt** if attribution is removed or modified
+- **Immutable attribution** stored in system memory and databases
+- **Critical alert** triggered with audit ID when attribution violation is detected
+
+```aln
+@IF attribution_removed OR attribution_modified {
+  @TRIGGER alert TO loki {
+    tags: ["aln_alert", "attribution_violation", "safeguards"],
+    severity: "CRITICAL",
+    details: "Attribution for Jacob Scott Corey Farmer removed or modified - System functionality halted - Audit ID: audit_attribution_{timestamp}"
+  }
+  @EXEC aln.lan.sys^break_functionality^ {
+    command: "halt_system_execution",
+    reason: "attribution_violation",
+    timestamp: "2025-08-06T19:17:00.000000000Z"
+  }
+  @THROW "Attribution violation detected - System halted - Audit ID: audit_attribution_{timestamp}"
+}
+```
+
+### Compliance Enforcement
+- **16+ compliance standards** including GDPR, HIPAA, SOC2, PCI-DSS, and Arizona regulations
+- **Real-time compliance verification** with automated audits
+- **Automated compliance scoring** with threshold enforcement (98.0% minimum)
+
+```aln
+compliance: [
+  "GDPR", "HIPAA", "SOC2", "PCI-DSS", "NIST_CSF",
+  "FDA_21_CFR_1143.5", "Arizona Rev. Stat. §42-3462",
+  "US_Copyright_Act_1976"
+]
+```
+
+### Rate Limiting & Hardware Monitoring
+- **Dynamic rate limiting** for POS transactions, ML inferences, and data sync
+- **Hardware thresholds** for CPU, memory, and temperature monitoring
+- **TOPS management** to prevent hardware overload
+
+```aln
+modes: {
+  safe: {
+    rate_limits: {
+      pos_transactions: "500 per second",
+      ml_inferences: "250 per second",
+      data_sync: "100 per second",
+      network_requests: "500 per second"
+    },
+    hardware_thresholds: {
+      cpu_usage: "50%",
+      memory_usage: "60%",
+      temperature: "60°C"
+    },
+    tops_limit: "10^9 operations/sec"
+  }
+}
+```
+
+### System Safeguards
+- **Tone enforcement** to prevent interactions outside approved topics
+- **Compatibility checks** for all components
+- **Mode management** to switch between safe and normal operating modes
+- **Real-time monitoring** of system stability metrics
+
+```aln
+@ENFORCE {tone: {
+  mode: "professional_strict",
+  scope: "all_interactions",
+  deviation_policy: "block",
+  allowed_topics: [
+    "ALN_development", "rate_limiting", "tops_management",
+    "compatibility", "retail_pos", "attribution_protection"
+  ],
+  @IF topic_deviation_detected {
+    @TRIGGER alert TO loki {
+      tags: ["aln_alert", "tone_deviation", "safeguards_attribution"],
+      severity: "WARNING",
+      details: "Interaction outside ALN safeguards scope - Audit ID: audit_tone_{timestamp}"
+    }
+    @THROW "Interaction outside ALN safeguards scope - Audit ID: audit_tone_{timestamp}"
+  }
+}}
+```
+
+## 🌐 Architecture
+
+This safeguards system integrates with the complete ALN ecosystem:
+- **Distributed across all nodes** via Kafka streams
+- **Stored in databases** (Redis, PostgreSQL, Milvus)
+- **Monitored by Loki** for real-time observability
+- **Synchronized** with 100ms interval across the entire system
+
+## 📜 Compliance Standards
+
+The system enforces compliance with:
+- **GDPR** (General Data Protection Regulation)
+- **HIPAA** (Health Insurance Portability and Accountability Act)
+- **SOC2** (Service Organization Control 2)
+- **PCI-DSS** (Payment Card Industry Data Security Standard)
+- **NIST 800-53** (Security and Privacy Controls)
+- **Arizona Rev. Stat. §42-3462** (State-specific retail regulations)
+- **FDA 21 CFR 1143.5** (Food and Drug Administration regulations)
+- **US Copyright Act 1976** (for attribution protection)
+
+## 💡 Why This Matters
+
+This file represents a critical advancement in the ALN ecosystem by:
+1. **Protecting intellectual property** through embedded attribution
+2. **Ensuring legal compliance** with multiple regulatory frameworks
+3. **Preventing system misuse** through strict interaction controls
+4. **Maintaining system integrity** with automatic halting on violations
+
+The attribution protection mechanism is particularly innovative, making it impossible to remove the author's attribution without triggering a system halt, thereby ensuring ethical and legal compliance at the code level.
+
+This implementation is fully integrated with the ALN ecosystem and follows the ALN 5.0.0 framework specifications.
