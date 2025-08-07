@@ -1,0 +1,109 @@
+```yaml
+name: ALN CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      ALN_VERSION: 5.0.0
+      COMPLIANCE_SCORE_THRESHOLD: 98.5
+      SYSTEM_HEALTH_THRESHOLD: 95.0
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up ALN
+      run: |
+        curl -s https://aln-lang.com/install.sh | bash
+        aln --version
+
+    - name: Build ALN Core
+      run: |
+        cd aln-core
+        make build
+
+    - name: Run ALN Tests
+      run: |
+        cd aln-core
+        make test
+
+    - name: Validate Compliance
+      run: |
+        cd aln-core
+        aln compliance validate --threshold $COMPLIANCE_SCORE_THRESHOLD
+
+    - name: Build Docker Image
+      run: |
+        cd aln-core
+        docker build -t ghcr.io/aln_lang/aln-core:${{ github.sha }} .
+        docker tag ghcr.io/aln_lang/aln-core:${{ github.sha }} ghcr.io/aln_lang/aln-core:latest
+
+    - name: Push Docker Image
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Push Docker Image to GitHub Container Registry
+      run: |
+        docker push ghcr.io/aln_lang/aln-core:${{ github.sha }}
+        docker push ghcr.io/aln_lang/aln-core:latest
+
+    - name: Deploy to Staging
+      if: github.ref == 'refs/heads/main'
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        script: |
+          cd /opt/aln
+          git pull origin main
+          docker pull ghcr.io/aln_lang/aln-core:${{ github.sha }}
+          docker-compose -f docker-compose.staging.yml up -d
+
+    - name: Run Compliance Audit
+      run: |
+        cd aln-core
+        aln compliance audit --environment staging
+
+  production-deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to Production
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /opt/aln
+          git pull origin main
+          docker pull ghcr.io/aln_lang/aln-core:latest
+          docker-compose -f docker-compose.prod.yml up -d --force-recreate
+          aln compliance verify --environment production
+
+    - name: Run Production Compliance Check
+      run: |
+        aln compliance verify --environment production
+        echo "Compliance score: $ALN_COMPLIANCE_SCORE"
+        if [ $(echo "$ALN_COMPLIANCE_SCORE < $COMPLIANCE_SCORE_THRESHOLD" | bc) -eq 1 ]; then
+          echo "Compliance score below threshold. Deployment failed."
+          exit 1
+        fi
+```
