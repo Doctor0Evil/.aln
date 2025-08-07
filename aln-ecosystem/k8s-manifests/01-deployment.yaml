@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aln-ecosystem
+  namespace: aln-ecosystem
+  labels:
+    app: aln-ecosystem
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aln-ecosystem
+  template:
+    metadata:
+      labels:
+        app: aln-ecosystem
+    spec:
+      containers:
+      - name: aln-core
+        image: aln-ecosystem:test
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: ALN_VERSION
+          value: "5.0.0"
+        - name: ALN_ENVIRONMENT
+          value: "development"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
