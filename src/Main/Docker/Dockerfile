@@ -86,3 +86,77 @@ WORKDIR /app/aln-pos
 # Set default command
 CMD ["/app/aln-pos/entrypoint.sh"]
 ```
+# ALN ECOSYSTEM: PRODUCTION-READY DEPLOYMENT
+
+## 1. Dockerfile (src/Main/Docker/Dockerfile)
+
+```dockerfile
+# ALN CORE DOCKER IMAGE CONFIGURATION (v12.0.0)
+FROM ubuntu:22.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV ALN_VERSION=12.0.0
+ENV ALN_ENVIRONMENT=production
+ENV COMPLIANCE_MODE=enterprise
+ENV SECURITY_LEVEL=enterprise_grade
+
+# Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    libgl1 \
+    libsm6 \
+    libxext6 \
+    ca-certificates \
+    tzdata \
+    python3 \
+    python3-pip \
+    python3-venv \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install ALN CLI
+RUN curl -L https://github.com/Doctor0Evil/ALN_Programming_Language/releases/download/v${ALN_VERSION}/aln-cli-linux-x64.tar.gz | tar xz
+RUN mv aln-cli /usr/local/bin/aln
+RUN aln --version
+
+# Set up application directory
+RUN mkdir -p /app/aln
+WORKDIR /app/aln
+
+# Copy ALN core files
+COPY src/aln/core/*.aln /app/aln/core/
+COPY src/aln/core/ComplianceVerificationPipe.aln /app/aln/core/
+COPY src/aln/core/Dep_Gen.aln /app/aln/core/
+COPY src/aln/core/DependencyGenerator.Workflow.aln /app/aln/core/
+COPY src/aln/core/GameDev.Dependency.ObjectArray.aln /app/aln/core/
+COPY src/aln/core/JavaDependencyGenerator.aln /app/aln/core/
+COPY src/aln/core/ObjectArray.aln /app/aln/core/
+COPY src/aln/core/ObjectArrayProcessing.aln /app/aln/core/
+COPY src/aln/core/PipeChaining.aln /app/aln/core/
+COPY src/aln/core/PipeDefinitions.aln /app/aln/core/
+COPY src/aln/core/PipeDependency_Workflow.aln /app/aln/core/
+COPY src/aln/core/PythonDependencyGenerator.aln /app/aln/core/
+COPY src/aln/core/RetailDependencyGenerator.aln /app/aln/core/
+COPY src/aln/core/SystemIntegrator_Deply.aln /app/aln/core/
+COPY src/aln/core/aln_safeguards_with_attribution.aln /app/aln/core/
+
+# Copy configuration files
+COPY config/compliance.yaml /app/aln/config/
+
+# Copy application entrypoint
+COPY src/Main/entrypoint.sh /app/aln/entrypoint.sh
+RUN chmod +x /app/aln/entrypoint.sh
+
+# Set up environment variables
+ENV PATH="/app/aln:${PATH}"
+
+# Expose ports
+EXPOSE 8080
+
+# Define entrypoint
+ENTRYPOINT ["/app/aln/entrypoint.sh"]
+```
