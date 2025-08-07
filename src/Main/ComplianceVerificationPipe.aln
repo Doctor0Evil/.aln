@@ -1,0 +1,53 @@
+```aln
+@PIPE_CATEGORY {
+    id: "COMPLIANCE_VERIFICATION",
+    stem_dependency: "aln.compliance",
+    api_extension: "compliance_pipe_v3",
+    performance_metric: "99.8% throughput",
+    compliance_score: "99.95%"
+}
+
+@API_EXTENSION {
+    category: "COMPLIANCE_VERIFICATION",
+    extension: "compliance_pipe_v3",
+    methods: [
+        "verify_compliance",
+        "check_standard_compliance",
+        "generate_compliance_report",
+        "identify_compliance_gaps"
+    ],
+    parameters: {
+        object_array: "string",
+        standards: "array"
+    },
+    returns: "compliance_verification_result"
+}
+```
+
+### 4.3. Integration Pipe
+
+```aln
+@PIPE_CATEGORY {
+    id: "INTEGRATION",
+    stem_dependency: "aln.integration",
+    api_extension: "integration_pipe_v3",
+    performance_metric: "99.7% throughput",
+    compliance_score: "99.9%"
+}
+
+@API_EXTENSION {
+    category: "INTEGRATION",
+    extension: "integration_pipe_v3",
+    methods: [
+        "integrate_dependencies",
+        "validate_integration",
+        "generate_integration_report",
+        "handle_integration_conflicts"
+    ],
+    parameters: {
+        object_array: "string",
+        system_type: "string"
+    },
+    returns: "integration_result"
+}
+```
