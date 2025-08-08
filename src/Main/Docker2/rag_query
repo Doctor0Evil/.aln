@@ -1,0 +1,142 @@
+@DOCKERFILE rag_query_service {
+  @CONFIG {
+    system_name: "ALN_QuantumSynergyPOS_RAG_Query",
+    version: "5.0.5",
+    scope: "rag_customer_query",
+    compliance: ["GDPR", "PCI-DSS", "ISO-8583", "SOC2", "NIST 800-53", "Arizona Rev. Stat. §42-3462", "FDA 21 CFR 1143.5", "HIPAA §164.312"],
+    encryption: "AES-256-GCM",
+    hash_algorithm: "SHA-512",
+    site: "AMPM-Site-42445-Phx-AZ",
+    address: "7849 N. 43rd Ave., Phoenix, AZ, 85051",
+    deployment_timestamp: "2025-08-08T13:00:00Z",
+    token_id: "ALN_RAG_QUERY_2025",
+    platforms: ["redis", "postgresql", "kafka_streams_v7.2", "loki", "milvus"],
+    sync_interval: "100ms",
+    repo: "https://github.com/Doctor0Evil/ALN_Programming_Language.git",
+    memory: {
+      stack: "128GB",
+      heap: "256GB",
+      persistent_cache: "96GB"
+    },
+    docker_image: "aln-rag-query:5.0.5",
+    registry: "https://registry.aln-lang.org",
+    menu_display_mode: "rich_interface",
+    command_prefix: "/aln",
+    quick_actions: ["quick-start", "deploy", "test", "docs", "status", "support"],
+    nlp_models: ["DarkBERT", "UniversalNER", "GLiNER"],
+    rag_config: {
+      retriever: "milvus_vector_search",
+      generator: "aln_nlp_generator",
+      knowledge_base: "postgresql://cluster.aln:5432/aln_knowledge",
+      max_context_size: "10MB"
+    },
+    attribution: {
+      author: "Jacob Scott Corey Farmer",
+      role: "AI-Programming-Specialist",
+      gpg_key: "brainpoolP256r1/B088B85F5F631492"
+    }
+  }
+  @STAGE base {
+    image: "alpine:3.19",
+    labels: {
+      maintainer: "Jacob Scott Corey Farmer <jacob@aln.dev>",
+      version: @CONFIG.version,
+      description: "ALN QuantumSynergyPOS RAG Query Service"
+    },
+    env: {
+      ALN_VERSION: @CONFIG.version,
+      ALN_ENVIRONMENT: "production",
+      COMPLIANCE_MODE: "enterprise",
+      SECURITY_LEVEL: "enterprise_grade",
+      COMPLIANCE_THRESHOLD: "99.0",
+      SECURITY_THRESHOLD: "99.5",
+      TZ: "America/Phoenix",
+      ALN_LOG_LEVEL: "info",
+      ALN_COMPLIANCE_ENFORCE: "true",
+      KAFKA_TOPIC: "aln_rag_queries",
+      REDIS_HOST: "redis.aln.local",
+      POSTGRES_HOST: "postgres.aln.local",
+      MILVUS_HOST: "milvus.aln.local",
+      MENU_DISPLAY_MODE: @CONFIG.menu_display_mode,
+      COMMAND_PREFIX: @CONFIG.command_prefix,
+      QUICK_ACTIONS: @CONFIG.quick_actions
+    },
+    commands: [
+      "apk update",
+      "apk add --no-cache bash curl git jq nodejs npm redis postgresql-client kafka milvus openssl",
+      "rm -rf /var/cache/apk/*",
+      "mkdir -p /opt/aln",
+      "curl -sSL https://registry.aln-lang.org/releases/v5.0.5/aln-runtime.tar.gz | tar -xz -C /opt/aln",
+      "chmod +x /opt/aln/bin/aln",
+      "ln -s /opt/aln/bin/aln /usr/local/bin/aln"
+    ]
+  }
+  @STAGE builder {
+    from: @STAGE.base,
+    workdir: "/build",
+    copy: [
+      { src: "src/aln/core/rag_query.aln", dest: "/build/src/rag_query.aln" },
+      { src: "config", dest: "/build/config" },
+      { src: "scripts", dest: "/build/scripts" }
+    ],
+    commands: [
+      "aln compile --input /build/src/rag_query.aln --output /build/dist --format ALN_BINARY --jit true --cache rag_patterns --validate strict --menu-config universal_menu_system --command-prefixes '/aln,!aln,@aln,aln:,>>aln,🌟' --quick-actions '@CONFIG.quick_actions'",
+      "chmod -R 755 /build/dist"
+    ]
+  }
+  @STAGE runtime {
+    from: @STAGE.base,
+    workdir: "/app",
+    copy: [
+      { from: @STAGE.builder, src: "/build/dist", dest: "/app/dist" },
+      { src: "config/compliance.yaml", dest: "/app/config/compliance.yaml" },
+      { src: "scripts/rag_query.sh", dest: "/app/scripts/rag_query.sh" }
+    ],
+    expose: [8085, 9092, 6379, 5432, 19530],
+    healthcheck: {
+      command: "curl -f http://localhost:8085/health || exit 1",
+      interval: "10s",
+      timeout: "3s",
+      start_period: "30s",
+      retries: 3
+    },
+    volume: ["/app/data", "/app/logs"],
+    commands: [
+      "aln init --config /app/config/compliance.yaml --encryption @CONFIG.encryption --hash @CONFIG.hash_algorithm --audit postgresql://cluster.aln:5432/aln_audit --menu-display-mode @CONFIG.menu_display_mode --command-prefix @CONFIG.command_prefix",
+      "mkdir -p /app/data /app/logs",
+      "chown -R nobody:nobody /app"
+    ],
+    entrypoint_script: {
+      path: "/app/entrypoint.sh",
+      content: [
+        "#!/bin/bash",
+        "set -e",
+        "aln runtime start --config /app/config/compliance.yaml --log-level @CONFIG.ALN_LOG_LEVEL --sync-interval @CONFIG.sync_interval --kafka-topic @CONFIG.KAFKA_TOPIC --redis-host @CONFIG.REDIS_HOST --postgres-host @CONFIG.POSTGRES_HOST --milvus-host @CONFIG.MILVUS_HOST --menu-display-mode @CONFIG.menu_display_mode --command-prefix @CONFIG.command_prefix --quick-actions '@CONFIG.quick_actions'",
+        "aln exec /app/dist/rag_query.aln --mode production --port 8085 --validate attribution --validate tokens --output /app/logs/rag_query.log",
+        "exec \"$@\""
+      ],
+      permissions: "chmod +x /app/entrypoint.sh"
+    },
+    user: "nobody",
+    entrypoint: ["/app/entrypoint.sh"],
+    cmd: ["aln", "run", "--foreground"]
+  }
+  @SYNC artifact {
+    @TO nodes {
+      target: ["all_nodes"],
+      method: "kafka_streams_v7.2",
+      topic: "aln_dockerfile_rag_query",
+      payload: {
+        system_name: @CONFIG.system_name,
+        version: @CONFIG.version,
+        artifact_id: @CONFIG.artifact_id,
+        timestamp: @CONFIG.deployment_timestamp
+      },
+      encryption: @CONFIG.encryption
+    }
+    @LOG action TO loki {
+      tags: ["aln_dockerfile", "rag_query_service"],
+      details: "Deployed RAG query service Dockerfile - Audit ID: audit_dockerfile_rag_query_2025-08-08T13:00:00Z"
+    }
+  }
+}
