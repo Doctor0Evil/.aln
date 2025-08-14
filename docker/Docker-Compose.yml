@@ -1,0 +1,154 @@
+# ALN Production Ecosystem (v12.0.0)
+version: '3.8'
+
+services:
+  aln-core:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: aln_core_engine
+    restart: unless-stopped
+    networks:
+      - aln-network
+    volumes:
+      - aln-data:/app/aln/data
+      - aln-logs:/app/aln/logs
+      - aln-config:/app/aln/config
+      - aln-secure:/app/aln/secure
+      - aln-backup:/app/aln/backup
+    environment:
+      - ALN_VERSION=12.0.0
+      - ALN_ENVIRONMENT=production
+      - COMPLIANCE_MODE=FULL
+      - COMPLIANCE_SCORE_THRESHOLD=98.5
+      - SYSTEM_HEALTH_THRESHOLD=95.0
+      - ALN_SECURITY_LEVEL=quantum_stealth
+      - ALN_COMPLIANCE_ENFORCE=true
+      - ALN_LOG_LEVEL=info
+      - TZ=America/New_York
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=aln_user
+      - POSTGRES_PASSWORD=aln_password
+      - POSTGRES_DB=aln_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - API_KEY_OPENAI=${OPENAI_API_KEY}
+      - API_KEY_ANTHROPIC=${ANTHROPIC_API_KEY}
+      - API_KEY_QWEN=${QWEN_API_KEY}
+      - API_KEY_MISTRAL=${MISTRAL_API_KEY}
+      - API_KEY_DEEPSEEK=${DEEPSEEK_API_KEY}
+      - API_KEY_GROK=${GROK_API_KEY}
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgresql:
+    image: postgres:15
+    container_name: aln_postgresql
+    restart: unless-stopped
+    networks:
+      - aln-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: aln_db
+      POSTGRES_USER: aln_user
+      POSTGRES_PASSWORD: aln_password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aln_user -d aln_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: aln_redis
+    restart: unless-stopped
+    networks:
+      - aln-network
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: aln_prometheus
+    restart: unless-stopped
+    networks:
+      - aln-network
+    volumes:
+      - ./prometheus/config:/etc/prometheus
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - aln-core
+
+  grafana:
+    image: grafana/grafana:10.4.4
+    container_name: aln_grafana
+    restart: unless-stopped
+    networks:
+      - aln-network
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    depends_on:
+      - aln-core
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: aln_loki
+    restart: unless-stopped
+    networks:
+      - aln-network
+    volumes:
+      - loki-data:/tmp/loki
+    ports:
+      - "3100:3100"
+    depends_on:
+      - aln-core
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.43
+    container_name: aln_jaeger
+    restart: unless-stopped
+    networks:
+      - aln-network
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    depends_on:
+      - aln-core
+
+networks:
+  aln-network:
+    driver: bridge
+
+volumes:
+  aln-data:
+  aln-logs:
+  aln-config:
+  aln-secure:
+  aln-backup:
+  postgres-data:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
