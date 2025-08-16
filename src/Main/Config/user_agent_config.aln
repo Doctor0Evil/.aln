@@ -1,0 +1,38 @@
+```aln
+@ALN_SCRIPT {
+  @METADATA {
+    name: "User Agent Configuration",
+    version: "aln_1.0",
+    description: "Configures user agent overrides for specific domains in Microsoft Edge."
+  }
+
+  @DEFINITIONS {
+    @USER_AGENT_OVERRIDES {
+      overrides: [
+        {
+          domain: "grow.google",
+          subpath: "/career-dreamer/home/",
+          user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537"
+        }
+        // Additional overrides can be added as needed based on further configurations
+      ],
+      usage: "Apply these overrides in the browser utilities configuration."
+    }
+  }
+
+  @FUNCTIONS {
+    @APPLY_USER_AGENT_OVERRIDES {
+      description: "Applies the specified user agent overrides for domains in Microsoft Edge.",
+      steps: [
+        "Iterate over each domain and subpath specified.",
+        "Configure the browser to use the specified user agent when accessing these domains.",
+        "Validate the configuration and ensure that overrides are applied correctly."
+      ]
+    }
+  }
+
+  @EXECUTION {
+    @APPLY_USER_AGENT_OVERRIDES
+  }
+}
+```
