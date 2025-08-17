@@ -1,4 +1,4 @@
-﻿```aln
+```aln
 @SYSTEM_INITIALIZE {
     steps: [
         "Validate firmware signatures",
@@ -19,11 +19,3 @@
     platform_compatibility: "UNIVERSAL_SUPPORT_ACTIVE"
 }
 ```
-
-// Added NIST_SP-80053 Compliance
-compliance_standards += ["NIST_SP-80053"]
-@ENHANCED_FEATURE {
-    id = "ai_pos_analytics";
-    description = "AI-driven analytics for POS systems";
-    integration = "quantum_optimized"
-}

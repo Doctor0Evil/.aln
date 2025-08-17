@@ -1,4 +1,4 @@
-﻿```aln
+```aln
 // Generate dependencies for retail POS system using object_array
 @DEPENDENCY_GENERATION {
     context: "retail_pos",
@@ -35,11 +35,3 @@
     target: "all_nodes"
 }
 ```
-
-// Added NIST_SP-80053 Compliance
-compliance_standards += ["NIST_SP-80053"]
-@ENHANCED_FEATURE {
-    id = "ai_pos_analytics";
-    description = "AI-driven analytics for POS systems";
-    integration = "quantum_optimized"
-}

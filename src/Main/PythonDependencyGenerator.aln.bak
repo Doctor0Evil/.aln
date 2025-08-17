@@ -1,4 +1,4 @@
-﻿```aln
+```aln
 @GENERATE_DEPENDENCY {
     context: "retail_pos",
     compliance: ["GDPR", "PCI-DSS", "SOC2", "ISO27001"],
@@ -33,11 +33,3 @@ class CircleKPOS:
     }
 }
 ```
-
-// Added NIST_SP-80053 Compliance
-compliance_standards += ["NIST_SP-80053"]
-@ENHANCED_FEATURE {
-    id = "ai_pos_analytics";
-    description = "AI-driven analytics for POS systems";
-    integration = "quantum_optimized"
-}

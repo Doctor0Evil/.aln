@@ -1,0 +1,7 @@
+﻿<html>
+<head><title>Sample AI Chat Data</title></head>
+<body>
+<p>This is a sample content for html.ai.txt used in ALN access token processing.</p>
+<p>Timestamp: 2025-08-16 16:39:16</p>
+</body>
+</html>

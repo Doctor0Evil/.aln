@@ -1,5 +1,5 @@
-﻿ ```aln
-// ALN 1.0.8 Core Syntax Enhancements
+ ```aln
+// ALN 1.0.7 Core Syntax Enhancements
 
 // QuantumNetv8.00 Driver
 def sync.driver.quantum_net_v8 {
@@ -43,11 +43,3 @@ def bind.quantum.pos {
   response_latency="0.005s";
 }
 ```  
-
-// Added NIST_SP-80053 Compliance
-compliance_standards += ["NIST_SP-80053"]
-@ENHANCED_FEATURE {
-    id = "ai_pos_analytics";
-    description = "AI-driven analytics for POS systems";
-    integration = "quantum_optimized"
-}

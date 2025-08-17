@@ -1,11 +1,11 @@
-﻿```rego
+```rego
 package aln_compliance
 
 default allow = false
 
 allow {
   input.method == "deploy"
-  input.version == "aln_1.0.8"
+  input.version == "aln_1.0.7"
   input.compliance_check == "passed"
   input.quantum_networking == "enabled"
 }
@@ -21,9 +21,3 @@ data.security.quantum {
   input.encryption_algorithm == "quantum_resistant"
 }
 ```  
-
-// Added NIST_SP-80053 Compliance
-compliance_standards += ["NIST_SP-80053"]
-violation[{"message": "Missing PCI-DSS v4.0 compliance"}] {
-  not input.pci_dss == "v4.0"
-}
