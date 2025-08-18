@@ -1,5 +1,4 @@
-# .github/workflows/aln_bootstrap.yml
-name: ALN Bootstrap & Remediation
+name: ALN Bootstrap CI
 
 on:
   push:
@@ -11,35 +10,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      # Step 0 — Preflight Namespace Healer
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # Full history for merging unrelated histories
+          fetch-depth: 0
 
-    - name: Set up PowerShell
-  uses: actions/setup-pwsh@v2
-  with:
-    pwsh-version: 'latest'
-
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y opa docker.io
-          # Install ALN CLI if available via package or script
-          # curl -L https://aln-lang.org/install.sh | bash
-
-      - name: Run bootstrap + remediation
+      - name: Heal all workflow namespaces
         shell: pwsh
-        run: ./ALN_Bootstrap_And_Push.ps1
-
-      - name: Configure Git identity
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          $workflows = Get-ChildItem ".github/workflows" -Filter "*.yml" -Recurse
+          foreach ($wf in $workflows) {
+              $content = Get-Content $wf.FullName -Raw
+              $fixedContent = $content -replace '(?m)^\s*uses:\s*powershell/setup-pwsh@v\d+', '    uses: actions/setup-pwsh@v2'
+              if ($content -ne $fixedContent) {
+                  Write-Host "🔧 Fixing namespace in $($wf.Name)..."
+                  $fixedContent | Set-Content $wf.FullName -Encoding UTF8
+                  git add $wf.FullName
+              }
+          }
+          if (git diff --cached --quiet) {
+              Write-Host "✅ No namespace issues found."
+          } else {
+              git config --global user.name "github-actions[bot]"
+              git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git commit -m "CI/CD: Auto‑correct setup‑pwsh namespace (bootstrap inline)"
+              git push origin main
+          }
 
-      - name: Commit & Push changes
+      # Step 1 — Install PowerShell
+      - name: Set up PowerShell
+        uses: actions/setup-pwsh@v2
+        with:
+          pwsh-version: 'latest'
+
+      # Step 2 — Run your bootstrap logic
+      - name: Execute bootstrap
+        shell: pwsh
         run: |
-          git add .
-          git commit -m "CI/CD: Auto-bootstrap & remediation run" || echo "No changes to commit"
-          git push origin main
+          ./github/scripts/Deploy-ALN_CI.ps1
