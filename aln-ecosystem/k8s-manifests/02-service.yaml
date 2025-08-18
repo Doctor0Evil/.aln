@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aln-core-service
+  namespace: aln-ecosystem
+  labels:
+    app: aln-ecosystem
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: aln-ecosystem

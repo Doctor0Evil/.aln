@@ -1,0 +1,9 @@
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aln-ecosystem
+  labels:
+    app.kubernetes.io/name: aln-ecosystem
+    app.kubernetes.io/component: core
+```

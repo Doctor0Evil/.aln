@@ -1,0 +1,106 @@
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aln-ecosystem
+  namespace: aln-ecosystem
+  labels:
+    app: aln-ecosystem
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: aln-ecosystem
+  template:
+    metadata:
+      labels:
+        app: aln-ecosystem
+    spec:
+      containers:
+      - name: aln-core
+        image: ghcr.io/aln_lang/aln-core:5.0.0
+        ports:
+        - containerPort: 8080
+        - containerPort: 8443
+        env:
+        - name: POSTGRES_HOST
+          value: "aln-db"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: REDIS_HOST
+          value: "aln-redis"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "aln-kafka:9092"
+        - name: MILVUS_URI
+          value: "aln-milvus:19530"
+        - name: PROMETHEUS_URL
+          value: "http://aln-prometheus:9090"
+        - name: GRAFANA_URL
+          value: "http://aln-grafana:3000"
+        - name: LOGGING_BACKEND
+          value: "aln-loki:3100"
+        - name: ALN_ENVIRONMENT
+          value: "production"
+        - name: COMPLIANCE_MODE
+          value: "full"
+        - name: COMPLIANCE_SCORE_THRESHOLD
+          value: "98.5"
+        - name: SYSTEM_HEALTH_THRESHOLD
+          value: "95.0"
+        resources:
+          limits:
+            cpu: "4"
+            memory: "16Gi"
+            ephemeral-storage: "10Gi"
+          requests:
+            cpu: "2"
+            memory: "8Gi"
+            ephemeral-storage: "5Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        volumeMounts:
+        - name: aln-data
+          mountPath: /app/aln-pos/data
+        - name: aln-logs
+          mountPath: /app/aln-pos/logs
+        - name: aln-config
+          mountPath: /app/aln-pos/config
+        - name: aln-backup
+          mountPath: /app/aln-pos/backup
+        - name: aln-secure
+          mountPath: /app/aln-pos/secure
+      volumes:
+      - name: aln-data
+        persistentVolumeClaim:
+          claimName: aln-data-pvc
+      - name: aln-logs
+        persistentVolumeClaim:
+          claimName: aln-logs-pvc
+      - name: aln-config
+        persistentVolumeClaim:
+          claimName: aln-config-pvc
+      - name: aln-backup
+        persistentVolumeClaim:
+          claimName: aln-backup-pvc
+      - name: aln-secure
+        persistentVolumeClaim:
+          claimName: aln-secure-pvc
+```

@@ -1,0 +1,37 @@
+```aln
+// Generate dependencies for retail POS system using object_array
+@DEPENDENCY_GENERATION {
+    context: "retail_pos",
+    compliance: ["GDPR", "PCI-DSS", "SOC2", "ISO27001"],
+    object_array: "retail_dependencies",
+    language: "ALL"
+}
+
+// Process the object_array through the dependency generation pipeline
+@PIPE_CHAIN {
+    chain: "retail_pos_dependency_chain",
+    parameters: {
+        context: "retail_pos",
+        compliance: ["GDPR", "PCI-DSS", "SOC2", "ISO27001"],
+        object_array: "retail_dependencies"
+    }
+}
+
+// Verify compliance for the generated dependencies
+@COMPLIANCE_VERIFICATION {
+    object_array: "retail_dependencies",
+    standards: ["GDPR", "PCI-DSS", "SOC2", "ISO27001"]
+}
+
+// Integrate the dependencies with the POS system
+@INTEGRATION {
+    object_array: "retail_dependencies",
+    system_type: "POS"
+}
+
+// Sync the dependencies across all system nodes
+@SYNC {
+    object_array: "retail_dependencies",
+    target: "all_nodes"
+}
+```

@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quantum-synergy-agent
+  labels:
+    app: quantum-synergy-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: quantum-synergy-agent
+  template:
+    metadata:
+      labels:
+        app: quantum-synergy-agent
+    spec:
+      serviceAccountName: qsa-runner
+      containers:
+        - name: agent
+          image: your-registry/qsa-agent:stable
+          env:
+            - name: REPO_URL
+              value: https://github.com/Doctor0Evil/ALN_Programming_Language.git
+            - name: REPO_BRANCH
+              value: main
+            - name: VAULT_ADDR
+              valueFrom:
+                secretKeyRef:
+                  name: vault-config
+                  key: addr
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+
+        - name: aln-runner
+          image: your-registry/aln-runner:stable
+          args: ["--listen=:9090", "--workspace=/workspace", "--repo", "$(REPO_URL)"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: "300m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+
+      volumes:
+        - name: workspace
+          emptyDir:
+            medium: Memory
+            sizeLimit: "4Gi"
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: qsa-egress-allowlist
+spec:
+  podSelector:
+    matchLabels:
+      app: quantum-synergy-agent
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 140.82.112.0/20 # github.com
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - namespaceSelector: {} # cluster‑internal services (e.g., Vault)
