@@ -1,0 +1,5 @@
+﻿# Backend Dockerfile for ALN Framework
+FROM mcr.microsoft.com/dotnet/runtime:8.0
+COPY ./bin/Release/net8.0/publish/ /app/
+WORKDIR /app
+ENTRYPOINT [""./ALNBootloader""]
