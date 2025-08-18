@@ -1,0 +1,44 @@
+# .github/workflows/aln_bootstrap.yml
+name: ALN Bootstrap & Remediation
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Full history for merging unrelated histories
+
+      - name: Set up PowerShell
+        uses: PowerShell/setup-pwsh@v2
+        with:
+          pwsh-version: 'latest'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y opa docker.io
+          # Install ALN CLI if available via package or script
+          # curl -L https://aln-lang.org/install.sh | bash
+
+      - name: Run bootstrap + remediation
+        shell: pwsh
+        run: ./ALN_Bootstrap_And_Push.ps1
+
+      - name: Configure Git identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit & Push changes
+        run: |
+          git add .
+          git commit -m "CI/CD: Auto-bootstrap & remediation run" || echo "No changes to commit"
+          git push origin main
