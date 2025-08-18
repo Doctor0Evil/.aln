@@ -1,1 +1,2 @@
 *.aln linguist-language=ALN
+*.aln linguist-detectable=true
