@@ -1,0 +1,108 @@
+{
+  "name": "ALN",
+  "scopeName": "source.aln",
+  "patterns": [
+    {
+      "match": "@INIT\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@PROCESS\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@SQL_\\w+\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@EXEC\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@LOG\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@CREATE\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@DEFINE\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@RETURN\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@ATTESTATION\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@CHAOTIC_IMPROVEMENT\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@SYNCHRONIZE\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@TO\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@MILESTONE\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@BUILD\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@IMPLEMENT\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@EVOLVE_SYNTAX\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "@EXEC_ALN_\\w+\\s*\\{",
+      "name": "keyword.control.aln"
+    },
+    {
+      "match": "\\w+\\s*:\\s*",
+      "name": "entity.other.attribute-name.aln"
+    },
+    {
+      "match": "\"[^\"]*\"",
+      "name": "string.quoted.double.aln"
+    },
+    {
+      "match": "'[^']*'",
+      "name": "string.quoted.single.aln"
+    },
+    {
+      "match": "([0-9]+\\.?[0-9]*)",
+      "name": "constant.numeric.aln"
+    },
+    {
+      "match": "//.*$",
+      "name": "comment.line.double-slash.aln"
+    },
+    {
+      "match": "/\\*.*?\\*/",
+      "name": "comment.block.aln"
+    }
+  ],
+  "repository": {
+    "string": {
+      "patterns": [
+        {
+          "match": "\"[^\"]*\"",
+          "name": "string.quoted.double.aln"
+        }
+      ]
+    }
+  }
+}
