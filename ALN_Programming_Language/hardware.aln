@@ -1,0 +1,6 @@
+@DEF hardware_integration {
+  @COMMENT 'Integrate security chips'
+  @PROC init_chip 'SLB9665' {
+    @EXE secure_boot
+  }
+}
