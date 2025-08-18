@@ -16,10 +16,11 @@ jobs:
         with:
           fetch-depth: 0   # Full history for merging unrelated histories
 
-      - name: Set up PowerShell
-        uses: PowerShell/setup-pwsh@v2
-        with:
-          pwsh-version: 'latest'
+    - name: Set up PowerShell
+  uses: actions/setup-pwsh@v2
+  with:
+    pwsh-version: 'latest'
+
 
       - name: Install dependencies
         run: |
