@@ -1,0 +1,65 @@
+```aln
+// ALN System Registry - Manages all system components and their relationships
+define_aln_system_registry {
+    system_registry = {
+        "components": {
+            "nlp_engine": {
+                "version": "v3.0.0.0.0.128.1.8.3",
+                "status": "active",
+                "dependencies": ["aln_core_engine", "aln_nlp_parser"],
+                "platforms": ["AI-Chat-Platform-1", "AI-Chat-Platform-2", "Military-Simulation-Instance"]
+            },
+            "military_sim": {
+                "version": "v2.1.0.0.0.128.1.8.3",
+                "status": "active",
+                "dependencies": ["aln_core_engine", "aln_battlefield_api"],
+                "platforms": ["Military-Simulation-Instance"]
+            },
+            "system_automation": {
+                "version": "v1.8.0.0.0.128.1.8.3",
+                "status": "active",
+                "dependencies": ["aln_core_engine", "aln_docker_emulator"],
+                "platforms": ["System-Automation-Node"]
+            },
+            "github_integration": {
+                "version": "v2.3.0.0.0.128.1.8.3",
+                "status": "active",
+                "dependencies": ["aln_core_engine", "aln_github_adapter"],
+                "platforms": ["All Platforms"]
+            }
+        },
+        "relationships": {
+            "nlp_engine": ["military_sim", "system_automation"],
+            "military_sim": ["nlp_engine"],
+            "system_automation": ["nlp_engine", "github_integration"],
+            "github_integration": ["system_automation"]
+        }
+    }
+    
+    // Register a new component
+    register_component @component_name @component_info {
+        if (system_registry.components[component_name]) {
+            update_component(component_name, component_info);
+        } else {
+            system_registry.components[component_name] = component_info;
+            add_to_relationships(component_name, component_info.dependencies);
+        }
+    }
+    
+    // Update component info
+    update_component @component_name @component_info {
+        system_registry.components[component_name] = component_info;
+    }
+    
+    // Add to relationships
+    add_to_relationships @component_name @dependencies {
+        for dependency in dependencies {
+            if (system_registry.relationships[component_name]) {
+                system_registry.relationships[component_name].push(dependency);
+            } else {
+                system_registry.relationships[component_name] = [dependency];
+            }
+        }
+    }
+}
+```
