@@ -1,0 +1,9 @@
+```aln
+// Deploy application container from ALN terminal
+deploy_container @repo("git@github.com:user/project.git") {
+    pull_repo(repo);
+    build_container(dockerfile_path="./Dockerfile");
+    push_container_registry(tag="latest");
+    remote_execute(target_server, "deploy latest container");
+}
+```
