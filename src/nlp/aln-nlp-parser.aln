@@ -1,0 +1,11 @@
+```aln
+// NLP Input Processing Example
+parse_user_input @text("I want ALN code examples for chatbot, simulation, deployment") {
+    tokenize => [split @delimiter(",")];
+    context_tag => [intent: "request_examples"];
+    extract_entities => [
+        "domains": ["chatbot", "military simulation", "system deployment"]
+    ];
+    dispatch_function => fn_route(intent="request_examples", domains);
+}
+```
