@@ -88,3 +88,12 @@ Complete, audit-ready reference for all ALN public APIs.
 
       - name: Build Docker image
         run: docker build -t aln:${{ github.sha }} .
+            - name: Preprocess yaml
+  # You may pin to the exact commit or the version.
+  # uses: valentin-barbotin/preprocess_yaml@7d6cc2e5a8f4af6005ef45f58e78c53a207aab81
+  uses: valentin-barbotin/preprocess_yaml@v1.0.2
+  with:
+    # The file to preprocess
+    file: 
+    # The output file, if not specified, the file will be overwritten
+    output: 
