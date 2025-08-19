@@ -1,0 +1,19 @@
+﻿name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PowerShell
+        uses: microsoft/setup-powershell@v1
+      - name: Run ALN Remediation
+        run: |
+          Import-Module modules\ALN_CI_Remediation.psm1
+          Invoke-Remediation -Scope "full"
