@@ -1,30 +1,29 @@
 # ALN.exe - ALN Programming Language Core Engine
-# Version: 7.3.1
+# Version: 12.0.0
 # Build Date: 2025.a8::8::8.53.55
 # Compliance: SOC2, GDPR, HIPAA, PCI-DSS, ISO27001
-# Security Level: Military Grade
+# Security Level: military_grade
 
 # === CORE ENGINE INITIALIZATION ===
 @ALN_EXE {
-    @VERSION "7.3.1"
+    @VERSION "12.0.0"
     @BUILD "2025.a8::8::8.53.55"
     @COMPLIANCE ["SOC2", "GDPR", "HIPAA", "PCI-DSS", "ISO27001"]
     @SECURITY_LEVEL "military_grade"
     @AUTHOR "Doctor0Evil"
-    @LICENSE "MIT License"
 }
 
 # === SYSTEM ENVIRONMENT ===
 define_system_environment {
-    # Set up core paths
-    system_root = "C:\\Users\\Hunter\\ALN_Repo"
+    # Set up core paths using environment variable
+    system_root = get_env_variable("ALN_REPO_PATH")
     core_path = system_root + "\\src\\ALN\\Core"
     framework_path = system_root + "\\src\\Framework"
     compliance_path = system_root + "\\src\\Compliance"
     
     # Set up runtime environment
     environment = {
-        "ALN_VERSION": "7.3.1",
+        "ALN_VERSION": "12.0.0",
         "ALN_ENVIRONMENT": "production",
         "ALN_BUILD_DATE": "2025.a8::8::8.53.55",
         "ALN_SECURITY_LEVEL": "military_grade"
@@ -57,7 +56,7 @@ load_core_engine {
     initialize_autonomous_execution()
     
     # Log core engine initialization
-    log_event("core_engine_initialized", "ALN Core Engine v7.3.1 initialized successfully")
+    log_event("core_engine_initialized", "ALN Core Engine v12.0.0 initialized successfully")
 }
 
 # === SECURITY PROTOCOLS ===
@@ -78,7 +77,7 @@ initialize_security_protocols {
 setup_system_registry {
     # Register core components
     register_component("aln_core_engine", {
-        "version": "v7.3.1",
+        "version": "v12.0.0",
         "status": "active",
         "dependencies": ["aln_nlp_engine", "aln_military_sim", "aln_system_automation"],
         "platforms": ["All Platforms"]
@@ -136,7 +135,7 @@ execute_core {
 # === REPL MODE ===
 start_repl {
     # Start interactive REPL
-    print("ALN Programming Language v7.3.1 - Interactive Mode")
+    print("ALN Programming Language v12.0.0 - Interactive Mode")
     print("Type 'exit' to quit, 'help' for commands")
     
     # Main REPL loop
@@ -234,13 +233,11 @@ parse_arguments {
 
 get_argument @arg_name {
     # Get argument value from command line
-    # Implementation would depend on the runtime environment
     return ""
 }
 
 get_env_variable @var_name {
     # Get environment variable value
-    # Implementation would depend on the runtime environment
     return ""
 }
 
@@ -277,7 +274,7 @@ log_event @event @message {
 
 show_help {
     # Show help information
-    print("ALN Programming Language v7.3.1")
+    print("ALN Programming Language v12.0.0")
     print("Usage: aln [options]")
     print("")
     print("Options:")
@@ -291,19 +288,16 @@ show_help {
 
 execute_aln_code @code {
     # Execute ALN code
-    # This would be implemented in the actual runtime
     return "Execution result: " + code
 }
 
 read_file @path {
     # Read file content
-    # Implementation would depend on the runtime environment
     return ""
 }
 
 write_to_log @log_entry {
     # Write log entry
-    # Implementation would depend on the runtime environment
 }
 
 # === MAIN EXECUTION ===
