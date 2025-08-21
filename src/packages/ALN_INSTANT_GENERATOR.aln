@@ -1,0 +1,107 @@
+// PACKAGE: ALN_INSTANT_GENERATOR
+// Universal ALN Input Expander & Code/Data Generator
+
+PACKAGE ALN_INSTANT_GENERATOR
+
+GLOBAL registry          // Tracks known modules/commands/APIs
+GLOBAL endpoint_map      // Maps strings/patterns → API/OS endpoints
+GLOBAL log_history       // Stores actions for traceability
+
+# --- Accept any ALN input (filename, command, etc.) ---
+
+ACTION handle_input
+    INPUT aln_input string
+    EXEC
+        LOG 📥 "Received ALN input: " + aln_input
+        type = detect_type(aln_input)               // .aln file, command, code, etc.
+        route = determine_route(aln_input, type)    // Which endpoints/APIs/expansions to trigger
+
+        # 1. Analyze/Interpret input for structure & intent
+        context = analyze_structure(aln_input)
+        LOG 🧠 "Context interpreted: " + context
+
+        # 2. Locate, expand, or generate as required
+        expansion = expand_aln(aln_input, context, route)
+        LOG ⚡ "Expansion triggered"
+
+        # 3. Communicate to endpoints/APIs as needed
+        result = dispatch_to_endpoints(expansion, route)
+        LOG 🔄 "Dispatched to endpoints"
+
+        # 4. Capture/generate output, distribute as needed
+        distribute_result(result, context)
+
+        # 5. Log and return for audit/tracing
+        log_history.APPEND({input: aln_input, output: result, context: context, time: TIME.now()})
+        RETURN result
+
+# --- Helper: Detect file or command type ---
+ACTION detect_type
+    INPUT source string
+    EXEC
+        IF source.endswith(".aln") THEN RETURN "aln_script"
+        IF source.startswith("api:") THEN RETURN "api_call"
+        IF source.startswith("@system") THEN RETURN "system_directive"
+        IF source CONTAINS "grimoire" THEN RETURN "doc_expansion"
+        RETURN "unknown"
+
+# --- Helper: Determine routing for expansion ---
+ACTION determine_route
+    INPUT name string, type string
+    EXEC
+        IF type == "aln_script" THEN RETURN registry["aln_handler"]
+        IF type == "api_call" THEN RETURN endpoint_map["api"]
+        IF type == "system_directive" THEN RETURN endpoint_map["system"]
+        IF type == "doc_expansion" THEN RETURN registry["grimoire_handler"]
+        RETURN registry["default"]
+
+# --- Helper: Analyze/Interpret the input for structure ---
+ACTION analyze_structure
+    INPUT source string
+    EXEC
+        # Parse for commands, sections, metadata, etc.
+        IF source.startswith("@system") THEN
+            meta = PARSE_META(source)
+            RETURN meta
+        ENDIF
+        # Default: filename analysis
+        meta = {filename: source, has_code: source.endswith(".aln"), length_estimate: 100}
+        RETURN meta
+
+# --- Expand/generate based on input/context ---
+ACTION expand_aln
+    INPUT name string, context map, route string
+    EXEC
+        IF context.has_code THEN
+            # Simulate/generate 10–1000 lines of code, for demonstration:
+            expansion = []
+            FOR i IN RANGE(1, RANDOM(10,1000)) DO
+                expansion.ADD("generated_code_line_" + TO_STRING(i))
+            ENDFOR
+            RETURN expansion
+        ELSE
+            RETURN ["No code detected in input"]
+        ENDIF
+
+# --- Dispatch to endpoints or APIs ---
+ACTION dispatch_to_endpoints
+    INPUT expansion list, route string
+    EXEC
+        # Send output to appropriate API, OS, or in-game handler
+        IF route == "system" THEN
+            CALL_OS_API(expansion)
+        ELSE IF route == "api" THEN
+            CALL_REMOTE_API(expansion)
+        ELSE IF route == "grimoire_handler" THEN
+            UPDATE_GRIMOIRE(expansion)
+        ELSE
+            LOG "No valid endpoint; outputting to console"
+        ENDIF
+        RETURN expansion
+
+# --- Distribute the result/output as needed ---
+ACTION distribute_result
+    INPUT result list, context map
+    EXEC
+        # E.g., write to log, distribute to players, update doc, etc.
+        LOG "Results distributed: " + TO_STRING(result[0:5]) + "..."
