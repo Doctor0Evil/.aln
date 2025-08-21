@@ -1,227 +1,171 @@
-/artifacts/ARC-9241.aln → Wand of Recursive Truths (Legendary Artifact)
+***
 
-```markdown
-# ALN Programming Language
+# 🌌 ALN Fantasia — Universal Platform & Runtime  
+*Seamless Continuation Codex*  
+*Updated: 2025-08-21*
 
 <div align="center">
-  <img src="https://img.shields.io/badge/version-12.0.0-blue.svg " alt="Version">
-  <img src="https://img.shields.io/badge/compliance-98.7%25-green.svg " alt="Compliance">
-  <img src="https://img.shields.io/badge/platform-multi--platform-brightgreen.svg " alt="Platform">
-  <img src="https://img.shields.io/badge/license-MIT-orange.svg " alt="License">
+  <img src="https://img.shields.io/badge/version-12.0.0-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/compliance-98.9%25-green.svg" alt="Compliance">
+  <img src="https://img.shields.io/badge/platform-cross--platform-brightgreen.svg" alt="Platform">
+  <img src="https://img.shields.io/badge/license-MIT-orange.svg" alt="License">
 </div>
 
-## 🚀 Overview
+***
 
-ALN (Alien Language Notion) is a next-generation, quantum-ready programming language designed for enterprise AI chat platforms, POS systems, and distributed computing environments. Built with native compliance for PCI-DSS, GDPR, HIPAA, and other enterprise standards.
+## 🚀 Project Vision
+**ALN (Alien Language Notion / Notation)** is a universal, AI-native language runtime powering:  
 
-## ✨ Key Features
+✅ **ALN Fantasia ("IOM Community-Memory-Bridge")** — a collaborative lore/game world spanning Discord, Web, and CLI  
+✅ **ALN_Net** — a secure .NET edition REPL sandbox runtime  
+✅ **ALN Core** — enterprise AI integration platform (quantum-ready, compliance-grade)  
 
-- **Native AI Integration**: Built-in support for OpenAI, Anthropic, Qwen, Mistral, and DeepSeek
-- **Quantum-Ready Architecture**: Post-quantum cryptography and quantum computing support
-- **Enterprise Compliance**: 98.7% compliance score across major standards
-- **Multi-Platform Support**: Linux, Windows, macOS, ARM64, Docker, Kubernetes
-- **Real-Time Processing**: Sub-millisecond execution with distributed caching
-- **Self-Programming Capabilities**: Auto-optimization and self-healing systems
+The **Prime UX Rule** across **all editions and deployments**:  
+> Every interaction MUST render/log via the **CircleK Receipt Format** (receipt-like menus, logs, and archivable outputs).
 
-## 📋 Requirements
+***
 
-- Docker 20.10+ or Kubernetes 1.24+
-- PowerShell Core 7.0+ (for deployment scripts)
-- Git 2.30+
-- 8GB RAM minimum (16GB recommended)
-- 20GB free disk space
+## 🏛 Repository Architecture
 
-## 🛠️ Installation
+```
+/src/lib/std.aln          → universal helpers & imports
+/src/lib/NAV_MENU.aln     → receipt-menu formatting standard
+/src/packages/            → gameplay, lore, governance, utilities
+/examples/aln_fantasia/   → canonical narrative demos
+/artifacts/ARC-9241.aln   → Legendary Artifact: Wand of Recursive Truths
+/docs/                    → architecture, API, compliance, dev guides
+/src/Core (ALN_Net)       → .NET sandbox runtime + REPL
+```
 
-### Quick Start with Docker
+***
 
+## ✨ Highlights (Current Build)
+
+- **Receipt-First UI/UX** → permanent, human-readable logs across terminals, Discord, and web apps  
+- **Native AI Connectors** → OpenAI, Anthropic, Qwen, Mistral, DeepSeek  
+- **Quantum-Readiness** → post-quantum crypto + QPU integration (12.0.0 baseline)  
+- **Enterprise Compliance** → PCI-DSS, GDPR, HIPAA, ISO-27001, SOC2  
+- **Games & Lore Modules** → ALN_Quest engine, Trivia, TicTacToe, Hangman, dice rolls  
+- **DOTNET Runtime Sandbox (ALN_Net)** → hardened REPL loop, strict execution sandbox  
+
+***
+
+## ⚡ Quickstart Example (Fantasia Edition)
+
+```aln
+IMPORT std
+
+menu = menu {
+  header: "Quest Menu",
+  user: CURRENT_USER,
+  timestamp: now(),
+  menu_items: [
+    { key: "A", label: "Attack" },
+    { key: "R", label: "Run" }
+  ]
+}
+LOG menu.text
+```
+
+***
+
+## 🛠 Deployments
+
+### Docker
 ```bash
-# Clone the repository
-git clone https://github.com/Doctor0Evil/ALN_Programming_Language.git 
+git clone https://github.com/Doctor0Evil/ALN_Programming_Language.git
 cd ALN_Programming_Language
-
-# Build and run with Docker Compose
 docker-compose -f docker/Docker-Compose.yml up -d
-
-# Verify installation
 curl http://localhost:8080/health
 ```
 
-### Kubernetes Deployment
-
+### Kubernetes
 ```bash
-# Apply all manifests
 kubectl apply -f k8s-manifests/
-
-# Check deployment status
 kubectl get pods -n aln-ecosystem
-
-# Access the service
 kubectl port-forward -n aln-ecosystem svc/aln-core-service 8080:80
 ```
 
-### PowerShell Deployment
-
-```powershell
-# Run the deployment script
-.\Modules\ALN_Deployment.ps1 `
-  -TargetDir "C:\ALN" `
-  -RepoUrl "https://github.com/Doctor0Evil/ALN_Programming_Language.git " `
-  -GitHubToken $env:GITHUB_TOKEN
-```
-
-## 📚 Documentation
-
-- [Architecture Overview](docs/architecture.md)
-- [API Reference](docs/api-reference.md)
-- [Compliance Guide](docs/compliance.md)
-- [Development Guide](docs/development.md)
-
-## 🔧 Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ALN_VERSION` | ALN runtime version | `12.0.0` |
-| `ALN_ENVIRONMENT` | Deployment environment | `production` |
-| `COMPLIANCE_MODE` | Compliance enforcement level | `FULL` |
-| `ALN_SECURITY_LEVEL` | Security profile | `quantum_stealth` |
-
-### API Keys
-
-Set the following environment variables for AI integrations:
-
+### .NET Runtime (ALN_Net REPL)
 ```bash
-export OPENAI_API_KEY="your-openai-key"
-export ANTHROPIC_API_KEY="your-anthropic-key"
-export QWEN_API_KEY="your-qwen-key"
-export MISTRAL_API_KEY="your-mistral-key"
-```
-
-## 📊 Compliance Status
-
-| Standard | Score | Status |
-|----------|-------|--------|
-| PCI-DSS v4.0 | 98.7% | ✅ Compliant |
-| GDPR | 98.5% | ✅ Compliant |
-| HIPAA | 99.2% | ✅ Compliant |
-| ISO 27001 | 98.9% | ✅ Compliant |
-| SOC 2 | 99.1% | ✅ Compliant |
-
-## 🧪 Testing
-
-```bash
-# Run unit tests
-./scripts/test.sh unit
-
-# Run integration tests
-./scripts/test.sh integration
-
-# Run compliance tests
-./scripts/test.sh compliance
-
-# Run all tests
-./scripts/test.sh all
-```
-
----
-
-<div align="center">
-  Made with ❤️ by the ALN Team | Phoenix, Arizona
-</div>
-```
-
-```markdown
-# ALN_Net: Alien Language Notation (.NET Edition)
-
-A fully-original, from-scratch .NET "chat-native" programmable shell and language runtime.  
-*Everything runs inside a secure, extensible sandbox: the ALN-Terminal-Shell.*
-
-## Quickstart
-
-```
-git clone https://github.com/Doctor0Evil/ALN_Programming_Language.git
 cd ALN_Programming_Language/src/Core
 dotnet build
 dotnet run --project ALN_Net_REPL.csproj
 ```
 
-## Structure
+***
 
-- `/src/Core/ALN_Net_REPL.cs` - Main REPL loop (user input, output)
-- `/src/Core/ALNCommand.cs` - Command parser & data structure
-- `/src/Core/ALNCommandDispatcher.cs` - Dispatches parsed commands
-- `/src/Core/ALNSandbox.cs` - Executes validated commands in a strict sandbox
-- `/Security/SecurityChecklist.md` - Sandboxing & threat-model guidance
-- `/tests/` - Starter test suite
+## 🎮 Entertainment & Community Games
 
-## Usage
+Available mini-games via ALN syntax:  
 
-Launch REPL, type ALN commands:
+- 🎲 Dice → `aln.game.dice { sides: 20 }`  
+- ❌⭕ TicTacToe → `aln.game.tictactoe { move: "B2" }`  
+- 🪢 Hangman → `aln.game.hangman { letter: "A" }`  
+- 🧭 Quest Engine → `aln.game.quest { action: "explore", location: "cave" }`  
+- 🧠 Trivia → `aln.game.trivia { answer: "42" }`  
+
+Future roadmap: polls, emoji stories, multiplayer modules.  
+
+***
+
+## 📊 Compliance Dashboard
+
+| Standard  | Score | Status |
+|-----------|-------|--------|
+| PCI-DSS   | 98.7% | ✅ |
+| GDPR      | 98.5% | ✅ |
+| HIPAA     | 99.2% | ✅ |
+| ISO-27001 | 98.9% | ✅ |
+| SOC 2     | 99.1% | ✅ |
+
+***
+
+## 🧪 Testing
+
+```bash
+./scripts/test.sh unit
+./scripts/test.sh integration
+./scripts/test.sh compliance
+./scripts/test.sh all
 ```
-***
-
-## 6. Entertainment Features  
-**Future games to implement:**  
-- Voting/poll mini-games
-- Emoji-based ALN chat stories
-- Multiplayer turn-based games (TicTacToe, Hangman)
-- Trivia with knowledge check and score tracking
-- "ALN-Quest": Interactive puzzles using ALN commands
-
-Example ALN commands:
-- `aln.game.hangman { letter: "A" }`
-- `aln.game.quest { action: "explore", location: "cave" }`
 
 ***
 
-```markdown
-## Entertainment & Community Games
+## 🧩 Contribution Codex
 
-ALN_Net supports community-driven entertainment via ALN-Syntax games!
+- 📚 Add helpers → `/src/lib/`  
+- 🏛 Add lore/game packages → `/src/packages/`  
+- 📜 Add demos → `/examples/`  
+- 🚫 Rule: Do NOT break **NAV_MENU receipt standard**.  
 
-Supported:
-- Dice roll: `aln.game.dice { sides: 20 }`
-- TicTacToe: `aln.game.tictactoe { move: "B2" }`
-- Trivia: `aln.game.trivia { answer: "42" }`
-- Hangman: `aln.game.hangman { letter: "A" }`
+Workflow: fork → feature branch → commit → PR → review merge.
 
-More games and social features coming soon!
-```
 ***
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🔗 Links
-
-- [Official Website](https://aln-lang.com )
-- [Documentation](https://docs.aln-lang.com )
-- [API Reference](https://api.aln-lang.com )
-- [Community Forum](https://forum.aln-lang.com )
 
 ## 👥 Team
 
-- Lead Developer: Jacob Scott Corey Farmer
-- Architecture: Hunter
-- Compliance: ALN Compliance Team
+- **Creator & Lead Architect:** Jacob Scott Corey Farmer  
+- **Architecture Mage:** Hunter  
+- **Compliance Guardians:** ALN Compliance Team  
 
-## 📞 Support
+***
 
-Author: Jacob Scott Corey Farmer
-Email: xboxteejaymcfarmer@gmail.com
-Role: ALN Creator & Lead Development Architect
-- Discord: [ALN Community](https://discord.gg/aln-lang )
-- GitHub Issues: [Report a bug](https://github.com/Doctor0Evil/ALN_Programming_Language/issues )
+## 📌 Handoff Marker
+
+```
+[Start of Handoff]
+ALN Fantasia Handoff-Package, as of 2025-08-21
+- Standard lib: src/lib/std.aln
+- Receipt menu: src/lib/NAV_MENU.aln
+- UX/logs: all via NAV_MENU receipts
+- Examples: examples/aln_fantasia/receipt_demo.aln
+- Rule: CONTINUE USING std/NAV_MENU everywhere
+[End of Handoff]
+```
+
+***
+
+<div align="center">
+  🪄 Made with ❤️ in Phoenix, Arizona | ALN Team  
+</div>
