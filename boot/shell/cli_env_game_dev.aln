@@ -1,0 +1,30 @@
+```aln
+cli_env_game_dev {
+  banner: "💾 Game Dev Console — RPG_Wastes Developer Shell"
+  prompt: "ruins-dev> "
+  commands: [
+    { cmd: "help", desc: "Show shell commands", handler: "handle_help" },
+    { cmd: "ls", desc: "List files", handler: "handle_ls" },
+    { cmd: "run <engine>", desc: "Run engine module", handler: "handle_run" },
+    { cmd: "export <file>", desc: "Export session/save file", handler: "handle_export" },
+    { cmd: "refactor <target>", desc: "Launch refactor wizard", handler: "handle_refactor" },
+    { cmd: "dropin <renderer>", desc: "Inject renderer in-frame", handler: "handle_dropin" },
+    { cmd: "exit", desc: "Exit shell", handler: "handle_exit" }
+  ]
+  event handle_help { display(commands.map(x => x.cmd + " — " + x.desc).join("\n")) }
+  event handle_ls { files = registry.list(); display(files.join("\n")) }
+  event handle_run(engine) {
+    if registry.has(engine) {
+      registry.load(engine); registry.boot(engine)
+    } else display("Engine not found!")
+  }
+  event handle_export(file) { system.export_log(file); display("Log exported to " + file) }
+  event handle_refactor(target) { launch_refactor_wizard(target) }
+  event handle_dropin(renderer) {
+    if context_supports("frame_injection")
+      context.inject_frame(renderer)
+    else display("Context does not support drop-in!")
+  }
+  event handle_exit { shell.exit(); }
+}
+```
