@@ -1,36 +1,31 @@
-```csharp
+using System.Threading.Tasks;
+
 namespace ALN_Net
 {
+    public class DispatchException : Exception
+    {
+        public DispatchException(string msg) : base(msg) { }
+    }
     public static class ALNCommandDispatcher
     {
-        public static string Dispatch(ALNCommand command)
+        public static async Task<string> DispatchAsync(ALNCommand command)
         {
-            if(command.Name == "aln.terminal.run")
+            try
             {
-                // Only allow echo/print for sandbox safety
-                if(command.Parameters.ContainsKey("command") && command.Parameters["command"].ToString().StartsWith("echo"))
+                // Async-friendly dispatcher body
+                switch(command.Name)
                 {
-                    return $"[sandboxed] {command.Parameters["command"].ToString().Replace("echo", "").Trim()}";
+                    case "aln.terminal.run":
+                        // ... handle ...
+                        return await Task.FromResult("[sandboxed] ...");
+                    default:
+                        throw new DispatchException("Unknown or unsupported command.");
                 }
-                return "🔒 Only 'echo' is permitted in sandbox.";
             }
-            return "🔒 Command not recognized or not permitted in sandbox.";
+            catch (Exception ex)
+            {
+                throw new DispatchException($"Dispatch failure: {ex.Message}");
+            }
         }
     }
 }
-```
-
-***
-
-### `/src/Core/ALNSandbox.cs`
-
-```csharp
-namespace ALN_Net
-{
-    // In v0.1, logic is inline in dispatcher; in future, move sandbox logic here
-    public static class ALNSandbox
-    {
-        // Placeholder for future isolation/execution engine
-    }
-}
-```
