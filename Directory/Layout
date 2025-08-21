@@ -1,0 +1,25 @@
+```
+webclient/
+  src/
+    App.tsx
+    components/
+      SearchBar.tsx
+      SuggestionPanel.tsx
+      MemorySubmission.tsx
+      ResultList.tsx
+      ConfirmationModal.tsx
+      CometWidget.tsx
+    comet/
+      secretCommands.ts
+      comet-utils.ts
+    api/
+      iom-api.ts
+    styles/
+      main.css
+  public/
+    index.html
+    favicon.ico
+  README.md
+  package.json
+  tsconfig.json
+```
