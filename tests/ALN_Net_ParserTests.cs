@@ -1,4 +1,3 @@
-```csharp
 using Xunit;
 using ALN_Net;
 
@@ -10,6 +9,7 @@ public class ALN_Net_ParserTests
         string input = "aln.terminal.run { command: \"echo Hi\" }";
         var cmd = ALNFullCommandParser.Parse(input);
         Assert.Equal("aln.terminal.run", cmd.Name);
+        Assert.True(cmd.Parameters.ContainsKey("command"));
         Assert.Equal("echo Hi", cmd.Parameters["command"]);
     }
 
@@ -28,4 +28,3 @@ public class ALN_Net_ParserTests
         Assert.False(ALNComplianceChecker.IsCompliant("aln.secret.backdoor"));
     }
 }
-```
