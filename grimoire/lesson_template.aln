@@ -1,0 +1,52 @@
+PACKAGE GRIMOIRE
+
+    GLOBAL LESSONS
+    GLOBAL CURRENT_LESSON
+
+    ACTION add_lesson
+        INPUT lesson_id string, title string, content string, tasks list
+        EXEC
+            LESSONS[lesson_id] = {
+                "title": title,
+                "content": content,
+                "tasks": tasks,
+                "completed": FALSE
+            }
+            LOG 📚 Lesson added: {title}
+
+    ACTION start_lesson
+        INPUT lesson_id string
+        EXEC
+            IF EXISTS LESSONS[lesson_id] THEN
+                CURRENT_LESSON = LESSONS[lesson_id]
+                LOG 🏫 Starting lesson: {CURRENT_LESSON["title"]}
+                LOG {CURRENT_LESSON["content"]}
+            ELSE
+                LOG ❌ Lesson {lesson_id} not found.
+            ENDIF
+
+    ACTION complete_task
+        INPUT task_index int
+        EXEC
+            IF CURRENT_LESSON != NULL THEN
+                CURRENT_LESSON["tasks"][task_index]["completed"] = TRUE
+                LOG ✅ Task {task_index + 1} completed!
+                # Check if all tasks done
+                IF ALL t["completed"] FOR t IN CURRENT_LESSON["tasks"] THEN
+                    CURRENT_LESSON["completed"] = TRUE
+                    LOG 🎉 Lesson completed: {CURRENT_LESSON["title"]}
+                ENDIF
+            ELSE
+                LOG ❌ No active lesson.
+            ENDIF
+
+    ACTION show_progress
+        EXEC
+            IF CURRENT_LESSON != NULL THEN
+                LOG 📊 Progress for {CURRENT_LESSON["title"]}:
+                FOR i, task IN ENUMERATE CURRENT_LESSON["tasks"]
+                    status = "✔️" IF task["completed"] ELSE "❌"
+                    LOG  [{i+1}] {task["description"]} - {status}
+                ENDFOR
+            ELSE
+                LOG ℹ️ No active lesson.
