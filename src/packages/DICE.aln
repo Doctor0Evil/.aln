@@ -1,0 +1,21 @@
+```aln
+PACKAGE DICE
+
+    ACTION roll
+        INPUT sides int = 20, modifier int = 0
+        EXEC
+            result = RANDOM.x sides + modifier
+            LOG 🔮 You rolled {result} on a {sides}-sided die.
+            RETURN result
+
+    ACTION check
+        INPUT roll int, dc int
+        EXEC
+            IF roll >= dc THEN
+                LOG Success! (Roll {roll} vs DC {dc})
+                RETURN "Success"
+            ELSE
+                LOG Failure... (Roll {roll} vs DC {dc})
+                RETURN "Fail"
+            ENDIF
+```
