@@ -193,3 +193,33 @@ dotnet run --project ALN_Net_REPL.csproj
 
 Launch REPL, type ALN commands:
 ```
+***
+
+## 6. Entertainment Features  
+**Future games to implement:**  
+- Voting/poll mini-games
+- Emoji-based ALN chat stories
+- Multiplayer turn-based games (TicTacToe, Hangman)
+- Trivia with knowledge check and score tracking
+- "ALN-Quest": Interactive puzzles using ALN commands
+
+Example ALN commands:
+- `aln.game.hangman { letter: "A" }`
+- `aln.game.quest { action: "explore", location: "cave" }`
+
+***
+
+```markdown
+## Entertainment & Community Games
+
+ALN_Net supports community-driven entertainment via ALN-Syntax games!
+
+Supported:
+- Dice roll: `aln.game.dice { sides: 20 }`
+- TicTacToe: `aln.game.tictactoe { move: "B2" }`
+- Trivia: `aln.game.trivia { answer: "42" }`
+- Hangman: `aln.game.hangman { letter: "A" }`
+
+More games and social features coming soon!
+```
+***
