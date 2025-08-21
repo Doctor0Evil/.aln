@@ -19,6 +19,27 @@ jobs:
         with:
           node-version: 18
 
+      - name: Validate & Extract Scroll Section
+        id: extract
+        run: |
+          if ! grep -q "^# 💬 Discord Pinned Scroll" README.md; then
+            echo "❌ ERROR: Missing '# 💬 Discord Pinned Scroll' section in README.md"
+            exit 1
+          fi
+          if ! grep -q "^---" README.md; then
+            echo "❌ ERROR: Missing terminating '---' marker after pinned scroll section in README.md"
+            exit 1
+          fi
+
+          # Extract pinned scroll block
+          awk '/^# 💬 Discord Pinned Scroll/{flag=1;next}/^---/{flag=0}flag' README.md > pinned_scroll.txt
+
+          echo "PINNED_SCROLL<<EOF" >> $GITHUB_ENV
+          cat pinned_scroll.txt >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          echo "✅ Extracted pinned scroll into env.PINNED_SCROLL"
+
       - name: Install Dependencies
         run: npm install node-fetch@3
 
@@ -28,3 +49,4 @@ jobs:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
           DISCORD_MESSAGE_ID: ${{ secrets.DISCORD_MESSAGE_ID }}
+          PINNED_SCROLL: ${{ env.PINNED_SCROLL }}
