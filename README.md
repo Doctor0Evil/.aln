@@ -1,3 +1,5 @@
+/artifacts/ARC-9241.aln → Wand of Recursive Truths (Legendary Artifact)
+
 ```markdown
 # ALN Programming Language
 
