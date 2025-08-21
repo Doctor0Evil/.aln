@@ -1,0 +1,39 @@
+- lesson_id: loops1
+  title: Loops & Control Flow
+  type: code
+  tasks: 3
+  mastery: Bronze
+  special: HotLink
+  status: unlocked
+
+- lesson_id: datatypes2
+  title: Data Types in ALN
+  type: text
+  tasks: 2
+  mastery: none
+  special: ""
+  status: locked
+
+- lesson_id: questgen3
+  title: Procedural Quests
+  type: interactive
+  tasks: 4
+  mastery: Silver
+  special: Trigger
+  status: unlocked
+
+- lesson_id: chatapi4
+  title: Chat/Game Integrator
+  type: api
+  tasks: 3
+  mastery: none
+  special: CrossMod
+  status: unlocked
+
+- lesson_id: rego5
+  title: Rego Policies
+  type: sandbox
+  tasks: 5
+  mastery: Gold
+  special: Security
+  status: unlocked
