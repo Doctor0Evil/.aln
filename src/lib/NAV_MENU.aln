@@ -1,0 +1,51 @@
+```aln
+@ACTION generate_nav_menu {
+  @INPUT {
+    header: string                   // E.g., "MAIN MENU", "SEARCH RESULTS"
+    subheader: string OR NULL        // Optional subtitle or context
+    user: string                     // Username or session label
+    timestamp: timestamp             // Now or action time
+    menu_items: list<object>         // [{ key: "A", label: "Search Lost Songs" }, ...]
+    notices: list<string>            // Info, warnings, event news
+    active_cmd: string OR NULL       // What the user just did (highlight)
+    footer: string OR NULL           // e.g., "Thank you for contributing!"
+  }
+  @EXEC {
+    @SET lines = []
+    APPEND lines WITH "===================================="
+    APPEND lines WITH "          " + UPPER(header)
+    @IF subheader != NULL THEN {
+      APPEND lines WITH "         " + subheader
+    }
+    APPEND lines WITH "------------------------------------"
+    APPEND lines WITH "User:    " + user
+    APPEND lines WITH "Time:    " + FORMAT_TIMESTAMP(timestamp, "YYYY-MM-DD HH:mm:ss")
+    APPEND lines WITH "------------------------------------"
+    APPEND lines WITH " Choices / Commands"
+    @FOR mi IN menu_items {
+      @IF active_cmd != NULL AND mi.key == active_cmd THEN {
+        APPEND lines WITH " [" + mi.key + "] " + UPPER(mi.label) + "  <<"
+      } @ELSE {
+        APPEND lines WITH "  " + mi.key + ". " + mi.label
+      }
+    }
+    APPEND lines WITH "------------------------------------"
+    @IF notices != NULL AND LENGTH(notices) > 0 THEN {
+      APPEND lines WITH " Notices"
+      @FOR n IN notices {
+        APPEND lines WITH "  - " + n
+      }
+      APPEND lines WITH "------------------------------------"
+    }
+    @IF footer != NULL THEN {
+      APPEND lines WITH " " + footer
+    }
+    APPEND lines WITH "===================================="
+    APPEND lines WITH "  Powered by the IOM Community"
+    APPEND lines WITH "===================================="
+
+    @LOG info TO loki { message: "Receipt-format nav menu generated", menu: header }
+    @RETURN { status: "menu_generated", text: JOIN(lines, "\n") }
+  }
+}
+```
