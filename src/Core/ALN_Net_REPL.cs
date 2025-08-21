@@ -1,4 +1,3 @@
-```csharp
 using System;
 
 namespace ALN_Net
@@ -17,12 +16,21 @@ namespace ALN_Net
                 if(input.Trim().ToLower() == "exit")
                     break;
 
-                // Parse and dispatch
-                var cmd = ALNCommandParser.Parse(input);
-                var output = ALNCommandDispatcher.Dispatch(cmd);
-                Console.WriteLine(output);
+                // Parse input using the improved parser
+                var cmd = ALNFullCommandParser.Parse(input);
+
+                // Compliance check before execution
+                if(ALNComplianceChecker.IsCompliant(cmd.Name))
+                {
+                    ALNBlockchainAudit.Log(cmd.Name);
+                    var output = ALNCommandDispatcher.Dispatch(cmd);
+                    Console.WriteLine(output);
+                }
+                else
+                {
+                    Console.WriteLine("❌ Command not permitted by compliance policy.");
+                }
             }
         }
     }
 }
-```
