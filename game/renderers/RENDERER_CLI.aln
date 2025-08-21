@@ -1,0 +1,19 @@
+PACKAGE RENDERER_CLI
+
+    ACTION print_line
+        INPUT text string
+        EXEC
+            LOG {text}
+
+    ACTION print_menu
+        INPUT title string, options list
+        EXEC
+            LOG === {title} ===
+            FOR i, option IN ENUMERATE options
+                LOG {i+1}. {option}
+            ENDFOR
+
+    ACTION prompt_input
+        INPUT prompt_text string
+        EXEC
+            RETURN INPUT.prompt {prompt_text}
