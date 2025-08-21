@@ -1,21 +1,77 @@
 // src/lib/std.aln
-// ALN Standard Library — Shared by all modules
+// ALN Standard Library — Universal Imports & Helpers
 // -------------------------------------------------------
 
-// === UNIVERSAL IMPORTS (add/remove as modules grow) ===
-IMPORT NAV_MENU          // Receipt-style navigation menu utility
-// IMPORT DICE           // If you have dice helpers here for core
-// IMPORT UTILS          // Core math, text, format, random, time
-// IMPORT STRING         // String manipulation helpers
-// IMPORT TIME           // Timestamp/clock utilities
+// === UNIVERSAL IMPORTS ===
+IMPORT NAV_MENU    // Receipt-style menu
+IMPORT DICE        // Dice/roll helpers
+IMPORT UTILS       // Math, format, random, object utils
+IMPORT STRING      // Extended string utilities
+IMPORT TIME        // Timestamp/date helpers
 
-// === SHORTHAND ALIASES (if needed) ===
+// === ENVIRONMENT DETECTION ===
+ACTION getenv EXEC
+    env = {}
+    # Common ALN environments: CLI, WEB, DISCORD, BOT
+    IF EXISTS ENV.TYPE THEN
+        env.type = ENV.TYPE
+    ELSE IF EXISTS window THEN
+        env.type = "WEB"
+    ELSE IF EXISTS discord THEN
+        env.type = "DISCORD"
+    ELSE
+        env.type = "CLI"
+    ENDIF
+    RETURN env
+
+ACTION is_cli EXEC RETURN getenv().type == "CLI"
+ACTION is_web EXEC RETURN getenv().type == "WEB"
+ACTION is_discord EXEC RETURN getenv().type == "DISCORD"
+
+LOG "Loaded ALN std lib for " + getenv().type + " environment."
+
+// === ALIASES ===
 ALIAS menu NAV_MENU.generate_nav_menu
+ALIAS roll DICE.roll
 
-// === UTILITY ACTIONS ===
+// === ADVANCED STRING HELPERS ===
+ACTION slug INPUT s string EXEC
+    # Lowercase, replace spaces with "-", remove unsafe chars
+    safe = STRING.lower(STRING.replace(s, " ", "-"))
+    safe = STRING.replace(safe, /[^a-z0-9\-]/, "")
+    RETURN safe
 
+ACTION abbr INPUT s string, n int EXEC
+    IF LENGTH(s) <= n THEN RETURN s
+    RETURN SUBSTR(s, 0, n) + "…"
+
+// === DICE/ROLL HELPERS ===
+# Roll format: "2d6", "1d20"
+ACTION dice INPUT spec string EXEC RETURN DICE.roll(spec)
+
+ACTION roll_range INPUT min int, max int EXEC
+    RETURN RANDOM.int(min, max)
+
+// === JSON/YAML HELPERS ===
+# Parse string to object (JSON/YAML auto-detect by leading '{' or '-')
+ACTION parse INPUT s string EXEC
+    IF STRING.starts_with(s, "{") THEN
+        RETURN JSON.parse(s)
+    ELSE IF STRING.starts_with(s, "-") THEN
+        RETURN YAML.parse(s)
+    ELSE
+        LOG "Unknown format (not JSON/YAML): " + SUBSTR(s, 0, 32)
+        RETURN s
+    ENDIF
+
+ACTION to_json INPUT o object EXEC
+    RETURN JSON.stringify(o)
+
+ACTION to_yaml INPUT o object EXEC
+    RETURN YAML.stringify(o)
+
+// === GENERIC UTILITIES ===
 ACTION now EXEC RETURN TIME.now()
-
 ACTION print INPUT s string EXEC LOG s
 
 ACTION delimiter INPUT c string, n int EXEC
@@ -24,10 +80,12 @@ ACTION delimiter INPUT c string, n int EXEC
     RETURN line
 
 // -------------------------------------------------------
-// Extend and adapt: import more as new libs arrive!
-// E.g., for math, randomness, array, object helpers...
-// See also: src/packages/ for core game/feature modules.
+// As new modules (ARRAY, OBJECT, CRYPTO, etc) stabilize,
+// add more IMPORT lines and actions here!
 //
-// This file is always imported by default in all
-// entrypoints—DO NOT DELETE!
+// IMPORT ARRAY
+// IMPORT CRYPTO
+// ...
+//
+// Always keep this the FIRST import in all entrypoints!
 // -------------------------------------------------------
