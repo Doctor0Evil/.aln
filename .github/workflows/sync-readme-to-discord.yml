@@ -87,3 +87,10 @@ jobs:
           DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
           DISCORD_MESSAGE_ID: ${{ secrets.DISCORD_MESSAGE_ID }}
           PINNED_SCROLL: ${{ env.PINNED_SCROLL }}
+    
+      - name: Capture Commit Message
+        run: |
+          msg=$(git log -1 --pretty=%B)
+          echo "GITHUB_COMMIT_MESSAGE<<EOF" >> $GITHUB_ENV
+          echo "$msg" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
