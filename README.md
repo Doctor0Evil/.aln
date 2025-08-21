@@ -169,3 +169,53 @@ ALN Fantasia Handoff-Package, as of 2025-08-21
 <div align="center">
   🪄 Made with ❤️ in Phoenix, Arizona | ALN Team  
 </div>
+
+
+***
+
+# 💬 Discord Pinned Scroll (Synced to README.md)
+
+```
+📜 **ALN Fantasia — Handoff Codex**  
+*(Continuum as of 2025‑08‑21)*
+
+🚀 **Project Vision**  
+ALN = Alien Language Notion / Notation  
+→ Universal platform across **Discord, Web, CLI**  
+→ Includes ALN Fantasia (lore world), ALN_Net (.NET REPL sandbox), ALN Core (enterprise runtime)  
+→ Prime Rule: **ALL outputs = CircleK Receipt Format**
+
+🏛 **Repo Map (simplified)**  
+- 📂 `src/lib/std.aln` → universal helpers  
+- 📂 `src/lib/NAV_MENU.aln` → receipt-menu formatter  
+- 📦 `src/packages/` → lore, gameplay, governance  
+- 🎭 `examples/aln_fantasia/` → narrative demos  
+- 🪄 `artifacts/ARC-9241.aln` → Wand of Recursive Truths  
+
+⚡ **Quick Spell**  
+```
+IMPORT std
+menu = menu { header: "Quest Menu", user: CURRENT_USER, timestamp: now(),
+  menu_items: [ { key: "A", label: "Attack" }, { key: "R", label: "Run" } ] }
+LOG menu.text
+```
+
+🎮 **Community Playables**  
+- 🎲 `aln.game.dice { sides: 20 }`  
+- ❌⭕ `aln.game.tictactoe { move: "B2" }`  
+- 🪢 `aln.game.hangman { letter: "A" }`  
+- 🧠 `aln.game.trivia { answer: "42" }`  
+- 🧭 `aln.game.quest { action: "explore", location: "cave" }`
+
+🛡 **Compliance**  
+PCI‑DSS ✅ | GDPR ✅ | HIPAA ✅ | ISO‑27001 ✅ | SOC2 ✅  
+
+📌 **Pinned Law**  
+> Always `IMPORT std`  
+> Always wrap in `NAV_MENU`  
+> Never break receipt‑format parity (Discord/Web/CLI)  
+
+---
+Maintainers: Jacob Scott Corey Farmer + ALN Team 🪄  
+Phoenix, Arizona • MIT License
+```
