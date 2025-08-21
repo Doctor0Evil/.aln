@@ -1,0 +1,14 @@
+```yaml
+- id: track_01013
+  type: lost_video
+  memory: "Animated clip aired on MTV, chorus: 'we are light, we are dust'"
+  submitter: songseeker221B
+  tags: [animation, 90s, TV]
+  leads:
+    - "Aired late nights around 1997, possibly French artist"
+  contributed_files: [unknown_clip.mp4]
+  status: unsolved
+  matches: []
+  confirmations: []
+  votes: 2
+```
