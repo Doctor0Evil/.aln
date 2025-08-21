@@ -1,0 +1,22 @@
+```aln
+PACKAGE LORE
+
+    GLOBAL HISTORY
+
+    ACTION add_entry
+        INPUT entry string
+        EXEC
+            APPEND HISTORY entry
+            LOG ✨ Lore updated: {entry}
+            RETURN entry
+
+    ACTION show
+        EXEC
+            IF LENGTH HISTORY == 0 THEN
+                LOG No lore yet... begin your legend!
+            ELSE
+                FOR i, entry IN HISTORY
+                    LOG "{i}. {entry}"
+                ENDFOR
+            ENDIF
+```
