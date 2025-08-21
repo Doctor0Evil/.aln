@@ -1,0 +1,23 @@
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Merchant Item Schema",
+  "type": "object",
+  "properties": {
+    "itemid": { "type": "string" },
+    "name": { "type": "string" },
+    "category": { "type": "string" },
+    "rarity": { "type": "string" },
+    "variants": { "type": "array", "items": { "type": "string" } },
+    "description": { "type": "string" },
+    "effects": { "type": "array", "items": { "type": "string" } },
+    "image": { "type": "string" },
+    "pricegp": { "type": "integer" },
+    "altprice": { "type": "string" },
+    "stockcount": { "type": "integer" },
+    "source": { "type": "string" },
+    "unlockhint": { "type": "string" }
+  },
+  "required": ["itemid", "name", "category", "rarity"]
+}
+```
