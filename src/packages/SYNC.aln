@@ -1,0 +1,37 @@
+```aln
+PACKAGE SYNC
+
+    SETTINGS
+        SERVER_ENDPOINT string = "https://api.alnfantasia.world"
+
+    ACTION log_action
+        INPUT username string, action string, details string
+        EXEC
+            timestamp = TIME.now()
+            payload = {
+                "user": username,
+                "action": action,
+                "details": details,
+                "time": timestamp
+            }
+            API.POST SERVER_ENDPOINT + "/log" payload
+            LOG 📡 Action logged for {username}: {action} → {details}
+            RETURN "Sent"
+
+    ACTION save_player
+        INPUT username string
+        EXEC
+            payload = PLAYER.PLAYERBASE[username]
+            API.POST SERVER_ENDPOINT + "/save_player" payload
+            LOG 💾 Saved data for player {username}.
+            RETURN "Saved"
+
+    ACTION load_player
+        INPUT username string
+        EXEC
+            payload = {"user": username}
+            result = API.GET SERVER_ENDPOINT + "/load_player" payload
+            PLAYER.PLAYERBASE[username] = result
+            LOG 🔄 Data loaded for player {username}.
+            RETURN result
+```
