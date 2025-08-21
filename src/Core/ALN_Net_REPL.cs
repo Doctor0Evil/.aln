@@ -1,10 +1,11 @@
 using System;
+using System.Threading.Tasks;
 
 namespace ALN_Net
 {
     class ALN_Net_REPL
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.WriteLine("🧙 ALN_Net Terminal Bootloader v0.1");
             while(true)
@@ -16,19 +17,35 @@ namespace ALN_Net
                 if(input.Trim().ToLower() == "exit")
                     break;
 
-                // Parse input using the improved parser
-                var cmd = ALNFullCommandParser.Parse(input);
+                try
+                {
+                    // Parse user input
+                    var cmd = ALNFullCommandParser.Parse(input);
 
-                // Compliance check before execution
-                if(ALNComplianceChecker.IsCompliant(cmd.Name))
-                {
-                    ALNBlockchainAudit.Log(cmd.Name);
-                    var output = ALNCommandDispatcher.Dispatch(cmd);
-                    Console.WriteLine(output);
+                    // Compliance check
+                    if(ALNComplianceChecker.IsCompliant(cmd.Name))
+                    {
+                        ALNBlockchainAudit.Log(cmd.Name);
+                        // (If you have any async command handlers, await here)
+                        var output = await ALNCommandDispatcher.DispatchAsync(cmd);
+                        Console.WriteLine(output);
+                    }
+                    else
+                    {
+                        Console.WriteLine("❌ Command not permitted by compliance policy.");
+                    }
                 }
-                else
+                catch (ParseException px)
                 {
-                    Console.WriteLine("❌ Command not permitted by compliance policy.");
+                    Console.WriteLine($"⚠️ Parse error: {px.Message}");
+                }
+                catch (DispatchException dx)
+                {
+                    Console.WriteLine($"⚠️ Dispatch error: {dx.Message}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"💥 Unexpected error: {ex.Message}");
                 }
             }
         }
