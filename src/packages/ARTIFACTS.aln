@@ -1,0 +1,64 @@
+PACKAGE ARTIFACTS
+
+    GLOBAL ARTIFACTS
+    GLOBAL SPELLS
+
+    ACTION craft_artifact
+        INPUT name string, base_power int
+        EXEC
+            artifact = {
+                "name": name,
+                "power": base_power,
+                "enchantments": []
+            }
+            APPEND ARTIFACTS artifact
+            LOG 🔨 Crafted artifact: {name} with power {base_power}
+            RETURN artifact
+
+    ACTION enchant_artifact
+        INPUT artifact_name string, enchantment string, bonus int
+        EXEC
+            artifact = FIND ARTIFACTS WHERE name == artifact_name
+            IF artifact != NULL THEN
+                enchant = {
+                    "name": enchantment,
+                    "bonus": bonus
+                }
+                APPEND artifact["enchantments"] enchant
+                artifact["power"] += bonus
+                LOG ✨ Enchanted {artifact_name} with {enchantment} (+{bonus})
+                RETURN artifact
+            ELSE
+                LOG ❌ Artifact not found: {artifact_name}
+                RETURN NULL
+            ENDIF
+
+    ACTION learn_spell
+        INPUT player_name string, spell_name string, effect string
+        EXEC
+            spell = {
+                "name": spell_name,
+                "effect": effect
+            }
+            APPEND SPELLS spell
+            PLAYER.learn_spell player_name spell_name
+            LOG 📚 {player_name} learned spell: {spell_name}
+            RETURN spell
+
+    ACTION cast_spell
+        INPUT player_name string, spell_name string
+        EXEC
+            spell = FIND SPELLS WHERE name == spell_name
+            IF spell != NULL THEN
+                roll = DICE.roll 20
+                IF roll > 10 THEN
+                    LOG 🔮 {player_name} successfully casts {spell_name}! Effect: {spell["effect"]}
+                    RETURN "Success"
+                ELSE
+                    LOG 💥 {player_name} failed to cast {spell_name} properly… Spell backfires!
+                    RETURN "Fail"
+                ENDIF
+            ELSE
+                LOG ❌ Spell not known: {spell_name}
+                RETURN "Unknown Spell"
+            ENDIF
