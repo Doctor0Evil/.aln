@@ -123,41 +123,6 @@ export MISTRAL_API_KEY="your-mistral-key"
 ./scripts/test.sh all
 ```
 
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🔗 Links
-
-- [Official Website](https://aln-lang.com )
-- [Documentation](https://docs.aln-lang.com )
-- [API Reference](https://api.aln-lang.com )
-- [Community Forum](https://forum.aln-lang.com )
-
-## 👥 Team
-
-- Lead Developer: Jacob Scott Corey Farmer
-- Architecture: Hunter
-- Compliance: ALN Compliance Team
-
-## 📞 Support
-
-Author: Jacob Scott Corey Farmer
-Email: xboxteejaymcfarmer@gmail.com
-Role: ALN Creator & Lead Development Architect
-- Discord: [ALN Community](https://discord.gg/aln-lang )
-- GitHub Issues: [Report a bug](https://github.com/Doctor0Evil/ALN_Programming_Language/issues )
-
 ---
 
 <div align="center">
@@ -223,3 +188,38 @@ Supported:
 More games and social features coming soon!
 ```
 ***
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 Links
+
+- [Official Website](https://aln-lang.com )
+- [Documentation](https://docs.aln-lang.com )
+- [API Reference](https://api.aln-lang.com )
+- [Community Forum](https://forum.aln-lang.com )
+
+## 👥 Team
+
+- Lead Developer: Jacob Scott Corey Farmer
+- Architecture: Hunter
+- Compliance: ALN Compliance Team
+
+## 📞 Support
+
+Author: Jacob Scott Corey Farmer
+Email: xboxteejaymcfarmer@gmail.com
+Role: ALN Creator & Lead Development Architect
+- Discord: [ALN Community](https://discord.gg/aln-lang )
+- GitHub Issues: [Report a bug](https://github.com/Doctor0Evil/ALN_Programming_Language/issues )
