@@ -1,0 +1,33 @@
+// src/lib/std.aln
+// ALN Standard Library — Shared by all modules
+// -------------------------------------------------------
+
+// === UNIVERSAL IMPORTS (add/remove as modules grow) ===
+IMPORT NAV_MENU          // Receipt-style navigation menu utility
+// IMPORT DICE           // If you have dice helpers here for core
+// IMPORT UTILS          // Core math, text, format, random, time
+// IMPORT STRING         // String manipulation helpers
+// IMPORT TIME           // Timestamp/clock utilities
+
+// === SHORTHAND ALIASES (if needed) ===
+ALIAS menu NAV_MENU.generate_nav_menu
+
+// === UTILITY ACTIONS ===
+
+ACTION now EXEC RETURN TIME.now()
+
+ACTION print INPUT s string EXEC LOG s
+
+ACTION delimiter INPUT c string, n int EXEC
+    line = REPEAT c n
+    LOG line
+    RETURN line
+
+// -------------------------------------------------------
+// Extend and adapt: import more as new libs arrive!
+// E.g., for math, randomness, array, object helpers...
+// See also: src/packages/ for core game/feature modules.
+//
+// This file is always imported by default in all
+// entrypoints—DO NOT DELETE!
+// -------------------------------------------------------
