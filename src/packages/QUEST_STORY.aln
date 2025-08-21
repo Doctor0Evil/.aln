@@ -1,0 +1,63 @@
+PACKAGE QUEST_STORY
+
+    GLOBAL QUESTS
+    GLOBAL BRANCHES
+
+    ACTION generate_quest
+        INPUT quest_name string, difficulty int
+        EXEC
+            quest = {
+                "name": quest_name,
+                "difficulty": difficulty,
+                "branches": []
+            }
+            LOG 🎲 Generating quest: {quest_name} (Difficulty {difficulty})
+            # Create initial branch
+            first_branch = ACTION create_branch "Start" 0
+            APPEND quest["branches"] first_branch
+            QUESTS[quest_name] = quest
+            RETURN quest
+
+    ACTION create_branch
+        INPUT branch_name string, depth int
+        EXEC
+            desc = "Branch at depth " + depth + ": " + branch_name
+            # Simulate AI narrative expansion (mock)
+            narrative = "You arrive at " + branch_name + ". The air feels thick with mystery."
+            branch = {
+                "name": branch_name,
+                "depth": depth,
+                "narrative": narrative,
+                "choices": []
+            }
+            LOG 📜 {narrative}
+            RETURN branch
+
+    ACTION add_choice
+        INPUT quest_name string, branch_name string, choice_text string, next_branch_name string
+        EXEC
+            quest = QUESTS[quest_name]
+            branch = FIND quest["branches"] WHERE name == branch_name
+            choice = {
+                "text": choice_text,
+                "next_branch": next_branch_name
+            }
+            APPEND branch["choices"] choice
+            LOG 🔀 Choice added to {branch_name}: {choice_text}
+            RETURN choice
+
+    ACTION advance_branch
+        INPUT quest_name string, current_branch_name string, choice_index int
+        EXEC
+            quest = QUESTS[quest_name]
+            current_branch = FIND quest["branches"] WHERE name == current_branch_name
+            IF choice_index < LENGTH current_branch["choices"] THEN
+                next_name = current_branch["choices"][choice_index]["next_branch"]
+                next_branch = ACTION create_branch next_name (current_branch["depth"] + 1)
+                APPEND quest["branches"] next_branch
+                LOG 🧭 Advancing to branch: {next_name}
+                RETURN next_branch
+            ELSE
+                LOG ❌ Invalid choice index.
+                RETURN NULL
+            ENDIF
