@@ -1,107 +1,161 @@
-// PACKAGE: ALN_INSTANT_GENERATOR
-// Universal ALN Input Expander & Code/Data Generator
+// =========================================================
+//  ALN_INSTANT_GENERATOR.aln
+//  Universal ALN Input Handler & Mythos Engine
+//  Path: src/packages/ALN_INSTANT_GENERATOR.aln
+// =========================================================
 
 PACKAGE ALN_INSTANT_GENERATOR
 
-GLOBAL registry          // Tracks known modules/commands/APIs
-GLOBAL endpoint_map      // Maps strings/patterns → API/OS endpoints
-GLOBAL log_history       // Stores actions for traceability
+GLOBAL registry        // Registered expansion handlers (quests, artifacts, lore, AI, etc.)
+GLOBAL endpoint_map    // Pattern → endpoint routing
+GLOBAL log_history     // All actions, as living world-mythos
 
-# --- Accept any ALN input (filename, command, etc.) ---
-
+# --- Main Invocation ---
 ACTION handle_input
     INPUT aln_input string
     EXEC
-        LOG 📥 "Received ALN input: " + aln_input
-        type = detect_type(aln_input)               // .aln file, command, code, etc.
-        route = determine_route(aln_input, type)    // Which endpoints/APIs/expansions to trigger
-
-        # 1. Analyze/Interpret input for structure & intent
+        LOG 🌌 "The world listens: '" + aln_input + "'"
+        type = detect_type(aln_input)
         context = analyze_structure(aln_input)
-        LOG 🧠 "Context interpreted: " + context
+        route = determine_route(aln_input, type, context)
 
-        # 2. Locate, expand, or generate as required
+        IF context["trigger"] == "lore_quest_proposal" THEN
+            LOG 📖 "A tale in the Grimoire becomes prophecy..."
+            result = expand_quest_from_lore(context)
+            distribute_result(result, context)
+            RETURN result
+        ENDIF
+
+        IF context["trigger"] == "mutation_special" THEN
+            LOG 🔥 "A mutation stirs — custom quests emerge."
+            result = trigger_mutation_expansion(context)
+            distribute_result(result, context)
+            RETURN result
+        ENDIF
+
+        IF context["trigger"] == "governance_ai_vote" THEN
+            LOG 🏛️ "Decree passed: the AI forges something new."
+            result = ai_governance_creation(context)
+            distribute_result(result, context)
+            RETURN result
+        ENDIF
+
         expansion = expand_aln(aln_input, context, route)
-        LOG ⚡ "Expansion triggered"
+        dispatch_to_endpoints(expansion, route)
+        distribute_result(expansion, context)
+        log_action(aln_input, expansion, context)
+        RETURN expansion
 
-        # 3. Communicate to endpoints/APIs as needed
-        result = dispatch_to_endpoints(expansion, route)
-        LOG 🔄 "Dispatched to endpoints"
-
-        # 4. Capture/generate output, distribute as needed
-        distribute_result(result, context)
-
-        # 5. Log and return for audit/tracing
-        log_history.APPEND({input: aln_input, output: result, context: context, time: TIME.now()})
-        RETURN result
-
-# --- Helper: Detect file or command type ---
+# --- Input Analysis ---
 ACTION detect_type
     INPUT source string
     EXEC
         IF source.endswith(".aln") THEN RETURN "aln_script"
-        IF source.startswith("api:") THEN RETURN "api_call"
         IF source.startswith("@system") THEN RETURN "system_directive"
-        IF source CONTAINS "grimoire" THEN RETURN "doc_expansion"
+        IF source.contains("#quest_proposal") THEN RETURN "lore_metaquest"
+        IF source.contains("gov_vote_passed") THEN RETURN "governance_trigger"
         RETURN "unknown"
 
-# --- Helper: Determine routing for expansion ---
-ACTION determine_route
-    INPUT name string, type string
-    EXEC
-        IF type == "aln_script" THEN RETURN registry["aln_handler"]
-        IF type == "api_call" THEN RETURN endpoint_map["api"]
-        IF type == "system_directive" THEN RETURN endpoint_map["system"]
-        IF type == "doc_expansion" THEN RETURN registry["grimoire_handler"]
-        RETURN registry["default"]
-
-# --- Helper: Analyze/Interpret the input for structure ---
 ACTION analyze_structure
     INPUT source string
     EXEC
-        # Parse for commands, sections, metadata, etc.
-        IF source.startswith("@system") THEN
-            meta = PARSE_META(source)
-            RETURN meta
+        meta = {filename: source, length_est: RANDOM(12,64), trigger: ""}
+        IF source.contains("#quest_proposal") THEN meta["trigger"] = "lore_quest_proposal"
+        IF PLAYER.exists AND PLAYER.PLAYERBASE[current_user]["mutations"].length > 0 THEN
+            meta["trigger"] = "mutation_special"
+            meta["mutation"] = PLAYER.PLAYERBASE[current_user]["mutations"]
         ENDIF
-        # Default: filename analysis
-        meta = {filename: source, has_code: source.endswith(".aln"), length_estimate: 100}
+        IF source.contains("gov_vote_passed") THEN
+            meta["trigger"] = "governance_ai_vote"
+            meta["proposal"] = extract_proposal(source)
+        ENDIF
         RETURN meta
 
-# --- Expand/generate based on input/context ---
+ACTION determine_route
+    INPUT name string, type string, context map
+    EXEC
+        IF context["trigger"] == "lore_quest_proposal" THEN RETURN registry["quest_branch_handler"]
+        IF context["trigger"] == "mutation_special" THEN RETURN registry["mutation_handler"]
+        IF context["trigger"] == "governance_ai_vote" THEN RETURN registry["ai_governance"]
+        IF type == "aln_script" THEN RETURN registry["aln_handler"]
+        IF type == "system_directive" THEN RETURN endpoint_map["system"]
+        RETURN registry["default"]
+
+# --- Expansion Logic ---
+ACTION expand_quest_from_lore
+    INPUT context map
+    EXEC
+        quest_name = "QuestOf_" + SLUGIFY(context["filename"])
+        QUEST_ENGINE.create_branch quest_name
+        LORE.add_entry("A new quest is woven from the lore: " + quest_name)
+        LOG ⚔️ "Quest branch born: " + quest_name
+        RETURN {"type": "quest", "name": quest_name}
+
+ACTION trigger_mutation_expansion
+    INPUT context map
+    EXEC
+        mut = context["mutation"][0]
+        quest = "ShadowPath_" + mut + "_" + RANDOM(1000,9999)
+        QUEST_ENGINE.create_branch quest
+        LOG "🧬 Mutation " + mut + " shapes a hidden story: " + quest
+        LORE.add_entry("Mutation-generated quest: " + quest)
+        RETURN {"type": "quest", "mutation": mut, "name": quest}
+
+ACTION ai_governance_creation
+    INPUT context map
+    EXEC
+        desc = context["proposal"] OR "Unspecified"
+        ai_output = AI.GENERATE_ALN_CODE("New artifact for: " + desc)
+        ARTIFACTS.craft_artifact ai_output["name"] ai_output["power"]
+        LORE.add_entry("AI-forged artifact: " + ai_output["name"])
+        LOG "🤖 AI has spoken: " + ai_output["name"]
+        RETURN {"type": "artifact", "name": ai_output["name"]}
+
 ACTION expand_aln
     INPUT name string, context map, route string
     EXEC
-        IF context.has_code THEN
-            # Simulate/generate 10–1000 lines of code, for demonstration:
-            expansion = []
-            FOR i IN RANGE(1, RANDOM(10,1000)) DO
-                expansion.ADD("generated_code_line_" + TO_STRING(i))
-            ENDFOR
-            RETURN expansion
-        ELSE
-            RETURN ["No code detected in input"]
-        ENDIF
-
-# --- Dispatch to endpoints or APIs ---
-ACTION dispatch_to_endpoints
-    INPUT expansion list, route string
-    EXEC
-        # Send output to appropriate API, OS, or in-game handler
-        IF route == "system" THEN
-            CALL_OS_API(expansion)
-        ELSE IF route == "api" THEN
-            CALL_REMOTE_API(expansion)
-        ELSE IF route == "grimoire_handler" THEN
-            UPDATE_GRIMOIRE(expansion)
-        ELSE
-            LOG "No valid endpoint; outputting to console"
-        ENDIF
+        expansion = []
+        FOR i IN RANGE(1, RANDOM(10,41)) DO
+            expansion.ADD("// Generated line " + TO_STRING(i) + ": magic = incant('"+name+"',"+TO_STRING(i)+")")
+        ENDFOR
+        LOG "✨ Expansion: " + TO_STRING(expansion[0:3]) + "..."
         RETURN expansion
 
-# --- Distribute the result/output as needed ---
-ACTION distribute_result
-    INPUT result list, context map
+ACTION dispatch_to_endpoints
+    INPUT output, route
     EXEC
-        # E.g., write to log, distribute to players, update doc, etc.
-        LOG "Results distributed: " + TO_STRING(result[0:5]) + "..."
+        IF route == "system" THEN
+            SYSTEM.API.dispatch output
+        ELSE IF route == "quest_branch_handler" THEN
+            QUEST_ENGINE.load output
+        ELSE IF route == "ai_governance" THEN
+            ARTIFACTS.save output
+        ELSE
+            OUTPUT.push output
+        ENDIF
+
+ACTION distribute_result
+    INPUT res, context
+    EXEC
+        LOG "🌠 Distribution complete — the world remembers."
+        // Could trigger in-game alerts, broadcasts, etc.
+
+ACTION log_action
+    INPUT inp, outp, ctx
+    EXEC
+        log_history.APPEND({input: inp, output: outp, context: ctx, time: TIME.now()})
+        LOG "📜 HISTORY: " + inp
+
+// ----- Support -----
+ACTION extract_proposal
+    INPUT src string
+    EXEC
+        # Example: extract after "gov_vote_passed:" (if any)
+        idx = INDEXOF(src, "gov_vote_passed:")
+        IF idx == -1 THEN RETURN "Unknown"
+        RETURN TRIM(SUBSTR(src, idx+16, 96))
+
+// =========================================================
+// End of ALN_INSTANT_GENERATOR
+// Worlds are now ready to expand on any input.
+// =========================================================
