@@ -215,6 +215,15 @@ PCI‑DSS ✅ | GDPR ✅ | HIPAA ✅ | ISO‑27001 ✅ | SOC2 ✅
 > Always wrap in `NAV_MENU`  
 > Never break receipt‑format parity (Discord/Web/CLI)  
 
+```markdown
+## 📚 Documentation
+- [Playbook](docs/PLAYBOOK.md) – Player commands & quest system
+- [Grimoire Rulebook](docs/GRIOMIRE_RULEBOOK.md) – Governance & community rules
+- [IOM](docs/IOM.md) – Community memory archive
+- [Architecture](docs/ARCHITECTURE.md) – Complete directory structure
+- [AI Development Flow](docs/AI_DEVELOPMENT_FLOW.md) – How votes trigger AI content
+```
+
 ---
 Maintainers: Jacob Scott Corey Farmer + ALN Team 🪄  
 Phoenix, Arizona • MIT License
