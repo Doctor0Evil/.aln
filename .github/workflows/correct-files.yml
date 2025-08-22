@@ -1,0 +1,35 @@
+name: "ALN File Correction"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  correct-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PowerShell
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          architecture: 'x64'
+
+      - name: Run file correction
+        run: |
+          # Install required PowerShell modules (non-admin)
+          pip install -q --user psutil
+          
+          # Run correction script
+          powershell -ExecutionPolicy Bypass -File ./scripts/correct-aln-files.ps1
+          
+          # Commit and push corrections
+          git config user.name "ALN File Corrector"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Automated ALN file correction" || echo "No changes to commit"
+          git push
