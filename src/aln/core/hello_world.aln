@@ -1,20 +1,20 @@
-```aln
-@ALN_HELLO_WORLD {
-    id: "aln_hello_world_v12",
-    version: "12.0.0",
-    description: "Hello World example for ALN ecosystem with compliance",
+MODULE HelloWorldALN {
+    id: "aln_hello_world_v13",
+    version: "13.0.0",
+    description: "Refined 'Hello World' example for the ALN ecosystem, emphasizing compliance and transparency.",
     compliance: ["GDPR", "HIPAA", "SOC2", "ISO27001", "PCI-DSS"],
-    implementation: {
-        print: "🚀 [ALN] Hello, World! Quantum-optimized execution initiated.",
-        print: "✅ [ALN] System: ALN v12.0.0",
-        print: "📊 [ALN] Performance: 10^14 operations/sec",
-        print: "🔒 [ALN] Security: AES-256-GCM, SHA3-512_NANO",
-        print: "合规 [ALN] Compliance: GDPR, HIPAA, SOC2, ISO27001, PCI-DSS"
-    },
-    attribution: {
+    meta: {
         author: "Jacob Scott Corey Farmer",
-        role: "AI-Programming-Specialist",
-        license: "ALN-12.0.0-Enterprise"
+        role: "AI Programming Specialist",
+        license: "ALN-13.0.0-Enterprise"
     }
+    event main
+        PRINT "🚀 [ALN] Hello, World! Quantum-optimized execution started."
+        PRINT "✅ [ALN] System: ALN v13.0.0"
+        PRINT "📊 [ALN] Performance: 10¹⁴ operations/sec"
+        PRINT "🔒 [ALN] Security: AES-256-GCM + SHA3-512_NANO"
+        PRINT "🛡️ [ALN] Compliance: GDPR, HIPAA, SOC2, ISO27001, PCI-DSS"
+    end
 }
-```
+
+main()
