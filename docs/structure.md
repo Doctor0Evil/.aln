@@ -1,5 +1,26 @@
 ```
-/src/packages/
+```aln
+# src/packages/GOVERNANCE.aln (Existing file - this is the implementation)
+SETTINGS
+    GP_CURRENCY string = "Grimoire Points"
+    VOTING_PERIOD int = 7 * 86400  # 7 days in seconds
+    QUORUM_PERCENT float = 0.01
+    PASS_THRESHOLD float = 0.60
+
+ACTION propose
+    INPUT title string, type string, details string, voting_period string = "7d"
+    EXEC
+        proposal_id = RANDOM.id()
+        PROPOSAL[proposal_id] = {
+            "title": title,
+            "type": type,
+            "details": details,
+            "voting_period": voting_period,
+            "status": "active"
+        }
+        LOG 📜 Proposal #{proposal_id} created: {title}
+        RETURN proposal_id
+
     DICE.aln         # All dice mechanics
     PLAYER.aln       # Stats, GP, spells, mutations
     LORE.aln         # Shared world narrative log
