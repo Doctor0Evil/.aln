@@ -1,0 +1,12 @@
+==============================
+    ALN POS — Main Menu
+==============================
+[1] Process Sale        - Start new sales transaction
+[1] Inventory           - Manage inventory and UPCs
+[2] Compliance & Audit  - Audit logs and compliance
+[3] Promotions & Loyalty- Manage offers, loyalty
+[4] System Settings     - Configure, admin only
+------------------------------
+Breadcrumb: Main Menu
+
+Select option: _
