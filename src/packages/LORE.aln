@@ -1,38 +1,199 @@
-```aln
+PACKAGE LORE
 
-// Lore Database Resource
-resource LoreDB {
-    entries: map<uuid, LoreEntry>
-
-    add(entry: LoreEntry) {
-        entries[entry.id] = entry
-        LOG "LoreEntry added: " + entry.title
+    // LoreEntry Schema - Defines the structure of all lore entries
+    type LoreEntry {
+        id: uuid
+        title: string
+        era: string
+        author: string
+        type: enum["Canon", "Milestone", "Holiday", "Tournament", "Proposal"]
+        trigger: string
+        body: string
+        impact: string
+        links: list<string>
+        votes: int
+        version: int
+        created: datetime
+        updated: datetime
     }
 
-    findByTitle(title: string) : LoreEntry? {
-        for entry in entries.values {
-            if entry.title == title { return entry }
+    // Lore Database Resource - Manages all lore entries
+    resource LoreDB {
+        entries: map<uuid, LoreEntry>
+
+        add(entry: LoreEntry) {
+            entries[entry.id] = entry
+            LOG "LoreEntry added: " + entry.title
         }
-        return NULL
+
+        findByTitle(title: string) : LoreEntry? {
+            for entry in entries.values {
+                if entry.title == title { return entry }
+            }
+            return NULL
+        }
+
+        search(keyword: string) : list<LoreEntry> {
+            results = []
+            for entry in entries.values {
+                if keyword in entry.title or keyword in entry.body
+                { results.append(entry) }
+            }
+            return results
+        }
+
+        retcon(id: uuid, new_body: string, new_author: string) {
+            if id in entries {
+                entries[id].body = new_body
+                entries[id].author = new_author
+                entries[id].version += 1
+                entries[id].updated = now()
+                LOG "LoreEntry retconned: " + entries[id].title
+            }
+        }
     }
 
-    search(keyword: string) : list<LoreEntry> {
-        results = []
-        for entry in entries.values {
-            if keyword in entry.title or keyword in entry.body
-            { results.append(entry) }
+    // AI Scribe Integration - Generates lore entries using AI
+    module LoreAI {
+        function scribe(event: Event): string {
+            // Use your ALN AI pipeline here.
+            return "In era " + event.era + ", " + event.desc + " became part of ALNFantasia legend."
         }
-        return results
     }
 
-    retcon(id: uuid, new_body: string, new_author: string) {
-        if id in entries {
-            entries[id].body = new_body
-            entries[id].author = new_author
-            entries[id].version += 1
-            entries[id].updated = now()
-            LOG "LoreEntry retconned: " + entries[id].title
+    // LoreComposer System - Main interface for adding lore entries
+    function LoreComposer_on_event(event: Event) {
+        entry = LoreEntry {
+            id: uuid(),
+            title: event.title ?? event.desc,
+            era: event.era,
+            author: event.author ?? (
+                event.type == "user_proposal" ? "Player" :
+                event.type == "holiday" ? "Community" : "LoreAI"
+            ),
+            type: event.type,
+            trigger: event.desc,
+            body: LoreAI.scribe(event),
+            impact: event.impact ?? "",
+            links: event.links ?? [],
+            votes: 0,
+            version: 1,
+            created: now(),
+            updated: now()
+        }
+        LoreDB.add(entry)
+        return entry
+    }
+
+    function LoreComposer_vote(lore_id: uuid, up: bool) {
+        entry = LoreDB.entries[lore_id]
+        if entry {
+            entry.votes += (up ? 1 : -1)
         }
     }
-}
-```
+
+    function LoreComposer_retcon(lore_id: uuid, new_body: string, new_author: string) {
+        LoreDB.retcon(lore_id, new_body, new_author)
+    }
+
+    // Core Lore Management Functions
+    ACTION add_entry
+        INPUT entry LoreEntry
+        EXEC
+            LoreDB.add(entry)
+            LOG "✨ Lore updated: " + entry.title
+            RETURN entry
+
+    ACTION show
+        EXEC
+            IF LENGTH LoreDB.entries == 0 THEN
+                LOG "No lore yet... begin your legend!"
+            ELSE
+                FOR i, entry IN LoreDB.entries.values
+                    LOG "{i}. {entry.title} ({entry.era})"
+                ENDFOR
+            ENDIF
+            RETURN LoreDB.entries
+
+    ACTION show_entry_by_title
+        INPUT title string
+        EXEC
+            entry = LoreDB.findByTitle(title)
+            IF entry THEN
+                LOG "=== {entry.title} ==="
+                LOG "Era: {entry.era}"
+                LOG "Author: {entry.author}"
+                LOG "Type: {entry.type}"
+                LOG "Impact: {entry.impact}"
+                LOG "Body: {entry.body}"
+                LOG "Links: {entry.links}"
+                LOG "Votes: {entry.votes}"
+                LOG "Version: {entry.version}"
+                LOG "Created: {entry.created}"
+                LOG "Updated: {entry.updated}"
+            ELSE
+                LOG "No lore entry found with title: {title}"
+            ENDIF
+            RETURN entry
+
+    // AI-Enhanced Lore Functions
+    ACTION AI_generate_lore
+        INPUT event Event
+        EXEC
+            RETURN LoreAI.scribe(event)
+
+    ACTION AI_suggest_lore_topics
+        EXEC
+            topics = [
+                "Ancient Prophecies",
+                "Mythical Creatures",
+                "Historic Events",
+                "Famous Artifacts",
+                "Mysterious Locations"
+            ]
+            RETURN topics
+
+    ACTION AI_suggest_lore_links
+        INPUT topic string
+        EXEC
+            links = []
+            IF topic == "Ancient Prophecies" THEN
+                links = ["Prophecy_001", "Prophecy_002", "Prophecy_003"]
+            ELSE IF topic == "Mythical Creatures" THEN
+                links = ["Dragon", "Phoenix", "Griffin"]
+            ELSE IF topic == "Historic Events" THEN
+                links = ["Cometfall", "Frostlight Festival", "Solstice"]
+            ELSE IF topic == "Famous Artifacts" THEN
+                links = ["Sword of Dawn", "Crystal of Insight", "Amulet of Luck"]
+            ELSE IF topic == "Mysterious Locations" THEN
+                links = ["Shadow Crypt", "Ancient Ruins", "Cursed Forest"]
+            ENDIF
+            RETURN links
+
+    // Lore History Tracking
+    GLOBAL HISTORY
+
+    ACTION log_lore_update
+        INPUT entry LoreEntry
+        EXEC
+            APPEND HISTORY entry.title + " (" + entry.era + ")"
+            LOG "✨ Lore updated: " + entry.title
+            RETURN HISTORY
+
+    ACTION show_history
+        EXEC
+            IF LENGTH HISTORY == 0 THEN
+                LOG "No lore history yet..."
+            ELSE
+                FOR i, entry IN HISTORY
+                    LOG "{i}. {entry}"
+                ENDFOR
+            ENDIF
+            RETURN HISTORY
+
+    // Query/Browse Functions
+    ACTION browse_by_keyword
+        INPUT keyword string
+        EXEC
+            results = LoreDB.search(keyword)
+            RETURN results
