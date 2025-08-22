@@ -1,22 +1,38 @@
 ```aln
-PACKAGE LORE
 
-    GLOBAL HISTORY
+// Lore Database Resource
+resource LoreDB {
+    entries: map<uuid, LoreEntry>
 
-    ACTION add_entry
-        INPUT entry string
-        EXEC
-            APPEND HISTORY entry
-            LOG ✨ Lore updated: {entry}
-            RETURN entry
+    add(entry: LoreEntry) {
+        entries[entry.id] = entry
+        LOG "LoreEntry added: " + entry.title
+    }
 
-    ACTION show
-        EXEC
-            IF LENGTH HISTORY == 0 THEN
-                LOG No lore yet... begin your legend!
-            ELSE
-                FOR i, entry IN HISTORY
-                    LOG "{i}. {entry}"
-                ENDFOR
-            ENDIF
+    findByTitle(title: string) : LoreEntry? {
+        for entry in entries.values {
+            if entry.title == title { return entry }
+        }
+        return NULL
+    }
+
+    search(keyword: string) : list<LoreEntry> {
+        results = []
+        for entry in entries.values {
+            if keyword in entry.title or keyword in entry.body
+            { results.append(entry) }
+        }
+        return results
+    }
+
+    retcon(id: uuid, new_body: string, new_author: string) {
+        if id in entries {
+            entries[id].body = new_body
+            entries[id].author = new_author
+            entries[id].version += 1
+            entries[id].updated = now()
+            LOG "LoreEntry retconned: " + entries[id].title
+        }
+    }
+}
 ```
