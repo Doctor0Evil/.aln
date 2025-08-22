@@ -1,0 +1,26 @@
+ ```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: aln-namespace
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: aln-fastapi
+  template:
+    metadata:
+      labels:
+        app: aln-fastapi
+    spec:
+      serviceAccountName: aln-service-account
+      containers:
+        - name: fastapi
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 80
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+```
