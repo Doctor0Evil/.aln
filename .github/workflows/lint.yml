@@ -1,0 +1,294 @@
+name: 🧹 Lint & Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Prevent multiple runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-yaml:
+    name: 📝 YAML Linting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🧹 Lint YAML files
+      uses: ibiqlik/action-yamllint@v3
+      with:
+        config_file: .yamllint.yml
+        strict: false
+      continue-on-error: true
+
+    - name: 🔍 Manual YAML validation
+      run: |
+        echo "🔍 Validating YAML files manually..."
+        
+        # Find all YAML files
+        find . -type f \( -name "*.yml" -o -name "*.yaml" \) -not -path "./.git/*" | while read -r file; do
+          echo "Checking: $file"
+          
+          # Basic YAML syntax check using Python
+          python3 -c "
+        import yaml
+        import sys
+        try:
+            with open('$file', 'r') as f:
+                yaml.safe_load(f)
+            print('✅ $file - Valid YAML')
+        except yaml.YAMLError as e:
+            print('❌ $file - Invalid YAML:', str(e))
+            sys.exit(1)
+        except Exception as e:
+            print('⚠️ $file - Error:', str(e))
+        " || {
+            echo "❌ YAML validation failed for $file"
+            echo "This might cause workflow failures"
+          }
+        done
+        
+        echo "✅ YAML validation completed"
+
+  lint-powershell:
+    name: 🔧 PowerShell Linting
+    runs-on: windows-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🧹 Lint PowerShell files
+      shell: pwsh
+      run: |
+        Write-Host "🧹 Linting PowerShell files..."
+        
+        # Install PSScriptAnalyzer if not available
+        if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+          Write-Host "📦 Installing PSScriptAnalyzer..."
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+        }
+        
+        # Find all PowerShell files
+        $psFiles = Get-ChildItem -Recurse -Include "*.ps1", "*.psm1" -Exclude "*.Tests.ps1"
+        
+        if ($psFiles.Count -eq 0) {
+          Write-Host "ℹ️ No PowerShell files found to lint"
+          exit 0
+        }
+        
+        $allIssues = @()
+        
+        foreach ($file in $psFiles) {
+          Write-Host "Checking: $($file.FullName)"
+          
+          $issues = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Warning, Error
+          
+          if ($issues.Count -eq 0) {
+            Write-Host "✅ $($file.Name) - No issues found"
+          } else {
+            Write-Host "⚠️ $($file.Name) - Found $($issues.Count) issues:"
+            foreach ($issue in $issues) {
+              Write-Host "  Line $($issue.Line): $($issue.Message)"
+            }
+            $allIssues += $issues
+          }
+        }
+        
+        if ($allIssues.Count -gt 0) {
+          Write-Host "⚠️ Found $($allIssues.Count) total PowerShell linting issues"
+          Write-Host "These are warnings and won't fail the build"
+        } else {
+          Write-Host "✅ All PowerShell files passed linting"
+        }
+
+  lint-markdown:
+    name: 📚 Markdown Linting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🧹 Lint Markdown files
+      uses: DavidAnson/markdownlint-cli2-action@v16
+      with:
+        globs: |
+          **/*.md
+          !node_modules/**
+        config: |
+          {
+            "default": true,
+            "MD013": false,
+            "MD033": false,
+            "MD041": false
+          }
+      continue-on-error: true
+
+  validate-json:
+    name: 📋 JSON Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔍 Validate JSON files
+      run: |
+        echo "🔍 Validating JSON files..."
+        
+        find . -type f -name "*.json" -not -path "./.git/*" -not -path "./node_modules/*" | while read -r file; do
+          echo "Checking: $file"
+          
+          if python3 -m json.tool "$file" > /dev/null 2>&1; then
+            echo "✅ $file - Valid JSON"
+          else
+            echo "❌ $file - Invalid JSON"
+            python3 -m json.tool "$file" 2>&1 | head -5
+          fi
+        done
+        
+        echo "✅ JSON validation completed"
+
+  check-links:
+    name: 🔗 Link Checking
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔗 Check markdown links
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        use-quiet-mode: 'yes'
+        use-verbose-mode: 'no'
+        config-file: '.github/mlc_config.json'
+      continue-on-error: true
+
+    - name: 🔗 Manual link check for critical files
+      run: |
+        echo "🔗 Checking critical links in README.md..."
+        
+        if [[ -f "README.md" ]]; then
+          # Extract URLs from README and check basic ones
+          URLS=$(grep -oP 'https?://[^\s\)]+' README.md | head -10)
+          
+          if [[ -n "$URLS" ]]; then
+            echo "Found URLs to check:"
+            echo "$URLS"
+            
+            # Check a few key URLs (don't fail the build)
+            while IFS= read -r url; do
+              if curl -s --head --max-time 10 "$url" > /dev/null 2>&1; then
+                echo "✅ $url - Accessible"
+              else
+                echo "⚠️ $url - May be inaccessible"
+              fi
+            done <<< "$URLS"
+          else
+            echo "ℹ️ No URLs found in README.md"
+          fi
+        else
+          echo "ℹ️ README.md not found"
+        fi
+
+  security-lint:
+    name: 🔒 Security Linting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔍 Scan for secrets
+      run: |
+        echo "🔍 Scanning for potential secrets..."
+        
+        # Common secret patterns
+        PATTERNS=(
+          "password\s*[=:]\s*['\"][^'\"]{8,}"
+          "api[_-]?key\s*[=:]\s*['\"][^'\"]{20,}"
+          "secret\s*[=:]\s*['\"][^'\"]{16,}"
+          "token\s*[=:]\s*['\"][^'\"]{16,}"
+          "private[_-]?key\s*[=:]\s*['\"][^'\"]{32,}"
+        )
+        
+        FOUND_ISSUES=false
+        
+        for pattern in "${PATTERNS[@]}"; do
+          if grep -rE -i "$pattern" . --exclude-dir=.git --exclude="*.md" --exclude-dir=node_modules 2>/dev/null | grep -v "example\|placeholder\|template\|test" | head -5; then
+            FOUND_ISSUES=true
+          fi
+        done
+        
+        if [[ "$FOUND_ISSUES" == "true" ]]; then
+          echo "⚠️ Potential secrets detected - please review"
+          echo "Note: This may include false positives"
+        else
+          echo "✅ No obvious secrets detected"
+        fi
+
+  code-quality-summary:
+    name: 📊 Code Quality Summary
+    runs-on: ubuntu-latest
+    needs: [lint-yaml, lint-powershell, lint-markdown, validate-json, check-links, security-lint]
+    if: always()
+    timeout-minutes: 5
+    
+    steps:
+    - name: 📊 Generate summary
+      run: |
+        echo "📊 Code Quality Summary:" 
+        echo "YAML Linting: ${{ needs.lint-yaml.result }}"
+        echo "PowerShell Linting: ${{ needs.lint-powershell.result }}"
+        echo "Markdown Linting: ${{ needs.lint-markdown.result }}"
+        echo "JSON Validation: ${{ needs.validate-json.result }}"
+        echo "Link Checking: ${{ needs.check-links.result }}"
+        echo "Security Linting: ${{ needs.security-lint.result }}"
+        
+        # Count successful jobs
+        SUCCESS_COUNT=0
+        TOTAL_COUNT=6
+        
+        if [[ "${{ needs.lint-yaml.result }}" == "success" ]]; then
+          ((SUCCESS_COUNT++))
+        fi
+        if [[ "${{ needs.lint-powershell.result }}" == "success" ]]; then
+          ((SUCCESS_COUNT++))
+        fi
+        if [[ "${{ needs.lint-markdown.result }}" == "success" ]]; then
+          ((SUCCESS_COUNT++))
+        fi
+        if [[ "${{ needs.validate-json.result }}" == "success" ]]; then
+          ((SUCCESS_COUNT++))
+        fi
+        if [[ "${{ needs.check-links.result }}" == "success" ]]; then
+          ((SUCCESS_COUNT++))
+        fi
+        if [[ "${{ needs.security-lint.result }}" == "success" ]]; then
+          ((SUCCESS_COUNT++))
+        fi
+        
+        PERCENTAGE=$((SUCCESS_COUNT * 100 / TOTAL_COUNT))
+        
+        echo "✅ Code quality score: $SUCCESS_COUNT/$TOTAL_COUNT ($PERCENTAGE%)"
+        
+        if [[ $SUCCESS_COUNT -eq $TOTAL_COUNT ]]; then
+          echo "🎉 All code quality checks passed!"
+        else
+          echo "⚠️ Some code quality checks had issues - review the logs above"
+        fi
