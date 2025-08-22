@@ -1,0 +1,24 @@
+```json
+{
+    "type": "object",
+    "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "title": { "type": "string" },
+        "era": { "type": "string" },
+        "author": { "type": "string" },
+        "type": {
+            "type": "string",
+            "enum": ["Canon", "Milestone", "Holiday", "Tournament", "Proposal"]
+        },
+        "trigger": { "type": "string" },
+        "body": { "type": "string" },
+        "impact": { "type": "string" },
+        "links": { "type": "array", "items": { "type": "string" } },
+        "votes": { "type": "integer" },
+        "version": { "type": "integer" },
+        "created": { "type": "string", "format": "date-time" },
+        "updated": { "type": "string", "format": "date-time" }
+    },
+    "required": ["id", "title", "era", "type", "body"]
+}
+```
