@@ -1,0 +1,8 @@
+```yaml
+apiVersion: v2
+name: aln-secure-stack
+description: "Secure FastAPI JWT service with RBAC + NetworkPolicy"
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+```
