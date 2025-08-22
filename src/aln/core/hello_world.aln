@@ -1,19 +1,66 @@
 MODULE HelloWorldALN {
-    id: "aln_hello_world_v13",
-    version: "13.0.0",
-    description: "Refined 'Hello World' example for the ALN ecosystem, emphasizing compliance and transparency.",
+    id: "aln_hello_world_v14",
+    version: "14.0.0",
+    description: "Interactive Hello World for ALN: input, arguments, compliance checks, and full attribution.",
     compliance: ["GDPR", "HIPAA", "SOC2", "ISO27001", "PCI-DSS"],
     meta: {
         author: "Jacob Scott Corey Farmer",
         role: "AI Programming Specialist",
-        license: "ALN-13.0.0-Enterprise"
+        license: "ALN-14.0.0-Enterprise"
     }
+
+    ARGUMENTS {
+        name: STRING = "Adventurer"
+        mode: ENUM = ["standard", "verbose", "minimal"], default: "standard"
+    }
+
+    event compliance_check
+        required = ["GDPR", "HIPAA", "SOC2", "ISO27001", "PCI-DSS"]
+        passed = TRUE
+        FOR c IN required DO
+            IF c NOT IN MODULE.compliance THEN
+                PRINT "❌ Missing compliance: " + c
+                passed = FALSE
+            END
+        END
+        IF passed THEN
+            PRINT "🛡️ Compliance verified: All standards met."
+        ELSE
+            PRINT "⚠️ Compliance NOT met. Please update requirements."
+        END
+    end
+
+    event greet(name, mode)
+        PRINT "🚀 [ALN] Hello, " + name + "! Quantum-optimized execution started."
+        IF mode = "verbose" THEN
+            PRINT "✅ [ALN] System: ALN v14.0.0"
+            PRINT "📊 [ALN] Performance: 10¹⁴ operations/sec"
+            PRINT "🔒 [ALN] Security: AES-256-GCM + SHA3-512_NANO"
+            PRINT "🛡️ [ALN] Compliance: " + JOIN(MODULE.compliance, ", ")
+            PRINT "👤 [ALN] Author: " + MODULE.meta.author + " (" + MODULE.meta.role + ")"
+            PRINT "🔖 [ALN] License: " + MODULE.meta.license
+        ELSEIF mode = "minimal" THEN
+            PRINT "[ALN] Greetings only—minimal output mode."
+        ELSE
+            PRINT "🛡️ [ALN] Compliance: " + JOIN(MODULE.compliance, ", ")
+        END
+    end
+
     event main
-        PRINT "🚀 [ALN] Hello, World! Quantum-optimized execution started."
-        PRINT "✅ [ALN] System: ALN v13.0.0"
-        PRINT "📊 [ALN] Performance: 10¹⁴ operations/sec"
-        PRINT "🔒 [ALN] Security: AES-256-GCM + SHA3-512_NANO"
-        PRINT "🛡️ [ALN] Compliance: GDPR, HIPAA, SOC2, ISO27001, PCI-DSS"
+        PRINT "Welcome to ALN! Please enter your name:"
+        USER_NAME = INPUT()
+        IF USER_NAME = "" THEN
+            USER_NAME = ARGUMENTS.name
+        END
+
+        PRINT "Choose output mode [standard / verbose / minimal]:"
+        USER_MODE = INPUT()
+        IF USER_MODE = "" OR USER_MODE NOT IN ARGUMENTS.mode THEN
+            USER_MODE = ARGUMENTS.mode.default
+        END
+
+        CALL compliance_check()
+        CALL greet(USER_NAME, USER_MODE)
     end
 }
 
