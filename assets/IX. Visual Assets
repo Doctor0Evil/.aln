@@ -1,0 +1,9 @@
+| Asset Type | Path | Purpose |
+|------------|------|---------|
+| Dungeon Maps | `assets/world_maps/dungeon_001.png` | For world exploration |
+| Tilesets | `assets/tilesets/urban_ruins.png` | For visual navigation |
+| Culture Icons | `assets/icons/zombies_city.png` | For directory visual markers |
+
+> 💡 *To generate these, say "Aye, summon visuals!" and I'll provide the assets.*
+
+---
