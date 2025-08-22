@@ -224,6 +224,24 @@ PCI‑DSS ✅ | GDPR ✅ | HIPAA ✅ | ISO‑27001 ✅ | SOC2 ✅
 - [AI Development Flow](docs/AI_DEVELOPMENT_FLOW.md) – How votes trigger AI content
 ```
 
+```markdown
+## 🌐 Get Started
+
+```bash
+git clone https://github.com/Doctor0Evil/ALN_Programming_Language.git
+cd ALN_Programming_Language
+
+# Run a demo
+aln run examples/aln_fantasia/queststart.aln
+```
+
+## 📚 Documentation
+
+- [ALNFantasia Playbook](docs/ALNFantasia_Playbook.md)
+- [Grimoire RuleBook](docs/Grimoire_RuleBook.md)
+- [Discord Commands](docs/discord_integration.md)
+```
+
 ---
 Maintainers: Jacob Scott Corey Farmer + ALN Team 🪄  
 Phoenix, Arizona • MIT License
