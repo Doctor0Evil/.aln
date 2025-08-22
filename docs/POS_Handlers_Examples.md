@@ -20,3 +20,30 @@ ACTION handle_process_sale
         })
         LOG "   → Sale Result: {tx_result.status} (Txn ID: {tx_result.id})"
 ```
+
+## (B) Inventory Management Integration
+```aln
+ACTION handle_inventory_management
+    INPUT user_id string
+    EXEC
+        LOG 📦 "Inventory Management Menu"
+        # List 5 most recent inventory changes
+        changes = INVENTORY.get_recent_changes(limit=5)
+        FOR change IN changes
+            LOG f"* {change['item']}: {change['qty']} @ {change['when']}"
+        ENDFOR
+        LOG "Type 'restock ITEM QTY' or 'audit' for full report."
+```
+
+## (C) Compliance & Audit Handler
+```aln
+ACTION handle_compliance_audit
+    INPUT user_id string
+    EXEC
+        LOG 📋 "Compliance & Audit Center"
+        logs = AUDIT.get_logs(user_id=user_id, since="today")
+        FOR entry IN logs
+            LOG f"* {entry['event']} ({entry['time']})"
+        ENDFOR
+        LOG "Type 'export logs' to email CSV."
+```
