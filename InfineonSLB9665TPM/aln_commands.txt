@@ -1,0 +1,8 @@
+# ALN Command Summary - Virtual Hardware Conversion/Upgrade
+
+aln convert-hardware --source mt6883 --target infineon-slb9665 --optionals all
+aln analyze-code --hardware mt6883 --mode qr-scannable
+aln capture-nexus-endpoints --target InfineonSLB9665TPM --bio-node --neural-node --haptic-node
+aln set-new-nexus-map --map @aln.cyb.nexus.nodes*
+aln hardware-wipe --hardware mt6883 --for-clean-install --bios
+aln upgrade --module {Energy_Consumption_Efficiency|CyberVision|Restriction_Rule_Modifiers|GenAI_Cybernetic_Assistant|AI_Assisted_Usage|Cybernetic_Language_Interpreter_ALN|LLM_Compliance_ALN}

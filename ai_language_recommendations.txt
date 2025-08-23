@@ -1,0 +1,6 @@
+- Python: Best for rapid prototyping, tons of AI/ML/NLP libraries (transformers, NLTK, spaCy, PyTorch/TensorFlow). Great for dialogue generation and context logic.
+- C#: Powerful for game integration with Unity and .NET, good for type-safe scripting, async logic.
+- Rust: Robust concurrent systems, great tooling for game server/AI backends, growing AI libraries.
+- JavaScript/TypeScript: For web/Node/game overlays, live-editable AI, and rapid prototyping of dialogue/logic.
+- C++: For real-time/AAA engines, max performance, direct memory control, used in Unreal/Source/L4D 'director'-like behavior trees.
+- Lua: Embedded scripting for game engines (esp. for modding, fast reload, very lightweight and extensible).

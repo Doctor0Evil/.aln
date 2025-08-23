@@ -1,0 +1,9 @@
+# ALN-Graph-Pipe - Internal Process Tree (ALN vNext Design)
+pid:{1.1.1.1.1}   dep_ref:ai-decision-tree             ps:logic-category
+pid:{2.2.2.2.2}   dep_ref:possible-choice-matrix       ps:user-driven-progression
+pid:{3.3.3.3.3}   dep_ref:core-gameplay-mechanics      ps:world-livliness & environmental-changes
+pid:{4.4.4.4.4}   dep_ref:random-occurences            ps:randomness & procedurally-generated-circumstances
+pid:{5.5.5.5.5}   dep_ref:gameloop.processes           ps:results and causality
+pid:{6.6.6.6.6}   dep_ref:dialogue.random.behavior     ps:ai-decisions/consequence
+pid:{7.7.7.7.7}   dep_ref:negative-result              ps:input/error/sandbox policy
+pid:{8.8.8.8.8}   dep_ref:bad.input.handlers           ps:output/correction/parsing

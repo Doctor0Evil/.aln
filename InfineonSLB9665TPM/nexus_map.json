@@ -1,0 +1,17 @@
+[
+    {
+        "status":  "linked",
+        "node":  "bio-nerve-07",
+        "type":  "biological"
+    },
+    {
+        "status":  "linked",
+        "node":  "neural-stem-03",
+        "type":  "neural"
+    },
+    {
+        "status":  "linked",
+        "node":  "haptic-core-02",
+        "type":  "haptic"
+    }
+]

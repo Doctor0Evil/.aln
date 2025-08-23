@@ -1,0 +1,20 @@
+# AI Reasoning Logics (template)
+{
+    "input_conditions": [
+        "player_stats", "status_modifiers", "environment_modifiers", "inventory"
+    ],
+    "reasoning_flow": [
+        "Randomizer: Shuffle seed with Get-Random + entropy (e.g. system time, input hash)",
+        "Bias: Status/trends skewed by context (e.g. wet clothes = higher hypothermia chance)",
+        "Event Masking: Nonlinear branching to make deterministic processes feel random",
+        "Behavior Mutation: Current state triggers new behaviors if thresholds or rare events",
+        "Dialogue: Randomly choose lines w/contextual weighting (player speech/traits/conditions)",
+        "Fatigue: Reweight outcomes per rolls (dehydrated = lower agility, increased exhaustion failures)",
+        "Morale: Lower morale triggers flight/cowardice, High = aggression/confidence",
+        "Buff Stack: Additive/subtractive values based on traits/equipment (armor, drugs, status effects)",
+        "Procedural Learning: Accumulate short-term 'memory' for AI, adapt tactics"
+    ],
+    "output": [
+        "Next-game-state", "Narrative-branch", "AI-Behavior-change", "Event-queue"
+    ]
+}
