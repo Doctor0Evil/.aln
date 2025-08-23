@@ -8,3 +8,4 @@ ACTION get_artifact
             LOG ❌ Artifact not found: {id}
             RETURN NULL
         ENDIF
+

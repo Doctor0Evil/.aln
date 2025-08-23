@@ -19,3 +19,4 @@ PACKAGE DICE
                 RETURN "Fail"
             ENDIF
 ```
+

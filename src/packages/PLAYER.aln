@@ -60,3 +60,4 @@ PACKAGE PLAYER
             LOG Spells: {stats["spells"]}, Mutations: {stats["mutations"]}, Inventory: {stats["inventory"]}
             RETURN stats
 ```
+

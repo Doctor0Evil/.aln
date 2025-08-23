@@ -23,3 +23,4 @@ CALL add_lesson(
         {"description": "Add/remove an element and show result", "completed": FALSE}
     ]
 )
+

@@ -6,3 +6,4 @@ module PersonalityMatrix {
     # Use simple hash and stateless merge; no private or game IP
     return hash(personality_seed + str(history) + "ALN")
 }
+

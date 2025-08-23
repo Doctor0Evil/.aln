@@ -41,3 +41,4 @@ rpg_wastes_apoc_ruins {
   event system { context.enter_shell("cli_env_game_dev") }
 }
 ```
+

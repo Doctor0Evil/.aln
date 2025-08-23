@@ -1,3 +1,4 @@
-"# ALN Core Module - Auto-generated" 
-"function Run-ALN { Write-Host 'ALN Engine Running...' }" 
-"export module ALNCore" 
+"# ALN Core Module - Auto-generated"
+"function Run-ALN { Write-Host 'ALN Engine Running...' }"
+"export module ALNCore"
+

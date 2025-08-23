@@ -20,23 +20,23 @@
     validation: "strict_schema_check",
     output_format: "aln_terminal_commands"
   }
-  
+
   // Execute the command with compliance checks
-  @EXEC { 
-    command: "echo $input", 
+  @EXEC {
+    command: "echo $input",
     success_criteria: "status=0",
     compliance_checks: ["GDPR", "HIPAA", "SOC2", "ISO27001", "PCI-DSS"],
     security_level: "quantum_stealth"
   }
-  
+
   // Log the result with audit trail
-  @LOG { 
-    message: "Hello World output: $input", 
-    level: "info", 
+  @LOG {
+    message: "Hello World output: $input",
+    level: "info",
     tags: ["greeting", "aln", "compliance"],
     audit_id: "aln_hello_world_20250806"
   }
-  
+
   // Verify system compliance
   @VERIFY compliance {
     standards: ["GDPR", "HIPAA", "SOC2", "ISO27001", "PCI-DSS"],
@@ -92,3 +92,4 @@
   findings: []
 }
 ```
+

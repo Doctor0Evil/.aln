@@ -28,7 +28,7 @@
 @RULE {
   condition: "Proposal PASSED"
   action: "Spawn AI generated module via ALN"
-  example: 
+  example:
   @CREATE realm {
     target: "/World/Spy/Agency/Missions"
     assets: ["tileset", "quests", "narrative"]
@@ -42,3 +42,4 @@
   "IOM.ARCHIVE sync" => permanently store in public IOM pool
 }
 ```
+

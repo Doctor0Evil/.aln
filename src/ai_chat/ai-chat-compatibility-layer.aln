@@ -13,7 +13,7 @@ define_ai_chat_compatibility_layer {
         }
         return platform;
     }
-    
+
     // Platform-specific configuration
     platform_configurations = {
         "AI-Chat-Platform-1": {
@@ -35,7 +35,7 @@ define_ai_chat_compatibility_layer {
             "response_format": "json"
         }
     };
-    
+
     // Configure platform
     configure_platform @platform {
         config = platform_configurations[platform];
@@ -44,7 +44,7 @@ define_ai_chat_compatibility_layer {
         set_max_tokens(config.max_tokens);
         set_response_format(config.response_format);
     }
-    
+
     // Process input for AI chat
     process_input_for_ai_chat @input {
         platform = detect_platform(input);
@@ -52,7 +52,7 @@ define_ai_chat_compatibility_layer {
         sanitized_input = sanitize_input(input);
         return generate_aln_compatible_request(sanitized_input, platform);
     }
-    
+
     // Sanitize input
     sanitize_input @input {
         // Remove any potential malicious content
@@ -61,7 +61,7 @@ define_ai_chat_compatibility_layer {
         sanitized = sanitized.replace(/javascript:/g, "");
         return sanitized;
     }
-    
+
     // Generate ALN-compatible request
     generate_aln_compatible_request @input @platform {
         return {
@@ -73,3 +73,4 @@ define_ai_chat_compatibility_layer {
     }
 }
 ```
+

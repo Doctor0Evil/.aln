@@ -17,3 +17,4 @@ PACKAGE RENDERER_CLI
         INPUT prompt_text string
         EXEC
             RETURN INPUT.prompt {prompt_text}
+

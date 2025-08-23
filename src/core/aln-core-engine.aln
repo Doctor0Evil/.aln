@@ -7,7 +7,7 @@ define_aln_core_engine @version {
         configure_security_policies();
         establish_autonomous_execution();
     }
-    
+
     // System module loading
     load_system_modules {
         modules = [
@@ -17,12 +17,12 @@ define_aln_core_engine @version {
             "aln_github_integration",
             "aln_compliance_engine"
         ];
-        
+
         for module in modules {
             load_module(module);
         }
     }
-    
+
     // Security policy configuration
     configure_security_policies {
         policies = [
@@ -30,12 +30,12 @@ define_aln_core_engine @version {
             "ALN_Authentication_Policy_v2.0",
             "ALN_Compliance_Policy_v2.0"
         ];
-        
+
         for policy in policies {
             apply_policy(policy);
         }
     }
-    
+
     // Autonomous execution setup
     establish_autonomous_execution {
         execution_protocol = "ALN-AutoDev-2.0";
@@ -44,3 +44,4 @@ define_aln_core_engine @version {
     }
 }
 ```
+

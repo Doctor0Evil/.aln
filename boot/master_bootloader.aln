@@ -2,7 +2,7 @@
 bootloader {
   state: "idle"
   menu: master_menu
-  
+
   master_menu = [
     { icon: "🧑‍💻", label: "Start Game", event: "start_game" },
     { icon: "🎲", label: "Drop Game In-Frame", event: "drop_in_frame" },
@@ -10,7 +10,7 @@ bootloader {
     { icon: "🏜️", label: "RPG_Wastes.Apocalyptic.Ruins", event: "load_rpg_wastes" },
     { icon: "⚙️", label: "System Control", event: "system_control" }
   ]
-  
+
   event start_game {
     call menu "game_selection_menu"
   }
@@ -41,3 +41,4 @@ bootloader {
   }
 }
 ```
+

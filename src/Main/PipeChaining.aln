@@ -1,4 +1,4 @@
-﻿```aln
+```aln
 // Full dependency generation pipeline for retail POS system
 @DEPENDENCY_GENERATION_CHAIN {
     id: "retail_pos_dependency_chain",
@@ -28,3 +28,4 @@ compliance_standards += ["NIST_SP-80053"]
     description = "AI-driven analytics for POS systems";
     integration = "quantum_optimized"
 }
+

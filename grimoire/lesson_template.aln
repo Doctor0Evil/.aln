@@ -50,3 +50,4 @@ PACKAGE GRIMOIRE
                 ENDFOR
             ELSE
                 LOG ℹ️ No active lesson.
+

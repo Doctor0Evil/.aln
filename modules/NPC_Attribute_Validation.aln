@@ -16,3 +16,4 @@ END
 
 # Call as: aln run NPC_Attribute_Validation.validate_npc_csv data/npc_attributes.aln.csv
 endmodule
+

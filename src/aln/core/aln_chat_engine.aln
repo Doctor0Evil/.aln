@@ -1,4 +1,4 @@
-﻿@STEM aln_chat_engine {
+@STEM aln_chat_engine {
   BASE: "engine_core",
   INHERIT: @TRAIT.aln_real_time_adaptation,
   FIELDS: [
@@ -49,3 +49,4 @@
     "langchain": "rag_query(query, vectorstore)"
   }
 }
+

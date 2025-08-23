@@ -534,3 +534,4 @@
     level: "info",
     tags: ["sql", "compliance", "database"]
 }
+

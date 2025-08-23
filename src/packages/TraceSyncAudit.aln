@@ -8,3 +8,4 @@ module TraceSyncAudit {
     log_store.append(signed_event)
     return signed_event
 }
+

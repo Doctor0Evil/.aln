@@ -59,3 +59,4 @@ PACKAGE COMMUNITY_MEMORY_BRIDGE
                 ENDIF
             ENDFOR
             RETURN results
+

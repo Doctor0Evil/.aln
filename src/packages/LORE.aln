@@ -197,3 +197,4 @@ PACKAGE LORE
         EXEC
             results = LoreDB.search(keyword)
             RETURN results
+

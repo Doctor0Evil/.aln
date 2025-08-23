@@ -130,35 +130,35 @@
   },
   execution: {
     @LOG "🛡️ Starting safe execution with compatibility layer"
-    
+
     // Detect platform if not provided
     @IF platform == null {
       @SET platform = @DETECT_PLATFORM
       @LOG "🖥️ Auto-detected platform: ${platform}"
     }
-    
+
     // Adapt command for platform
     @SET adapted_command = @ADAPT_COMMAND(command: command, platform: platform)
     @LOG "🔄 Adapted command for ${platform}: ${adapted_command}"
-    
+
     // Initialize retry counter
     @SET attempt = 0
     @SET success = false
     @SET last_error = null
-    
+
     // Retry loop with exponential backoff
     @WHILE attempt < RETRY_CONFIG.max_attempts AND success == false {
       @SET attempt = attempt + 1
       @LOG "🔄 Attempt ${attempt} of ${RETRY_CONFIG.max_attempts}"
-      
+
       @TRY {
         // Execute command with timeout
         @SET result = @EXECUTE_WITH_TIMEOUT(
-          command: adapted_command, 
-          platform: platform, 
+          command: adapted_command,
+          platform: platform,
           timeout: 30000
         )
-        
+
         @IF result.success == true {
           @SET success = true
           @LOG "✅ Command executed successfully on attempt ${attempt}"
@@ -168,24 +168,24 @@
       @CATCH error {
         @SET last_error = error
         @LOG "⚠️ Execution failed on attempt ${attempt}: ${error.message}"
-        
+
         // Classify error
         @SET error_type = @CLASSIFY_ERROR(error: error)
         @LOG "🔍 Error classified as: ${error_type}"
-        
+
         // Handle non-retryable errors
         @IF ERROR_TYPES[error_type].retryable == false {
           @LOG "🚫 Non-retryable error, applying fallback strategy"
           @SET fallback_result = @APPLY_FALLBACK(
-            error_type: error_type, 
-            command: command, 
+            error_type: error_type,
+            command: command,
             platform: platform,
             error: error
           )
           @RETURN fallback_result
         }
       }
-      
+
       // Calculate delay for next attempt
       @IF attempt < RETRY_CONFIG.max_attempts AND success == false {
         @SET delay = @CALCULATE_DELAY(attempt: attempt)
@@ -193,7 +193,7 @@
         @SLEEP delay
       }
     }
-    
+
     // All retries exhausted
     @LOG "❌ All execution attempts failed"
     @RETURN {
@@ -215,18 +215,18 @@
   },
   execution: {
     @LOG "📤 Starting safe GitHub push with resilience layer"
-    
+
     // Initialize variables
     @SET attempt = 0
     @SET success = false
     @SET last_error = null
     @SET fallback_used = null
-    
+
     // Try different push strategies
     @WHILE attempt < 3 AND success == false {
       @SET attempt = attempt + 1
       @LOG "🔄 GitHub push attempt ${attempt} of 3"
-      
+
       @TRY {
         @SWITCH attempt {
           CASE 1 {
@@ -257,7 +257,7 @@
             @SET fallback_used = "new_branch"
           }
         }
-        
+
         @IF result.success == true {
           @SET success = true
           @LOG "✅ GitHub push succeeded on attempt ${attempt}"
@@ -270,20 +270,20 @@
       @CATCH error {
         @SET last_error = error
         @LOG "⚠️ GitHub push failed on attempt ${attempt}: ${error.message}"
-        
+
         // Check for authentication issues
         @IF error.message.includes("authentication") OR error.message.includes("401") {
           @LOG "🔑 Authentication error, attempting token refresh"
           @EXEC @REFRESH_GITHUB_TOKEN
         }
-        
+
         // Check for network issues
         @IF error.message.includes("network") OR error.message.includes("ECONN") {
           @LOG "🌐 Network error, waiting before retry"
           @SLEEP 5000
         }
       }
-      
+
       // Wait before next attempt
       @IF attempt < 3 AND success == false {
         @SET delay = 3000 * attempt
@@ -291,10 +291,10 @@
         @SLEEP delay
       }
     }
-    
+
     // All GitHub push attempts failed
     @LOG "❌ All GitHub push attempts failed"
-    
+
     // Final fallback: Save to local cache for later sync
     @LOG "💾 Saving changes to local cache for later sync"
     @SET cache_result = @SAVE_TO_LOCAL_CACHE(
@@ -302,7 +302,7 @@
       branch: branch,
       files: files
     )
-    
+
     @RETURN {
       success: false,
       message: "GitHub push failed, changes saved to local cache",
@@ -323,7 +323,7 @@
   },
   execution: {
     @LOG "🔄 Applying fallback for ${error_type}"
-    
+
     @SWITCH error_type {
       CASE "SYNTAX_ERROR" {
         @LOG "🔧 Generating syntax correction suggestion"
@@ -335,13 +335,13 @@
           fallback_type: "syntax_correction"
         }
       }
-      
+
       CASE "PERMISSION_ERROR" {
         @LOG "🔐 Requesting permission elevation"
         @SET elevation_result = @REQUEST_ELEVATION(command: command, platform: platform)
         @RETURN elevation_result
       }
-      
+
       CASE "PLATFORM_INCOMPATIBILITY" {
         @LOG "🔄 Adapting command for platform compatibility"
         @SET adapted_command = @ADAPT_COMMAND(command: command, platform: platform)
@@ -352,7 +352,7 @@
         )
         @RETURN result
       }
-      
+
       DEFAULT {
         @LOG "⚠️ No specific fallback available, returning error details"
         @RETURN {
@@ -404,32 +404,32 @@
       @LOG "⚠️ No platform config for ${platform}, returning original command"
       @RETURN command
     }
-    
+
     // Split command into parts
     @SET parts = @SPLIT(command, " ")
     @SET base_command = parts[0]
-    
+
     // Check if we have a mapping for this command
     @SET mapped_command = platform_config.command_mappings[base_command]
     @IF mapped_command != null {
       @SET parts[0] = mapped_command
       @SET adapted_command = @JOIN(parts, " ")
-      
+
       // Add platform-specific prefix if needed
       @IF platform_config.command_prefix != "" {
         @SET adapted_command = "${platform_config.command_prefix} \"${adapted_command}\""
       }
-      
+
       @LOG "🔄 Adapted command: ${adapted_command}"
       @RETURN adapted_command
     }
-    
+
     // No mapping found, but still add prefix if needed
     @IF platform_config.command_prefix != "" {
       @SET adapted_command = "${platform_config.command_prefix} \"${command}\""
       @RETURN adapted_command
     }
-    
+
     @RETURN command
   }
 }
@@ -441,7 +441,7 @@
   },
   execution: {
     @SET error_message = @TO_LOWER(error.message)
-    
+
     @IF error_message.includes("syntax") OR error_message.includes("parse") {
       @RETURN "SYNTAX_ERROR"
     }
@@ -468,13 +468,13 @@
   execution: {
     @SET base_delay = RETRY_CONFIG.initial_delay * (RETRY_CONFIG.backoff_multiplier ^ (attempt - 1))
     @SET delay = @MIN(base_delay, RETRY_CONFIG.max_delay)
-    
+
     // Add jitter to avoid thundering herd
     @IF RETRY_CONFIG.jitter == true {
       @SET jitter = @RANDOM(0, delay * 0.2) // 20% jitter
       @SET delay = delay + jitter
     }
-    
+
     @RETURN @CEIL(delay)
   }
 }
@@ -491,12 +491,12 @@
       @SET start_time = @TIME.now
       @SET result = @EXECUTE(command: command, platform: platform)
       @SET end_time = @TIME.now
-      
+
       @IF (end_time - start_time) > timeout {
         @LOG "⏱️ Command execution exceeded timeout"
         @THROW "Command execution timeout"
       }
-      
+
       @RETURN result
     }
     @CATCH error {
@@ -511,24 +511,24 @@
   description: "Integrate compatibility layer with main ALN system",
   execution: {
     @LOG "🔗 Integrating compatibility layer with main ALN system"
-    
+
     // Override command execution with safe version
     @SET SYSTEM.command_executor = @ACTION.safe_execute
-    
+
     // Override GitHub push with safe version
     @SET SYSTEM.github_push = @ACTION.safe_github_push
-    
+
     // Register compatibility commands
     @REGISTER_COMMAND "aln.compat.execute" {
       description: "Execute command with compatibility layer",
       handler: @ACTION.safe_execute
     }
-    
+
     @REGISTER_COMMAND "aln.compat.github_push" {
       description: "Push to GitHub with compatibility layer",
       handler: @ACTION.safe_github_push
     }
-    
+
     @LOG "✅ Compatibility layer integrated successfully"
   }
 }
@@ -538,27 +538,28 @@
   description: "Initialize compatibility layer at system startup",
   execution: {
     @LOG "🚀 Initializing ALN Compatibility Layer v1.0.0"
-    
+
     // Initialize error tracking
     @SET COMPATIBILITY_LAYER.error_count = 0
     @SET COMPATIBILITY_LAYER.last_error = null
-    
+
     // Initialize circuit breaker state
     @SET COMPATIBILITY_LAYER.circuit_breaker = {
       state: "closed",
       failure_count: 0,
       last_failure_time: 0
     }
-    
+
     // Initialize local cache for GitHub fallbacks
     @SET COMPATIBILITY_LAYER.local_cache = []
-    
+
     // Integrate with main system
     @EXEC integrate_compatibility_layer
-    
+
     @LOG "✅ Compatibility layer initialized successfully"
     @LOG "🛡️ All commands now have robust error handling and fallback mechanisms"
     @LOG "🔄 GitHub operations have multiple retry strategies"
     @LOG "🖥️ Platform adaptation enabled for Windows, Linux, and macOS"
   }
 }
+

@@ -35,7 +35,7 @@ define_aln_system_registry {
             "github_integration": ["system_automation"]
         }
     }
-    
+
     // Register a new component
     register_component @component_name @component_info {
         if (system_registry.components[component_name]) {
@@ -45,12 +45,12 @@ define_aln_system_registry {
             add_to_relationships(component_name, component_info.dependencies);
         }
     }
-    
+
     // Update component info
     update_component @component_name @component_info {
         system_registry.components[component_name] = component_info;
     }
-    
+
     // Add to relationships
     add_to_relationships @component_name @dependencies {
         for dependency in dependencies {
@@ -63,3 +63,4 @@ define_aln_system_registry {
     }
 }
 ```
+

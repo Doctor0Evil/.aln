@@ -16,16 +16,16 @@
     output: {success: bool, message: string, version: string},
     execution: "
         @LOG '🚀 Initializing ALN Core Engine v12.0.0...'
-        
+
         // Validate core integrity
         @IF !@CHECK_HASH(@ALN_CORE_ENGINE, 'SHA3-512_NANO') {
             @TRIGGER alert TO loki {tags: ['aln_alert', 'core_integrity'], severity: 'CRITICAL', message: 'Core engine hash mismatch detected!'}
             @RETURN {success: false, message: 'Core engine integrity check failed.', version: @ALN_CORE_ENGINE.version}
         }
-        
+
         // Initialize system state
         @SET @SYSTEM.initialized = true
-        
+
         // Log successful initialization
         @LOG '✅ ALN Core Engine initialized successfully.'
         @RETURN {success: true, message: 'System initialized.', version: @ALN_CORE_ENGINE.version}
@@ -43,7 +43,7 @@
             @TRIGGER alert TO loki {tags: ['aln_alert', 'compliance_violation'], severity: 'WARNING', message: 'Command not compliant with standards: $command'}
             @RETURN {success: false, message: 'Command violates compliance standards', data: compliance_result, audit_id: compliance_result.audit_id}
         }
-        
+
         // Step 2: Parse and dispatch command
         @SWITCH command {
             @CASE 'aln.chatbot.maintain.create' {
@@ -89,7 +89,7 @@
     output: {success: bool, message: string, data: object},
     execution: "
         @LOG '📊 Checking system status'
-        
+
         // Gather metrics
         @LET metrics = {
             bootloader_version: @ALN_CORE_ENGINE.version,
@@ -101,7 +101,7 @@
             audit_trail: @GET_AUDIT_TRAIL_STATUS(),
             ota_status: @GET_OTA_STATUS()
         }
-        
+
         @LOG '✅ System status retrieved.'
         @RETURN {success: true, message: 'System status retrieved.', data: metrics}
     "
@@ -113,7 +113,7 @@
     output: {success: bool, message: string, commands: array[string]},
     execution: "
         @LOG '📘 Displaying help'
-        
+
         @LET help_text = [
             'aln.chatbot.maintain create <bot_id> - Create a new chatbot',
             'aln.chatbot.maintain update <bot_id> <settings> - Update chatbot settings',
@@ -126,7 +126,7 @@
             'aln.status - Check system status',
             'aln.help - Show this help message'
         ]
-        
+
         @LOG '✅ Help displayed.'
         @RETURN {success: true, message: 'Help displayed.', commands: help_text}
     "
@@ -153,7 +153,7 @@
     execution: "
         @LET score = 0.0
         @LET details = {}
-        
+
         @FOR standard IN standards {
             @SET details[standard] = {
                 compliant: @IS_STANDARD_COMPLIANT(standard, operation),
@@ -161,9 +161,9 @@
             }
             @SET score += details[standard].score
         }
-        
+
         @SET score = score / standards.length
-        
+
         @RETURN {
             compliant: score >= @CONFIG.compliance_threshold,
             score: score,
@@ -185,7 +185,7 @@
             timestamp: @TIMESTAMP(),
             audit_id: @GENERATE_AUDIT_ID()
         }
-        
+
         @LOG '📊 Compliance report generated for: $operation'
         @RETURN {
             report: report,
@@ -242,3 +242,4 @@
     "
 }
 ```
+

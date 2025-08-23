@@ -3,7 +3,7 @@ module CI_NPC_AI_Pipeline
   STAGE test-npc-behavior
     description "Unit, integration, and scenario tests for NPC logic"
     ENVIRONMENT runner "ubuntu-latest"
-    ACTION exec 
+    ACTION exec
       LOG "Starting Behavior tests"
       RUN aln test --module npc --type unit
       RUN aln test --module npc --type integration
@@ -29,8 +29,9 @@ module CI_NPC_AI_Pipeline
 
   # Additional stages for dialogue, event distribution, monitoring...
 
-  pipeline "NPC_AI_CI" 
+  pipeline "NPC_AI_CI"
     STAGES test-npc-behavior, test-pathfinding, validate-input-data
   EXECUTE pipeline "NPC_AI_CI"
 
 endmodule
+

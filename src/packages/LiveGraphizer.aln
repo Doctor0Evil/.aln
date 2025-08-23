@@ -7,3 +7,4 @@ module LiveGraphizer {
       print("|", node.label, "→", node.children)
     return "Graph Render Complete"
 }
+

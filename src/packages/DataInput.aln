@@ -6,3 +6,4 @@ module DataInput {
     return input
   # Accepts: user actions, world state, API
 }
+

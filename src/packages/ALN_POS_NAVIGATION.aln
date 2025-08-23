@@ -137,3 +137,4 @@ PACKAGE ALN_POS_NAVIGATION
             FOR idx, option IN ENUMERATE options
                 LOG  [{idx+1}] {option.label} - {option.description}
             ENDFOR
+

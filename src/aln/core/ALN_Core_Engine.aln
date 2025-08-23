@@ -21,7 +21,7 @@ define_system_environment {
     core_path = system_root + "\\src\\ALN\\Core"
     framework_path = system_root + "\\src\\Framework"
     compliance_path = system_root + "\\src\\Compliance"
-    
+
     # Set up runtime environment
     environment = {
         "ALN_VERSION": "12.1.0",
@@ -29,7 +29,7 @@ define_system_environment {
         "ALN_BUILD_DATE": "2025.a8::8::8.53.55",
         "ALN_SECURITY_LEVEL": "military_grade"
     }
-    
+
     # Set up security parameters
     security = {
         "encryption": "AES-4096-GCM",
@@ -46,16 +46,16 @@ load_core_engine {
     load_module("aln-system-registry.aln")
     load_module("aln-compliance-engine.aln")
     load_module("aln-safety-protocol.aln")
-    
+
     # Initialize security protocols
     initialize_security_protocols()
-    
+
     # Set up system registry
     setup_system_registry()
-    
+
     # Initialize autonomous execution
     initialize_autonomous_execution()
-    
+
     # Log core engine initialization
     log_event("core_engine_initialized", "ALN Core Engine v12.1.0 initialized successfully")
 }
@@ -66,10 +66,10 @@ initialize_security_protocols {
     enforce_policy("ALN_Sanitization_Policy_v2.0")
     enforce_policy("ALN_Authentication_Policy_v2.0")
     enforce_policy("ALN_Compliance_Policy_v2.0")
-    
+
     # Enable hardware isolation
     enable_hardware_isolation()
-    
+
     # Set up quantum-safe encryption
     setup_quantum_encryption()
 }
@@ -83,7 +83,7 @@ setup_system_registry {
         "dependencies": ["aln_nlp_engine", "aln_military_sim", "aln_system_automation"],
         "platforms": ["All Platforms"]
     })
-    
+
     # Register compliance engine
     register_component("aln_compliance_engine", {
         "version": "v2.1.0",
@@ -91,7 +91,7 @@ setup_system_registry {
         "dependencies": ["aln_core_engine"],
         "platforms": ["All Platforms"]
     })
-    
+
     # Register safety protocol
     register_component("aln_safety_protocol", {
         "version": "v2.3.0",
@@ -105,13 +105,13 @@ setup_system_registry {
 initialize_autonomous_execution {
     # Set up autonomous execution protocol
     execution_protocol = "ALN-AutoDev-2.0"
-    
+
     # Set up daily sync schedule
     sync_schedule = "0 0 * * *"
-    
+
     # Enable autonomous execution
     enable_autonomous_execution()
-    
+
     # Log autonomous execution setup
     log_event("autonomous_execution_initialized", "ALN Autonomous Execution v2.0 initialized")
 }
@@ -120,7 +120,7 @@ initialize_autonomous_execution {
 execute_core {
     # Parse command-line arguments
     args = parse_arguments()
-    
+
     # Handle different execution modes
     if (args.mode == "repl") {
         start_repl()
@@ -138,11 +138,11 @@ start_repl {
     # Start interactive REPL
     print("ALN Programming Language v12.1.0 - Interactive Mode")
     print("Type 'exit' to quit, 'help' for commands")
-    
+
     # Main REPL loop
     while (true) {
         input = read_input()
-        
+
         # Handle special commands
         if (input == "exit") {
             break
@@ -160,10 +160,10 @@ start_repl {
 run_script @script_path {
     # Read script file
     script_content = read_file(script_path)
-    
+
     # Execute script
     result = execute_aln_code(script_content)
-    
+
     # Return result
     return result
 }
@@ -175,16 +175,16 @@ deploy_to_github @repo_url @branch @commit_message {
         log_event("deployment_error", "Invalid deployment parameters")
         return { "success": false, "message": "Missing required deployment parameters" }
     }
-    
+
     # Get GitHub PAT from environment variable
     github_pat = get_env_variable("GITHUB_PAT")
-    
+
     # Check if PAT is available
     if (!github_pat) {
         log_event("deployment_error", "GitHub PAT not found in environment variables")
         return { "success": false, "message": "GitHub PAT not found. Set GITHUB_PAT environment variable." }
     }
-    
+
     # Configure GitHub repository
     repo_config = {
         "repo_url": repo_url,
@@ -192,19 +192,19 @@ deploy_to_github @repo_url @branch @commit_message {
         "branch": branch,
         "commit_message": commit_message
     }
-    
+
     # Commit changes to GitHub
     commit_result = commit_to_github(repo_config)
-    
+
     # Push to GitHub
     push_result = push_to_github(repo_config)
-    
+
     # Verify deployment
     verify_result = verify_deployment(repo_config)
-    
+
     # Log deployment
     log_event("github_deployment", "ALN deployment completed successfully")
-    
+
     # Return deployment status
     return {
         "success": true,
@@ -268,7 +268,7 @@ log_event @event @message {
         "event": event,
         "message": message
     }
-    
+
     # Write to log file
     write_to_log(log_entry)
 }
@@ -305,10 +305,11 @@ write_to_log @log_entry {
 main {
     # Initialize system environment
     define_system_environment()
-    
+
     # Load core engine
     load_core_engine()
-    
+
     # Execute core
     execute_core()
 }
+

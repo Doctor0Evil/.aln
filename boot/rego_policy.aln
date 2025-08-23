@@ -26,3 +26,4 @@ PACKAGE REGO_POLICY
                 RETURN FALSE
             ENDIF
             RETURN TRUE
+

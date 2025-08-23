@@ -62,3 +62,4 @@ PACKAGE ARTIFACTS
                 LOG ❌ Spell not known: {spell_name}
                 RETURN "Unknown Spell"
             ENDIF
+

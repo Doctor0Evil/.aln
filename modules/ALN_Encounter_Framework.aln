@@ -158,3 +158,4 @@
   ACTION sample_event { INPUT ctx map EXEC { RETURN { kind:"ambient", intensity:0.3 } } }
   ACTION cooldown { INPUT cds map, ev map, len float EXEC { } }
 }
+

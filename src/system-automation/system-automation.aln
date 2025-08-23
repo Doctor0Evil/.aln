@@ -7,3 +7,4 @@ deploy_container @repo("git@github.com:user/project.git") {
     remote_execute(target_server, "deploy latest container");
 }
 ```
+

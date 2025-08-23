@@ -53,3 +53,4 @@ CONST status_effects = [
     description: "Cold weather and wet clothes reduce endurance and dexterity."
   }
 ]
+

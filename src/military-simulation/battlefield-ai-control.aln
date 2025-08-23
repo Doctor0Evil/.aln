@@ -22,7 +22,7 @@ define_battlefield_ai_control {
             "roes": ["Rules of Engagement 3.0"]
         }
     };
-    
+
     // Initialize AI control
     initialize_ai_control @behavior_profile {
         if (behavior_profile) {
@@ -30,22 +30,22 @@ define_battlefield_ai_control {
         } else {
             current_profile = "infantry";
         }
-        
+
         // Set AI behavior based on profile
         set_ai_behavior(current_profile);
     }
-    
+
     // Set AI behavior
     set_ai_behavior @profile {
         behavior = ai_behavior_profiles[profile];
-        
+
         // Apply behavior settings
         set_movement_behavior(behavior.movement);
         set_tactics(behavior.tactics);
         set_engagement_range(behavior.engagement);
         apply_roes(behavior.roes);
     }
-    
+
     // Set movement behavior
     set_movement_behavior @behavior {
         switch (behavior) {
@@ -66,7 +66,7 @@ define_battlefield_ai_control {
                 break;
         }
     }
-    
+
     // Set tactics
     set_tactics @tactics {
         switch (tactics) {
@@ -87,7 +87,7 @@ define_battlefield_ai_control {
                 break;
         }
     }
-    
+
     // Set engagement range
     set_engagement_range @range {
         switch (range) {
@@ -108,14 +108,14 @@ define_battlefield_ai_control {
                 break;
         }
     }
-    
+
     // Apply ROEs
     apply_roes @roes {
         for roe in roes {
             apply_roe(roe);
         }
     }
-    
+
     // Apply individual ROE
     apply_roe @roe {
         switch (roe) {
@@ -139,7 +139,7 @@ define_battlefield_ai_control {
                 break;
         }
     }
-    
+
     // Generate AI unit
     generate_ai_unit @unit_type {
         unit = {
@@ -150,10 +150,10 @@ define_battlefield_ai_control {
             "health": 100,
             "speed": get_speed(unit_type)
         };
-        
+
         return unit;
     }
-    
+
     // Get random position
     get_random_position {
         return {
@@ -162,7 +162,7 @@ define_battlefield_ai_control {
             "altitude": random_between(0, 1000)
         };
     }
-    
+
     // Get speed based on unit type
     get_speed @unit_type {
         switch (unit_type) {
@@ -176,10 +176,11 @@ define_battlefield_ai_control {
                 return 5.0;
         }
     }
-    
+
     // Random number generator
     random_between @min @max {
         return min + (max - min) * random();
     }
 }
 ```
+
