@@ -1,0 +1,55 @@
+CONST status_effects = [
+  {
+    name: "stunned",
+    modifiers: { agility: -1 },
+    description: "Player is unable to act for one turn."
+  },
+  {
+    name: "poisoned",
+    modifiers: { hp_per_turn: -rand(32,168) },
+    description: "Player loses health over time."
+  },
+  {
+    name: "burning",
+    modifiers: { agility: -1, hp_per_turn: -rand(10,50) },
+    description: "Player suffers damage and reduced agility."
+  },
+  {
+    name: "frozen",
+    modifiers: { endurance: -2, strength: -1 },
+    description: "Player suffers endurance and strength penalties."
+  },
+  {
+    name: "blinded",
+    modifiers: { accuracy: -5 },
+    description: "Player’s vision is impaired, reducing accuracy."
+  },
+  {
+    name: "fatigued",
+    modifiers: { strength: -2, stamina: -3 },
+    description: "Player suffers reduced strength and stamina due to exhaustion."
+  },
+  {
+    name: "paralyzed",
+    modifiers: { agility: -3, skip_turn: true },
+    description: "Player cannot move or act."
+  },
+  {
+    name: "frightened",
+    modifiers: { morale: -10, accuracy: -2 },
+    description: "Player’s morale drops, affecting combat effectiveness."
+  },
+  {
+    name: "addiction_alcohol_withdrawals",
+    modifiers: { stamina: -3, concentration: -4 },
+    description: "Player suffers stamina and focus loss."
+  },
+  {
+    name: "hypothermia",
+    modifiers: { endurance: -4, dexterity: -2 },
+    triggers: [
+      "wet_clothes", "cold_weather", "prolonged_exposure"
+    ],
+    description: "Cold weather and wet clothes reduce endurance and dexterity."
+  }
+]
