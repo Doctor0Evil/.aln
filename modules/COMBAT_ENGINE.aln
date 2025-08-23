@@ -1,0 +1,79 @@
+// ============================================
+// ALN • COMBAT_ENGINE hardened for env/actor schema
+// ============================================
+@PACKAGE COMBAT_ENGINE {
+  IMPORT UTILS
+  GLOBAL RULES {
+    base_variance: [0.85, 1.15],
+    cover_bonus: 0.15,
+    wet_clothes_penalty: 0.1,
+    exhaustion_threshold: 0.6
+  }
+
+  ACTION apply_status_mods {
+    INPUT actor map, env map
+    EXEC {
+      hit_bonus = (actor.hit_bonus ?? 0.0) + (actor.traits.speech_impediment ? -0.05 : 0.0)
+      // Defaults
+      move_speed = (actor.move_speed ?? 1.0)
+      perception = (actor.perception ?? 1.0)
+      aim_stability = (actor.aim_stability ?? 1.0)
+      endurance = (actor.endurance ?? 1.0)
+      agility = (actor.agility ?? 1.0)
+
+      boots = actor.gear.boots ?? actor.boots ?? "standard"
+      eyewear = actor.gear.eyewear ?? actor.eyewear ?? "ok"
+
+      is_cold = (env.temperature_c ?? 20) < 0
+      is_mud = std.contains(std.lower(env.ground ?? ""), "mud")
+      is_hypo = (env.temperature_c ?? 20) <= -10 AND (actor.flags.wet ?? false)
+
+      move_speed *= (std.lower(boots) == "none") ? 0.9 : 1.0
+      perception *= (std.lower(eyewear) == "broken" OR std.lower(eyewear) == "broken-sunglasses") ? 0.9 : 1.0
+      aim_stability *= is_cold ? 0.95 : 1.0
+      endurance *= is_hypo ? 0.9 : 1.0
+      agility *= is_mud ? 0.9 : 1.0
+      IF (actor.flags.wet ?? false) THEN hit_bonus += -RULES.wet_clothes_penalty ENDIF
+
+      actor.hit_bonus = hit_bonus
+      actor.move_speed = move_speed
+      actor.perception = perception
+      actor.aim_stability = aim_stability
+      actor.endurance = endurance
+      actor.agility = agility
+      RETURN actor
+    }
+  }
+
+  ACTION compute_damage {
+    INPUT base float, ammo_mod float, variance float, target_armor float
+    EXEC {
+      raw = base * ammo_mod * variance
+      dmg = MAX(1, FLOOR(raw - target_armor))
+      RETURN dmg
+    }
+  }
+
+  ACTION turn {
+    INPUT attacker map, defender map, env map
+    EXEC {
+      v = CALL UTILS.uniform(RULES.base_variance[0], RULES.base_variance[1])
+      // Derive cover from defender flag if present
+      cover = defender.cover ?? 0.0
+      hit_chance = (attacker.accuracy ?? attacker.base_acc ?? 0.5) - cover + (attacker.hit_bonus ?? 0.0)
+      hit_chance = CLAMP(0.05, 0.95, hit_chance)
+
+      roll = CALL UTILS.uniform(0.0, 1.0)
+      IF roll <= hit_chance THEN
+        base_dmg = attacker.base_damage ?? attacker.base_dmg ?? 5
+        ammo_mod = attacker.ammo_mod ?? 1.0
+        armor = defender.armor ?? 0.0
+        dmg = CALL compute_damage(base_dmg, ammo_mod, v, armor)
+        defender.hp = (defender.hp ?? 1) - dmg
+        RETURN { hit: true, dmg: dmg, defender_hp: defender.hp }
+      ELSE
+        RETURN { hit: false, dmg: 0, defender_hp: defender.hp ?? 0 }
+      ENDIF
+    }
+  }
+}
