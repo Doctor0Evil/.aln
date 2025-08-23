@@ -7,3 +7,4 @@ module PersonalityMatrix {
     return hash(personality_seed + str(history) + "ALN")
 }
 
+
