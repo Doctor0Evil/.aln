@@ -1,0 +1,160 @@
+// ===========================
+// ALN • Encounter Framework
+// ===========================
+@PACKAGE CORE {
+  GLOBAL CLOCK { tick: 0 }
+  GLOBAL RNG { seed: 0xA1C3 }
+  ACTION next_tick { EXEC { CLOCK.tick += 1 } }
+}
+@PACKAGE ENV_SIM {
+  GLOBAL ENV {
+    weather: "sleet",
+    temperature_c: -3,
+    wind_mps: 7,
+    visibility: 0.6,
+    ground: "mud_snow",
+    time_of_day: "dusk"
+  }
+  ACTION sample {
+    EXEC {
+      // Slight drift to mask scripting
+      ENV.visibility = CLAMP(0.3, 1.0, ENV.visibility + CALL UTIL.noise(0.05))
+      ENV.wind_mps   = MAX(0, ENV.wind_mps + CALL UTIL.noise(0.8))
+      RETURN ENV
+    }
+  }
+}
+@PACKAGE STATUS {
+  ACTION derive_actor_mods {
+    INPUT actor map, env map
+    EXEC {
+      mods = {
+        hydration: actor.flags.dehydrated ? -0.10 : 0.0,
+        sleep: actor.flags.sleep_deprived ? -0.10 : 0.0,
+        eyewear: actor.gear.eyewear == "broken" ? -0.05 : 0.0,
+        wet: actor.flags.wet ? -0.05 : 0.0,
+        boots: actor.gear.boots == "none" ? -0.10 : 0.0,
+        cold: env.temperature_c < 0 ? -0.05 : 0.0
+      }
+      RETURN mods
+    }
+  }
+}
+@PACKAGE PERSONALITY {
+  GLOBAL PROFILES {
+    // Sanitized: no IP-linked names
+    warden_kine: { grit: 0.8, mercy: 0.3, pride: 0.6, caution: 0.4, curiosity: 0.2,
+                   style: ["terse","direct"], escalation_bias: 0.6 },
+    drifter:     { grit: 0.5, mercy: 0.5, pride: 0.4, caution: 0.3, curiosity: 0.7,
+                   style: ["dry","guarded"], escalation_bias: 0.4 }
+  }
+  ACTION sample_tactic {
+    INPUT profile map, context map, temperature float
+    EXEC {
+      // Softmax over tactic weights with temperature
+      tactics = ["rush","feint","pressure","break_off","threaten","parley"]
+      weights = CALL UTIL.tactic_weights(profile, context)
+      pick    = CALL UTIL.softmax_sample(tactics, weights, temperature)
+      RETURN pick
+    }
+  }
+}
+@PACKAGE DIRECTOR {
+  GLOBAL STATE { tension: 0.4, entropy: 0.5, cooldowns: {}, budget: 1.0 }
+  ACTION tick {
+    INPUT context map
+    EXEC {
+      base = STATE.tension * 0.6 + STATE.entropy * 0.4
+      noise = CALL UTIL.white_noise(0.18)
+      hysteresis = CALL UTIL.hysteresis(STATE.cooldowns, context)
+      surprise = CALL UTIL.surprise(context)
+      score = base + noise - hysteresis + surprise
+      IF score > 0.65 AND STATE.budget > 0.2 THEN
+        ev = CALL UTIL.sample_event(context)
+        CALL UTIL.cooldown(STATE.cooldowns, ev, CALL UTIL.uniform(0.4, 0.9))
+        STATE.budget -= 0.3
+        RETURN { trigger: true, event: ev }
+      ENDIF
+      STATE.budget = MIN(1.0, STATE.budget + 0.08)
+      RETURN { trigger: false }
+    }
+  }
+}
+@PACKAGE COMBAT {
+  GLOBAL RULES {
+    base_variance: [0.85, 1.15],
+    armor_floor: 1,
+    cover_scalar: 0.15
+  }
+  ACTION accuracy {
+    INPUT base float, mods map, env map, situational map
+    EXEC {
+      acc = base
+      acc += situational.opening_bonus ?? 0.0
+      acc -= (mods.hydration + mods.sleep + mods.eyewear + mods.wet + mods.cold)
+      acc -= (env.visibility < 0.5 ? 0.05 : 0.0)
+      RETURN CLAMP(0.05, 0.95, acc)
+    }
+  }
+  ACTION damage {
+    INPUT base float, ammo_mod float, variance float, target_armor float
+    EXEC {
+      raw = base * ammo_mod * variance
+      return MAX(RULES.armor_floor, FLOOR(raw - target_armor))
+    }
+  }
+  ACTION take_turn {
+    INPUT attacker map, defender map, env map
+    EXEC {
+      v = CALL UTIL.uniform(RULES.base_variance[0], RULES.base_variance[1])
+      hit_p = CALL accuracy(attacker.base_acc, attacker.mods, env, attacker.situational)
+      roll = CALL UTIL.uniform(0.0, 1.0)
+      IF roll <= hit_p THEN
+        dmg = CALL damage(attacker.base_dmg, attacker.ammo_mod, v, defender.armor)
+        defender.hp -= dmg
+        RETURN { hit: true, dmg: dmg, defender_hp: defender.hp }
+      ELSE
+        RETURN { hit: false, dmg: 0, defender_hp: defender.hp }
+      ENDIF
+    }
+  }
+}
+@PACKAGE LEARNING {
+  GLOBAL KINE_POLICY { rush: 0.4, feint: 0.2, pressure: 0.3, break_off: 0.1 }
+  ACTION update_policy {
+    INPUT context map, reward float, alpha float
+    EXEC {
+      t = context.last_tactic
+      exp = context.expected_reward ?? 0.3
+      delta = reward - exp
+      KINE_POLICY[t] = CLAMP(0.01, 0.99, KINE_POLICY[t] + alpha * delta)
+      RETURN KINE_POLICY
+    }
+  }
+}
+@PACKAGE DIALOG {
+  ACTION negotiate {
+    INPUT speaker map, listener map, context map
+    EXEC {
+      // Uses personality & wounds to set gates
+      base = speaker.stats.charisma * 0.05
+      base -= (speaker.traits.impairment ? 0.10 : 0.0)
+      base += (listener.hp < listener.hp_max * 0.5 ? 0.10 : 0.0)
+      base -= (context.just_shot ? 0.20 : 0.0)
+      chance = CLAMP(0.05, 0.90, base)
+      roll = CALL UTIL.uniform(0.0, 1.0)
+      RETURN { success: roll <= chance, chance: chance }
+    }
+  }
+}
+@PACKAGE UTIL {
+  ACTION noise { INPUT scale float EXEC { RETURN CALL uniform(-scale, scale) } }
+  ACTION white_noise { INPUT scale float EXEC { RETURN CALL uniform(-scale, scale) } }
+  ACTION uniform { INPUT a float, b float EXEC { RETURN (a+b)/2.0 /* stub */ } }
+  ACTION softmax_sample { INPUT keys list, weights map, temp float EXEC { RETURN keys[0] } }
+  ACTION tactic_weights { INPUT profile map, ctx map EXEC { RETURN { rush:0.3, feint:0.2, pressure:0.3, break_off:0.2 } } }
+  ACTION hysteresis { INPUT cds map, ctx map EXEC { RETURN 0.1 } }
+  ACTION surprise { INPUT ctx map EXEC { RETURN 0.0 } }
+  ACTION sample_event { INPUT ctx map EXEC { RETURN { kind:"ambient", intensity:0.3 } } }
+  ACTION cooldown { INPUT cds map, ev map, len float EXEC { } }
+}
