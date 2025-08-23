@@ -1,0 +1,36 @@
+module CI_NPC_AI_Pipeline
+
+  STAGE test-npc-behavior
+    description "Unit, integration, and scenario tests for NPC logic"
+    ENVIRONMENT runner "ubuntu-latest"
+    ACTION exec 
+      LOG "Starting Behavior tests"
+      RUN aln test --module npc --type unit
+      RUN aln test --module npc --type integration
+      RUN aln test --module npc --type scenario
+      LOG "Behavior tests complete"
+    end
+
+  STAGE test-pathfinding
+    description "Validate all NPC pathfinding decision graphs and heuristics"
+    ENVIRONMENT runner "ubuntu-latest"
+    ACTION exec
+      LOG "Executing NPC Pathfinding tests"
+      RUN aln ai.pathfinding.test --npcs all --benchmark true
+    end
+
+  STAGE validate-input-data
+    description "Verify NPC config spreadsheets, schema, and allowed value ranges"
+    ENVIRONMENT runner "ubuntu-latest"
+    ACTION exec
+      LOG "Validating data/npc_attributes.aln.csv with ALN-DataFilter"
+      RUN aln data.validate --file data/npc_attributes.aln.csv --schema npc
+    end
+
+  # Additional stages for dialogue, event distribution, monitoring...
+
+  pipeline "NPC_AI_CI" 
+    STAGES test-npc-behavior, test-pathfinding, validate-input-data
+  EXECUTE pipeline "NPC_AI_CI"
+
+endmodule
