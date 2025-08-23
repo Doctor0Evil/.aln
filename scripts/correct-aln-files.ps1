@@ -1,80 +1,48 @@
-# ALN File Correction Script - Non-admin, safe, and consistent
-# Runs in GitHub Actions without elevated permissions
+#!/usr/bin/env pwsh
+<#
+.SYNOPSIS
+  Corrects ALN files in a null‑safe, CI‑friendly way.
 
-# Define correction patterns (customize as needed)
-$correctionPatterns = @{
-    # Add file extensions and correction patterns here
-    "README.md" = {
-        $content = Get-Content $_ -Raw
-        if (-not $content.Contains("ALN Universal Language Framework")) {
-            $content = "## ALN Universal Language Framework v9.0.8`n`n" + $content
-            Set-Content $_ -Value $content
-            Write-Host "Corrected: $($_.Name)"
-        }
+.DESCRIPTION
+  Recursively scans the repository for `.aln` files,
+  applies corrections, and writes results back in place.
+  Will fail the run if no `.aln` files are found.
+#>
+
+# Stop on first error
+$ErrorActionPreference = 'Stop'
+
+# Get the repo root (script's parent directory 2 levels up)
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..') | Select-Object -ExpandProperty Path
+
+Write-Host "🔍 Searching for .aln files under: $RepoRoot"
+
+# Find all .aln files
+$alnFiles = Get-ChildItem -Path $RepoRoot -Recurse -Filter '*.aln' -File -ErrorAction SilentlyContinue
+
+if (-not $alnFiles -or $alnFiles.Count -eq 0) {
+    Write-Error "❌ No .aln files found. Check your repo structure or runner checkout path."
+    exit 1
+}
+
+foreach ($file in $alnFiles) {
+    try {
+        Write-Host "✏️ Processing: $($file.FullName)"
+
+        # Read the entire file content
+        $content = Get-Content -LiteralPath $file.FullName -Raw
+
+        # 🛠️ Perform your correction logic here
+        # Example: Trim trailing whitespace from each line
+        $corrected = $content -split "`r?`n" | ForEach-Object { $_.TrimEnd() } | Out-String
+
+        # Write corrected content back to the file
+        Set-Content -LiteralPath $file.FullName -Value $corrected -NoNewline
     }
-    
-    "ALN_Programming_Language/README.md" = {
-        $content = Get-Content $_ -Raw
-        if (-not $content.Contains("# ALN Universal Language Framework")) {
-            $content = "# ALN Universal Language Framework v9.0.8`n`n" + $content
-            Set-Content $_ -Value $content
-            Write-Host "Corrected: $($_.Name)"
-        }
-    }
-    
-    "*.aln" = {
-        $content = Get-Content $_ -Raw
-        if (-not $content.Contains("@DOCUMENTATION")) {
-            $newContent = "@DOCUMENTATION {`n@TITLE ""ALN Universal Language Framework""`n@VERSION ""9.0.8""`n@SUMMARY ""Adaptive, AI-native, self-evolving programming language and runtime for universal system and application development.""`n}`n`n" + $content
-            Set-Content $_ -Value $newContent
-            Write-Host "Corrected: $($_.Name)"
-        }
-    }
-    
-    "*.cs" = {
-        $content = Get-Content $_ -Raw
-        if (-not $content.Contains("ALN_Programming_Language")) {
-            $newContent = "/*`n * ALN Universal Language Framework`n * Copyright (c) 2025 ALN Universal Language Framework`n */`n`n" + $content
-            Set-Content $_ -Value $newContent
-            Write-Host "Corrected: $($_.Name)"
-        }
-    }
-    
-    "*.ps1" = {
-        $content = Get-Content $_ -Raw
-        if (-not $content.Contains("ALN Universal Language Framework")) {
-            $newContent = "# ALN Universal Language Framework - File Correction Script`n# Copyright (c) 2025 ALN Universal Language Framework`n`n" + $content
-            Set-Content $_ -Value $newContent
-            Write-Host "Corrected: $($_.Name)"
-        }
-    }
-    
-    "*.md" = {
-        $content = Get-Content $_ -Raw
-        if (-not $content.Contains("ALN Universal Language Framework")) {
-            $newContent = "## ALN Universal Language Framework v9.0.8`n`n" + $content
-            Set-Content $_ -Value $newContent
-            Write-Host "Corrected: $($_.Name)"
-        }
+    catch {
+        Write-Error "⚠️ Failed processing $($file.FullName): $_"
+        exit 1
     }
 }
 
-# Find all files that need correction
-$filesToCorrect = Get-ChildItem -Recurse -Include *.aln, *.cs, *.ps1, *.md -Exclude .git, .github, node_modules, __pycache__ -File
-
-foreach ($file in $filesToCorrect) {
-    # Check if this file type matches any correction pattern
-    $matchedPattern = $null
-    foreach ($pattern in $correctionPatterns.Keys) {
-        if ($file.Name -like $pattern) {
-            $matchedPattern = $pattern
-            break
-        }
-    }
-    
-    if ($matchedPattern) {
-        & $correctionPatterns[$matchedPattern] $file
-    }
-}
-
-Write-Host "ALN file correction complete. Total files corrected: $($filesToCorrect.Count)"
+Write-Host "✅ Completed correction on $($alnFiles.Count) file(s)."
