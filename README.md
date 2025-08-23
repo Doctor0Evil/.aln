@@ -1,3 +1,50 @@
+Code
+ALNFantasia/
+│
+├── src/
+│   ├── modules/
+│   │   ├── ALN_MODULE_LOADER.aln
+│   │   ├── ContinuousLearningLoop.aln
+│   │   ├── NPC_AI_MultiAgent.aln
+│   │   ├── ReplayAudit.aln
+│   │   ├── CommunityGovernance.aln
+│   │   ├── CommunityMemoryBridge.aln
+│   │   ├── CollectorCards.aln
+│   │   ├── AI_Combat_Logic.aln        
+│   │   ├── NPC_Dialogue_Procedural.aln
+│   │   └── ALNFantasiaDemo.aln
+│   │
+│   ├── ui/
+│   │   ├── StatusEffectsPanel.jsx
+│   │   ├── CombatLogViewer.jsx
+│   │   ├── DecisionTreeVisualizer.jsx
+│   │   └── ReplayControls.jsx
+│   │
+│   └── assets/
+│       ├── icons/
+│       └── styles/
+│
+├── ci/
+│   └── pipeline.yml
+│
+├── docs/
+│   ├── UI_Specs.md
+│   ├── Module_Integration.md
+│   └── Governance_Rules.md
+│
+├── build.gradle
+├── settings.gradle
+└── README.md
+
+
+
+
+
+
+
+
+
+
 ***
 
 # 🌌 ALN Fantasia — Universal Platform & Runtime  
