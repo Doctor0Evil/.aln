@@ -1,0 +1,18 @@
+module Event_Distribution_Safe
+
+ACTION distribute_events event_dir, timeout 20
+  files = os.listdir(event_dir)
+  FOR f IN files
+    TRY
+      RUN aln run f --timeout timeout
+      LOG "Event executed:", f
+    CATCH TimeoutException
+      LOG "Overflow/crash detected, event halted:", f
+      ALERT admin "Event crashed or overflowed: "+f
+    ENDTRY
+  ENDFOR
+END
+
+# Usage: aln run Event_Distribution_Safe.distribute_events aln/event_scripts 20
+
+endmodule
