@@ -1,0 +1,3 @@
+npc_id,name,type,aggression,speed,dialogue_profile,spawn_time,allowed_zones
+NPC001,Goblin,hostile,0.7,0.8,warrior,10:00,"forest,ruins"
+NPC002,Merchant,neutral,0.2,0.6,trader,09:30,"town,market"
