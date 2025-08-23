@@ -1,0 +1,8 @@
+ActionPipeline
+text
+module ActionPipeline {
+  function execute(decision, context):
+    # Stand-in for game/audio/chat/etc. output layer. Non-game/IP.
+    output = {"result": decision, "context": context}
+    return output
+}
