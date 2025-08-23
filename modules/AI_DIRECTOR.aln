@@ -1,0 +1,25 @@
+// ============================================
+// ALN • AI_DIRECTOR wired to UTILS
+// ============================================
+@PACKAGE AI_DIRECTOR {
+  IMPORT UTILS
+  GLOBAL STATE { tension: 0.4, entropy: 0.5, cooldowns: {}, event_budget: 1.0 }
+
+  ACTION schedule_event {
+    INPUT context map
+    EXEC {
+      base = STATE.tension * 0.6 + STATE.entropy * 0.4
+      noise = CALL UTILS.white_noise(0.15)
+      hysteresis = CALL UTILS.hysteresis(STATE.cooldowns, context)
+      trigger_score = base + noise - hysteresis + CALL UTILS.surprise_factor(context)
+      IF trigger_score > 0.65 AND STATE.event_budget > 0.2 THEN
+        ev = CALL UTILS.sample_event_bank(context)
+        CALL UTILS.apply_cooldown(STATE.cooldowns, ev, 0.8)
+        STATE.event_budget -= 0.3
+        RETURN { trigger: true, event: ev }
+      ENDIF
+      STATE.event_budget = MIN(1.0, STATE.event_budget + 0.1)
+      RETURN { trigger: false }
+    }
+  }
+}
