@@ -1,0 +1,57 @@
+// ============================================
+// ALN • Chat shell deltas to enable replay
+// ============================================
+@PACKAGE CHAT_SHELL_PPLX {
+  IMPORT CORE, REPLAY_SYSTEM, COMBAT_ENGINE, AI_DIRECTOR, UTILS
+  // ... keep existing imports and globals
+
+  ACTION enc_start {
+    INPUT user string, args list
+    EXEC {
+      CALL CORE.next_tick()
+      // existing body...
+      CALL REPLAY_SYSTEM.log_step(GET CORE.CLOCK.tick, user, "ENCOUNTER.START", { foe: FOE.key })
+      // ...
+    }
+  }
+
+  ACTION enc_attack {
+    EXEC {
+      CALL CORE.next_tick()
+      env = CALL ENV_SIM.sample()
+
+      PARTY.actor = CALL COMBAT_ENGINE.apply_status_mods(PARTY.actor, env)
+      FOE.actor   = CALL COMBAT_ENGINE.apply_status_mods(FOE.actor, env)
+
+      out1 = CALL COMBAT_ENGINE.turn(PARTY.actor, FOE.actor, env)
+      CALL REPLAY_SYSTEM.log_step(GET CORE.CLOCK.tick, SESSION.user, "COMBAT.TURN.PARTY", out1)
+
+      IF FOE.actor.hp <= 0 THEN RETURN CALL narrate("You deal " + out1.dmg + ". The foe falls. /enc.end") ENDIF
+
+      out2 = CALL COMBAT_ENGINE.turn(FOE.actor, PARTY.actor, env)
+      CALL REPLAY_SYSTEM.log_step(GET CORE.CLOCK.tick, "FOE", "COMBAT.TURN.FOE", out2)
+
+      dt = CALL AI_DIRECTOR.schedule_event({ first_turn: (LEN(LOGS) <= 2), hp_drop: out1.dmg + out2.dmg })
+      IF dt.trigger THEN CALL REPLAY_SYSTEM.log_step(GET CORE.CLOCK.tick, "DIRECTOR", "EVENT", dt.event) ENDIF
+
+      // ... keep existing narration/return
+    }
+  }
+
+  ACTION enc_parley {
+    EXEC {
+      CALL CORE.next_tick()
+      // existing body...
+      CALL REPLAY_SYSTEM.log_step(GET CORE.CLOCK.tick, SESSION.user, "PARLEY", { success: res.success, chance: res.chance })
+      // ...
+    }
+  }
+
+  ACTION enc_end {
+    EXEC {
+      CALL CORE.next_tick()
+      CALL REPLAY_SYSTEM.log_step(GET CORE.CLOCK.tick, SESSION.user, "ENCOUNTER.END", {})
+      // existing body...
+    }
+  }
+}
