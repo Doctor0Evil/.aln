@@ -1,0 +1,61 @@
+PACKAGE COMMUNITY_MEMORY_BRIDGE
+
+    GLOBAL IOM_ENTRIES = {}       # Keyed by media ID or query
+    GLOBAL IOM_REQUESTS = {}      # User requests with status and votes
+
+    # Submit a new memory request (e.g., lost song/video)
+    ACTION submit_request
+        INPUT request_id string, user_id string, description string
+        EXEC
+            IOM_REQUESTS[request_id] = {
+                "user": user_id,
+                "description": description,
+                "votes": 0,
+                "status": "open",
+                "linked_media": NULL
+            }
+            LOG 📥 Request {request_id} submitted by {user_id}
+            RETURN request_id
+
+    # Upvote a request or linked media
+    ACTION upvote_request
+        INPUT request_id string, user_id string
+        EXEC
+            IF EXISTS IOM_REQUESTS[request_id] THEN
+                IOM_REQUESTS[request_id]["votes"] += 1
+                LOG 👍 {user_id} upvoted request {request_id}
+                # Auto-close if votes exceed threshold
+                IF IOM_REQUESTS[request_id]["votes"] >= 10 THEN
+                    IOM_REQUESTS[request_id]["status"] = "complete"
+                    LOG 🎉 Request {request_id} marked complete
+                ENDIF
+                RETURN TRUE
+            ELSE
+                LOG ❌ Request {request_id} not found
+                RETURN FALSE
+            ENDIF
+
+    # Link media to a completed request
+    ACTION link_media_to_request
+        INPUT request_id string, media_url string
+        EXEC
+            IF EXISTS IOM_REQUESTS[request_id] AND IOM_REQUESTS[request_id]["status"] == "complete" THEN
+                IOM_REQUESTS[request_id]["linked_media"] = media_url
+                LOG 🔗 Media linked to request {request_id}
+                RETURN TRUE
+            ELSE
+                LOG ❌ Cannot link media, request not complete or missing
+                RETURN FALSE
+            ENDIF
+
+    # Search IOM entries (simplified)
+    ACTION search_iom
+        INPUT query string
+        EXEC
+            results = []
+            FOR req_id, req IN IOM_REQUESTS
+                IF query IN req["description"] OR (req["linked_media"] != NULL AND query IN req["linked_media"]) THEN
+                    APPEND results WITH req
+                ENDIF
+            ENDFOR
+            RETURN results
