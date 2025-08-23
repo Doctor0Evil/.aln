@@ -1,0 +1,17 @@
+// ============================================
+// ALN • AI_DIALOGUE hooked to personality matrix with fallback
+// ============================================
+@PACKAGE AI_DIALOGUE {
+  IMPORT AI_PERSONALITY_MATRIX, UTILS
+
+  ACTION generate {
+    INPUT persona map, mood map, context map
+    EXEC {
+      // Try personality compositor if present
+      reply = CALL AI_PERSONALITY_MATRIX.compose_response("default", context)
+      IF reply IS NOT NULL THEN RETURN reply ENDIF
+      // Fallback templating
+      RETURN CALL UTILS.template_select(persona ?? { tone:["measured"] }, mood ?? { valence:0, arousal:0 }, context)
+    }
+  }
+}
