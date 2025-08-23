@@ -1,0 +1,154 @@
+PACKAGE ALN_POS_NAVIGATION
+
+    GLOBAL NAV_NODES = {}
+    GLOBAL USER_CONTEXTS = {}
+
+    # 1. Define a navigation node
+    ACTION define_node
+        INPUT node_id string, label string, description string, parent_id string OR NULL, handler ACTION OR NULL, permissions list OR NULL
+        EXEC
+            NAV_NODES[node_id] = {
+                "label": label,
+                "description": description,
+                "parent": parent_id,
+                "children": [],
+                "handler": handler,
+                "permissions": permissions OR []
+            }
+            IF parent_id != NULL AND EXISTS NAV_NODES[parent_id] THEN
+                APPEND NAV_NODES[parent_id]["children"] node_id
+            ENDIF
+            LOG ⚙️ Node defined: {node_id} - {label}
+
+    # 2. Set or update user navigation context
+    ACTION set_user_context
+        INPUT user_id string, node_id string
+        EXEC
+            IF EXISTS NAV_NODES[node_id] THEN
+                USER_CONTEXTS[user_id] = node_id
+                LOG 🎯 User {user_id} context set to node {node_id}
+                RETURN TRUE
+            ELSE
+                LOG ❌ Invalid node {node_id} for user {user_id}
+                RETURN FALSE
+            ENDIF
+
+    # 3. Retrieve navigation options for user
+    ACTION get_navigation_options
+        INPUT user_id string, user_permissions list
+        EXEC
+            node_id = USER_CONTEXTS[user_id] OR "root"
+            node = NAV_NODES[node_id]
+            options = []
+            FOR child_id IN node["children"] {
+                child = NAV_NODES[child_id]
+                IF child["permissions"] == [] OR INTERSECT(child["permissions"], user_permissions) != [] THEN
+                    APPEND options WITH {
+                        "id": child_id,
+                        "label": child["label"],
+                        "description": child["description"]
+                    }
+                }
+            }
+            RETURN options
+
+    # 4. Navigate user to a target node, execute handler if allowed
+    ACTION navigate_to_node
+        INPUT user_id string, target_node_id string, user_permissions list
+        EXEC
+            options = ACTION get_navigation_options user_id user_permissions
+            valid_ids = MAP options, o -> o["id"]
+            IF target_node_id IN valid_ids THEN
+                ACTION set_user_context user_id target_node_id
+                handler = NAV_NODES[target_node_id]["handler"]
+                IF handler != NULL THEN
+                    EXEC handler user_id
+                ENDIF
+                RETURN TRUE
+            ELSE
+                LOG ❌ Navigation denied for user {user_id} to node {target_node_id}
+                RETURN FALSE
+            ENDIF
+
+    # 5. Get breadcrumb trail for UI
+    ACTION get_breadcrumb
+        INPUT user_id string
+        EXEC
+            path = []
+            node_id = USER_CONTEXTS[user_id] OR "root"
+            WHILE node_id != NULL {
+                node = NAV_NODES[node_id]
+                PREPEND path WITH node["label"]
+                node_id = node["parent"]
+            }
+            RETURN JOIN(path, " > ")
+
+    # 6. Example Handlers (link to operational modules)
+    ACTION handle_process_sale
+        INPUT user_id string
+        EXEC
+            LOG 🛒 User {user_id} started a Sale Processing workflow.
+            result = ALN_Master_Control.execute_command("PROCESS_SALE", {
+                store_id: "AMPM-Site-42445-Phx-AZ",
+                cashier_id: user_id,
+                items: [],
+                payment_method: "",
+                amount_tendered: 0.0
+            })
+            LOG ℹ️ Sale result: {result.status}
+
+    ACTION handle_inventory_management
+        INPUT user_id string
+        EXEC
+            LOG 📦 User {user_id} accessed Inventory Management.
+
+    ACTION handle_compliance_audit
+        INPUT user_id string
+        EXEC
+            LOG 📋 User {user_id} viewing Compliance & Audit reports.
+
+    ACTION handle_promotions_loyalty
+        INPUT user_id string
+        EXEC
+            LOG 🎁 User {user_id} managing Promotions & Loyalty programs.
+
+    ACTION handle_system_settings
+        INPUT user_id string
+        EXEC
+            LOG ⚙️ User {user_id} accessing System Settings.
+
+    # 7. Initialize navigation tree (called on system boot)
+    ACTION initialize_navigation_tree
+        EXEC
+            ACTION define_node("root", "Main Menu", "ALN POS Master Menu", NULL, NULL, [])
+            ACTION define_node("process_sale", "Process Sale", "Start new sales transaction", "root", handle_process_sale, ["cashier", "manager"])
+            ACTION define_node("inventory_mgmt", "Inventory", "Manage inventory and UPCs", "root", handle_inventory_management, ["manager"])
+            ACTION define_node("compliance_audit", "Compliance & Audit", "Audit and compliance reports", "root", handle_compliance_audit, ["auditor", "manager"])
+            ACTION define_node("promotions_loyalty", "Promotions & Loyalty", "Manage promotions and loyalty", "root", handle_promotions_loyalty, ["marketing", "manager"])
+            ACTION define_node("system_settings", "System Settings", "Admin system setup", "root", handle_system_settings, ["admin"])
+            LOG ✅ POS Navigation tree initialized
+
+    # 8. Display navigation options (main menu, etc.)
+    ACTION display_navigation_menu
+        INPUT user_id string, user_permissions list
+        EXEC
+            options = ACTION get_navigation_options user_id user_permissions
+            LOG 📜 Navigation for {user_id}:
+            FOR idx, option IN ENUMERATE options
+                LOG  [{idx+1}] {option.label} - {option.description}
+            ENDFOR
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

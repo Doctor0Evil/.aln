@@ -1,0 +1,22 @@
+// ==========================
+// aln-graph-pipe (.agp)
+// ==========================
+@GRAPH keene_encounter_v1.agp {
+  (p) pid:#{102.001.777.004.210}  - Ai-Decision   dep_ref: "ai-decision-tree"            ps: "logic-category"
+  (p) pid:#{102.001.777.004.211}  - Player-Interaction dep_ref: "possible-choice-matrix" ps: "user-driven-progression"
+  (p) pid:#{102.001.777.004.212}  - Gameworld     dep_ref: "core-gameplay-mechanics"     ps: "world-livliness & environmental-changes"
+  (p) pid:#{102.001.777.004.213}  - Events.Logic  dep_ref: "random-occurences"           ps: "randomness & procedurally-generated-circumstances"
+  (p) pid:#{102.001.777.004.214}  - Gameloop      dep_ref: "gameloop.processes"          ps: "if else, then this=results from event, & why"
+  (p) pid:#{102.001.777.004.215}  - Dialogue.Rand dep_ref: "dialogue.random.behavior"    ps: "ai-decisions, player-choice consequences, mutated-gameworld.event.ai-trigger"
+  (p) pid:#{102.001.777.004.216}  - Negative-Result dep_ref: "negative-result"           ps: "bad-user-inputs, null-interpretations, policy-violations, nlp.errors, sandbox.restrictions"
+  (p) pid:#{102.001.777.004.217}  - Bad.Input.Handlers dep_ref: "bad.input.handlers"     ps: "refined-output, sticky.response, rescaled.scope, reality.adjustments, command.parsing, event.rescripting, input.preparedness.handling, predictive.learning.human.inputs"
+  // Pipe-stems (dep_ref\ps=pipe-stems)
+  EDGE #{102.001.777.004.210} -> #{102.001.777.004.214}  dep_ref\ps: "ai-decision-tree\gameloop.processes"
+  EDGE #{102.001.777.004.212} -> #{102.001.777.004.214}  dep_ref\ps: "core-gameplay-mechanics\gameloop.processes"
+  EDGE #{102.001.777.004.213} -> #{102.001.777.004.210}  dep_ref\ps: "random-occurences\logic-category"
+  EDGE #{102.001.777.004.214} -> #{102.001.777.004.215}  dep_ref\ps: "then this=results\dialogue.random.behavior"
+  EDGE #{102.001.777.004.215} -> #{102.001.777.004.211}  dep_ref\ps: "ai-trigger\user-driven-progression"
+  EDGE #{102.001.777.004.214} -> #{102.001.777.004.216}  dep_ref\ps: "why\negative-result"
+  EDGE #{102.001.777.004.216} -> #{102.001.777.004.217}  dep_ref\ps: "sandbox.restrictions\bad.input.handlers"
+  EDGE #{102.001.777.004.217} -> #{102.001.777.004.214}  dep_ref\ps: "rescaled.scope\gameloop.processes"
+}

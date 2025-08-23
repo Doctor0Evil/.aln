@@ -26,22 +26,22 @@
     @EXEC {
         @LOG "Initializing ALN-Virtual-Emulation v${version}"
         @LOG "Checking dependencies..."
-        
+
         # Check for essential dependencies
         DEPENDENCIES = ["git", "docker", "nvidia-container-toolkit", "python3", "cmake", "unzip"]
         MISSING_DEPS = []
-        
+
         for dep in DEPENDENCIES {
             if ! command -v dep &> /dev/null {
                 MISSING_DEPS += dep
             }
         }
-        
+
         # Install missing dependencies if possible
         if MISSING_DEPS.length > 0 {
             @LOG "Missing dependencies: ${MISSING_DEPS.join(', ')}"
             @LOG "Attempting to install..."
-            
+
             # Try to install dependencies based on OS
             if [ -f /etc/os-release ] {
                 . /etc/os-release
@@ -66,7 +66,7 @@
                 @THROW "OS detection failed"
             }
         }
-        
+
         @LOG "All dependencies satisfied. Proceeding with initialization."
     }
 }
@@ -85,7 +85,7 @@
         mkdir -p ~/.aln/virtual_hardware/renders
         mkdir -p ~/.aln/virtual_hardware/configs
         mkdir -p ~/.aln/virtual_hardware/logs
-        
+
         # Initialize configuration
         CONFIG = {
             "version": version,
@@ -109,26 +109,26 @@
         ENGINE_TYPES = ["Unity", "Unreal", "Godot", "Custom"]
         for engine in ENGINE_TYPES {
             echo -e "Initializing ${engine} engine integration..." >> ~/.aln/virtual_hardware/logs/integration.log
-            
+
             # Create engine-specific configuration
             if [ ! -d ~/.aln/virtual_hardware/engines/${engine} ]; then
                 mkdir -p ~/.aln/virtual_hardware/engines/${engine}
                 echo -e "Engine: ${engine}\nVersion: ${version}\nPlatform: ${platform}" > ~/.aln/virtual_hardware/engines/${engine}/engine_config.json
             fi
         }
-        
+
         # Initialize rendering systems
         RENDER_TYPES = ["VR", "AR", "PC"]
         for render in RENDER_TYPES {
             echo -e "Initializing ${render} rendering system..." >> ~/.aln/virtual_hardware/logs/integration.log
-            
+
             # Create render-specific configuration
             if [ ! -d ~/.aln/virtual_hardware/renders/${render} ]; then
                 mkdir -p ~/.aln/virtual_hardware/renders/${render}
                 echo -e "Render: ${render}\nVersion: ${version}\nPlatform: ${platform}" > ~/.aln/virtual_hardware/renders/${render}/render_config.json
             fi
         }
-        
+
         @LOG "Virtual hardware integration complete. All engines and rendering systems initialized."
     }
 }
@@ -143,7 +143,7 @@
         mkdir -p ~/.aln/virtual_hardware/hot_patches
         echo -e "#!/bin/bash\n# ALN Hot Patching Script\n# Automatically applied during boot\n\n# Update VR rendering\naln.virt.update --vr\n\n# Apply AR optimizations\naln.virt.update --ar\n\n# Update engine compatibility\naln.virt.update --engine" > ~/.aln/virtual_hardware/hot_patches/patch_001.sh
         chmod +x ~/.aln/virtual_hardware/hot_patches/patch_001.sh
-        
+
         @LOG "Hot patching system initialized."
     }
 }
@@ -176,7 +176,7 @@
                 @LOG "Usage: aln engine.create --name \"<engine_name>\""
                 return
             }
-            
+
             ENGINE_NAME = args[1]
             @LOG "Creating new engine integration: ${ENGINE_NAME}"
             if [ ! -d ~/.aln/virtual_hardware/engines/${ENGINE_NAME} ]; then
@@ -192,7 +192,7 @@
                 @LOG "Usage: aln render.create --type \"<render_type>\""
                 return
             }
-            
+
             RENDER_TYPE = args[1]
             @LOG "Creating new rendering system: ${RENDER_TYPE}"
             if [ ! -d ~/.aln/virtual_hardware/renders/${RENDER_TYPE} ]; then
@@ -229,19 +229,19 @@
         if force_trigger == "VIRT_EMU_BOOT" || force_trigger == "VR_EMU" || force_trigger == "AR_EMU" || force_trigger == "VIRTUAL_BOOT" {
             @LOG "STRICT & STICKY TRIGGER DETECTED: ${force_trigger}"
             @LOG "Initiating ALN-Virtual-Emulation boot sequence..."
-            
+
             # Run all initialization steps
             pre_init_checks()
             system_config()
             virtual_hardware_integration()
             hot_patching()
-            
+
             # Apply hot patches
             for patch in ~/.aln/virtual_hardware/hot_patches/*.sh {
                 @LOG "Applying hot patch: ${patch}"
                 bash ${patch}
             }
-            
+
             # Initialize command interface
             aln_command_interface()
         } else {
@@ -261,3 +261,18 @@
     }
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

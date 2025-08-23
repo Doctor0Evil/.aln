@@ -1,0 +1,77 @@
+```aln
+PACKAGE GOVERNANCE
+
+    GLOBAL PROPOSAL
+    GLOBAL VOTES
+
+    SETTINGS
+        VOTING_PERIOD int = 120
+        QUORUM float = 0.30
+        PASS_THRESHOLD float = 0.60
+
+    ACTION create_proposal
+        INPUT id string, description string, creator string
+        EXEC
+            PROPOSAL[id] = {"desc": description, "creator": creator}
+            VOTES[id] = {"yes": 0, "no": 0}
+            LOG 📜 New Proposal #{id}: {description} by {creator}
+            RETURN id
+
+    ACTION vote
+        INPUT id string, voter string, gp int, choice string
+        EXEC
+            VOTES[id][choice] += gp
+            LOG {voter} voted {choice.upper()} with {gp} GP on {id}
+            RETURN choice
+
+    ACTION tally
+        INPUT id string, total_gp int
+        EXEC
+            yes = VOTES[id]["yes"]
+            no  = VOTES[id]["no"]
+            total = yes + no
+
+            quorum_required = QUORUM * total_gp
+
+            IF total < quorum_required THEN
+                LOG ❌ Proposal {id} FAILED (Not enough quorum).
+                RETURN "Disqualified"
+            ELSE IF (yes / total) >= PASS_THRESHOLD THEN
+                LOG ✅ Proposal {id} PASSED!
+                ACTION trigger_ai id
+                RETURN "Passed"
+            ELSE
+                LOG ❌ Proposal {id} REJECTED.
+                RETURN "Rejected"
+            ENDIF
+
+    ACTION trigger_ai
+        INPUT id string
+        EXEC
+            desc = PROPOSAL[id]["desc"]
+            creator = PROPOSAL[id]["creator"]
+            ai_output = QWENAI.generatealncode description = desc
+
+            LOG 🤖 AI proposes expansion: {ai_output}
+            confirm = INPUT.prompt "{creator}, accept this expansion? (y/n)"
+            IF confirm == "y" THEN
+                LORE.add_entry ai_output
+                LOG 🌍 World Expanded by Lore: {ai_output}
+            ELSE
+                LOG 🔄 Returned for refinement.
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

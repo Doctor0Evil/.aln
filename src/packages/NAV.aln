@@ -1,0 +1,166 @@
+```aln
+PACKAGE NAV
+
+    # Track the global current user and path (context-aware for multiplayer)
+    GLOBAL CURRENT_USER
+    GLOBAL CURRENT_PATH
+
+    # Set up a mock virtual filesystem (replace with live DIRECTORY/DB in prod)
+    GLOBAL FS = {
+        "/": ["players", "lore", "artifacts", "quests", "governance", "spells", "assets"],
+        "/players": ["alice", "bob"],
+        "/players/alice": ["character.aln", "inventory.aln", "questlog.aln"],
+        "/players/bob": ["character.aln", "inventory.aln", "questlog.aln"],
+        "/lore": ["events", "prophecies"],
+        "/lore/events": ["solstice.aln", "prophecy_001.aln"],
+        "/artifacts": ["staff_of_dreams.aln", "iron_fang_blade.aln"],
+        "/quests": ["crypt_mystery"],
+        "/quests/crypt_mystery": ["main.aln", "branches"],
+        "/quests/crypt_mystery/branches": ["branch-1.aln", "branch-2.aln"],
+        "/governance": ["proposals.json", "votes.json"],
+        "/spells": ["fireball.aln", "mutation_grasp.aln"],
+        "/assets": ["images"],
+        "/assets/images": ["worldmap.png", "sword_of_dawn.png"]
+    }
+
+    # Change (or set) the current path
+    ACTION cd
+        INPUT path string
+        EXEC
+            IF path == ".." THEN
+                # Move up
+                CURRENT_PATH = DIRECTORY.up CURRENT_PATH
+            ELSE IF EXISTS FS[path] THEN
+                CURRENT_PATH = path
+            ELSE
+                LOG "❌ Not a valid directory: " + path
+                RETURN "Invalid path"
+            ENDIF
+            LOG "📂 Now at: " + CURRENT_PATH
+            RETURN CURRENT_PATH
+
+    # List contents of a directory
+    ACTION ls
+        INPUT path string = NULL
+        EXEC
+            dir = path IF path != NULL ELSE CURRENT_PATH
+            IF EXISTS FS[dir] THEN
+                LOG "📄 Contents of " + dir + ": " + STRING.join FS[dir] ", "
+                RETURN FS[dir]
+            ELSE
+                LOG "❌ Directory not found: " + dir
+                RETURN []
+            ENDIF
+
+    # Show working directory
+    ACTION pwd
+        EXEC
+            LOG "📍 You are at: " + CURRENT_PATH
+            RETURN CURRENT_PATH
+
+    # Move up one directory
+    ACTION up
+        EXEC
+            parent = DIRECTORY.up CURRENT_PATH
+            CURRENT_PATH = parent
+            LOG "⬆️ Up to: " + parent
+            RETURN parent
+
+    # Find a file/object by name anywhere in the tree
+    ACTION find
+        INPUT name string
+        EXEC
+            found = []
+            FOR path, contents IN FS
+                FOR file IN contents
+                    IF name in file THEN
+                        APPEND found (path + "/" + file)
+                    ENDIF
+                ENDFOR
+            ENDFOR
+            IF LENGTH found > 0 THEN
+                LOG "🔍 Found: " + STRING.join found ", "
+            ELSE
+                LOG "Not found: " + name
+            ENDIF
+            RETURN found
+
+    # Print a tree-like structure from current path
+    ACTION tree
+        INPUT depth int = 2
+        EXEC
+            root = CURRENT_PATH
+            NAV.print_tree root 0 depth
+
+    # Recursively print directory tree (helper)
+    ACTION print_tree
+        INPUT node string, level int, max_depth int
+        EXEC
+            prefix = REPEAT "  " level
+            LOG prefix + "- " + node
+            IF level < max_depth AND EXISTS FS[node] THEN
+                FOR entry IN FS[node]
+                    child = node + "/" + entry
+                    IF EXISTS FS[child] THEN
+                        NAV.print_tree child (level+1) max_depth
+                    ELSE
+                        LOG REPEAT "  " (level+1) + "- " + entry
+                    ENDIF
+                ENDFOR
+            ENDIF
+
+    # Open/read file or artifact
+    ACTION open
+        INPUT name string
+        EXEC
+            found = NAV.find name
+            IF LENGTH found > 0 THEN
+                LOG "📖 Opening: " + found[0]
+                # Here you'd display file or artifact content
+                RETURN found
+            ELSE
+                LOG "Not found: " + name
+                RETURN NULL
+            ENDIF
+
+    # Save current location as a bookmark for user
+    GLOBAL BOOKMARKS = {}
+
+    ACTION bookmark
+        INPUT label string = NULL
+        EXEC
+            key = label IF label != NULL ELSE CURRENT_PATH
+            IF CURRENT_USER != NULL THEN
+                BOOKMARKS[CURRENT_USER] = key
+                LOG "🔖 Bookmarked as: " + key
+            ELSE
+                LOG "Set a user with LOGIN first!"
+            ENDIF
+            RETURN key
+
+    # List bookmarks for current user
+    ACTION bookmarks
+        EXEC
+            IF CURRENT_USER in BOOKMARKS THEN
+                LOG "Bookmarks for " + CURRENT_USER + ": " + BOOKMARKS[CURRENT_USER]
+                RETURN BOOKMARKS[CURRENT_USER]
+            ELSE
+                LOG "No bookmarks set."
+                RETURN NULL
+            ENDIF
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,59 @@
+```json
+{
+  "name": "IOM Magic Commands & Deep Integration",
+  "version": "0.1.0",
+  "description": "Enables magic address-bar commands and integrates Discord/community presence for the Internet.Archive.of.Music.",
+  "comet_commands": [
+    {
+      "trigger": "iom://find",
+      "description": "Instant IOM search UI",
+      "action": "/#/search"
+    },
+    {
+      "trigger": "iom://submit",
+      "description": "Jump to memory submission panel",
+      "action": "/#/submit"
+    },
+    {
+      "trigger": "iom://vault",
+      "description": "Instantly access Vault of Solved Mysteries",
+      "action": "/#/vault"
+    },
+    {
+      "trigger": "iom://party",
+      "description": "Open real-time Discord Hunt Party sync",
+      "action": "/#/party"
+    },
+    {
+      "trigger": "iom://onboard",
+      "description": "Show onboarding wizard",
+      "action": "/#/onboard"
+    },
+    {
+      "trigger": "iom://help",
+      "description": "Show quick guide and feature tour",
+      "action": "/#/help"
+    }
+  ],
+  "permissions": [
+    "tabs",
+    "storage",
+    "activeTab"
+  ],
+  "background": {
+    "scripts": ["comet-utils.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["comet-utils.js"]
+    }
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "128": "icon128.png"
+  }
+}
+```

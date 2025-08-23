@@ -1,0 +1,22 @@
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Player Data Schema",
+  "description": "Persistent player state for ALN Fantasia",
+  "type": "object",
+  "properties": {
+    "username": { "type": "string", "minLength": 1 },
+    "health": { "type": "integer", "minimum": 0, "maximum": 1000 },
+    "luck": { "type": "integer", "minimum": -10, "maximum": 10 },
+    "creativity": { "type": "integer", "minimum": 0, "maximum": 10 },
+    "gp": { "type": "integer", "minimum": 0 },
+    "level": { "type": "integer", "minimum": 1 },
+    "xp": { "type": "integer", "minimum": 0 },
+    "mutations": { "type": "array", "items": { "type": "string" } },
+    "spells": { "type": "array", "items": { "type": "string" } },
+    "inventory": { "type": "array", "items": { "type": "string" } },
+    "lastupdated": { "type": "string", "format": "date-time" }
+  },
+  "required": ["username", "health", "gp", "level"]
+}
+```

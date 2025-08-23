@@ -1,0 +1,59 @@
+PACKAGE COLLECTOR_CARDS
+
+    GLOBAL CARDS = {}
+    GLOBAL PLAYER_CARDS = {}
+
+    # Define a collector card
+    ACTION define_card
+        INPUT card_id string, name string, description string, buffs Map<Str, Int>, rarity string
+        EXEC
+            CARDS[card_id] = {
+                "name": name,
+                "description": description,
+                "buffs": buffs,
+                "rarity": rarity
+            }
+            LOG 🃏 Collector card defined: {name} ({rarity})
+
+    # Award a card to a player (only via gameplay or community events)
+    ACTION award_card
+        INPUT username string, card_id string
+        EXEC
+            IF NOT EXISTS PLAYER_CARDS[username] THEN
+                PLAYER_CARDS[username] = []
+            ENDIF
+            IF card_id IN PLAYER_CARDS[username] THEN
+                LOG ⚠️ {username} already owns card {card_id}
+                RETURN FALSE
+            ENDIF
+            APPEND PLAYER_CARDS[username] card_id
+            LOG 🎉 {username} awarded collector card {card_id}
+            RETURN TRUE
+
+    # Get player's total buffs from cards
+    ACTION get_player_buffs
+        INPUT username string
+        EXEC
+            buffs = {}
+            FOR card_id IN PLAYER_CARDS[username] OR []
+                card = CARDS[card_id]
+                FOR buff_key, buff_val IN card["buffs"]
+                    buffs[buff_key] = buffs.get(buff_key, 0) + buff_val
+                ENDFOR
+            ENDFOR
+            RETURN buffs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

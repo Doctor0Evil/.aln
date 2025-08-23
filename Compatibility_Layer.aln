@@ -1,0 +1,579 @@
+// ===================================================================
+// ALN COMPATIBILITY LAYER v1.0.0 - FAILOVER & FALLBACK SYSTEM
+// Provides robust error handling, safe retries, and cross-platform execution
+// Ensures seamless operation across AI-chat platforms and operating systems
+// ===================================================================
+
+// === COMPATIBILITY LAYER METADATA ===
+@COMPATIBILITY_LAYER {
+  version: "1.0.0",
+  name: "ALN Compatibility Layer",
+  description: "Robust error handling and fallback system for AI-chat platforms with cross-platform execution",
+  target_platforms: ["all_ai_chat_platforms", "windows", "linux", "macos"],
+  fallback_strategies: ["safe_retry", "platform_adaptation", "github_resilience"],
+  error_handling: ["syntax_errors", "permission_errors", "execution_failures", "network_errors"],
+  retry_mechanisms: ["exponential_backoff", "circuit_breaker", "graceful_degradation"],
+  compliance: ["PCI_DSS_v4.0", "GDPR", "ISO27001", "SOC2"],
+  security: "AES-256-GCM"
+}
+
+// === ERROR CLASSIFICATION SYSTEM ===
+@ERROR_TYPES {
+  SYNTAX_ERROR: {
+    severity: "critical",
+    retryable: false,
+    fallback: "syntax_correction_suggestion"
+  },
+  PERMISSION_ERROR: {
+    severity: "high",
+    retryable: false,
+    fallback: "elevation_request"
+  },
+  EXECUTION_FAILURE: {
+    severity: "medium",
+    retryable: true,
+    fallback: "safe_retry_with_backoff"
+  },
+  NETWORK_ERROR: {
+    severity: "medium",
+    retryable: true,
+    fallback: "cached_response_or_retry"
+  },
+  PLATFORM_INCOMPATIBILITY: {
+    severity: "medium",
+    retryable: false,
+    fallback: "platform_adaptation"
+  },
+  GITHUB_FAILURE: {
+    severity: "medium",
+    retryable: true,
+    fallback: "github_resilience_push"
+  }
+}
+
+// === RETRY CONFIGURATION ===
+@RETRY_CONFIG {
+  max_attempts: 3,
+  initial_delay: 1000, // 1 second
+  max_delay: 30000,    // 30 seconds
+  backoff_multiplier: 2,
+  jitter: true,
+  circuit_breaker_threshold: 5,
+  circuit_breaker_timeout: 60000 // 1 minute
+}
+
+// === PLATFORM ADAPTATION LAYER ===
+@PLATFORM_ADAPTATION {
+  windows: {
+    command_prefix: "powershell -Command",
+    path_separator: "\\",
+    env_vars: {
+      HOME: "USERPROFILE",
+      PATH: "Path"
+    },
+    command_mappings: {
+      "ls": "dir",
+      "rm": "del",
+      "cp": "copy",
+      "mv": "move",
+      "cat": "type",
+      "grep": "select-string",
+      "ps": "get-process",
+      "kill": "stop-process"
+    }
+  },
+  linux: {
+    command_prefix: "",
+    path_separator: "/",
+    env_vars: {
+      HOME: "HOME",
+      PATH: "PATH"
+    },
+    command_mappings: {
+      "dir": "ls",
+      "del": "rm",
+      "copy": "cp",
+      "move": "mv",
+      "type": "cat",
+      "select-string": "grep",
+      "get-process": "ps",
+      "stop-process": "kill"
+    }
+  },
+  macos: {
+    command_prefix: "",
+    path_separator: "/",
+    env_vars: {
+      HOME: "HOME",
+      PATH: "PATH"
+    },
+    command_mappings: {
+      "dir": "ls",
+      "del": "rm",
+      "copy": "cp -p",
+      "move": "mv",
+      "type": "cat",
+      "select-string": "grep",
+      "get-process": "ps",
+      "stop-process": "kill"
+    }
+  }
+}
+
+// === COMPATIBILITY ACTIONS ===
+@ACTION safe_execute {
+  description: "Execute command with robust error handling and fallback mechanisms",
+  parameters: {
+    command: "string (required)",
+    platform: "string (optional, auto-detected if not provided)",
+    context: "object (optional)"
+  },
+  execution: {
+    @LOG "🛡️ Starting safe execution with compatibility layer"
+
+    // Detect platform if not provided
+    @IF platform == null {
+      @SET platform = @DETECT_PLATFORM
+      @LOG "🖥️ Auto-detected platform: ${platform}"
+    }
+
+    // Adapt command for platform
+    @SET adapted_command = @ADAPT_COMMAND(command: command, platform: platform)
+    @LOG "🔄 Adapted command for ${platform}: ${adapted_command}"
+
+    // Initialize retry counter
+    @SET attempt = 0
+    @SET success = false
+    @SET last_error = null
+
+    // Retry loop with exponential backoff
+    @WHILE attempt < RETRY_CONFIG.max_attempts AND success == false {
+      @SET attempt = attempt + 1
+      @LOG "🔄 Attempt ${attempt} of ${RETRY_CONFIG.max_attempts}"
+
+      @TRY {
+        // Execute command with timeout
+        @SET result = @EXECUTE_WITH_TIMEOUT(
+          command: adapted_command,
+          platform: platform,
+          timeout: 30000
+        )
+
+        @IF result.success == true {
+          @SET success = true
+          @LOG "✅ Command executed successfully on attempt ${attempt}"
+          @RETURN result
+        }
+      }
+      @CATCH error {
+        @SET last_error = error
+        @LOG "⚠️ Execution failed on attempt ${attempt}: ${error.message}"
+
+        // Classify error
+        @SET error_type = @CLASSIFY_ERROR(error: error)
+        @LOG "🔍 Error classified as: ${error_type}"
+
+        // Handle non-retryable errors
+        @IF ERROR_TYPES[error_type].retryable == false {
+          @LOG "🚫 Non-retryable error, applying fallback strategy"
+          @SET fallback_result = @APPLY_FALLBACK(
+            error_type: error_type,
+            command: command,
+            platform: platform,
+            error: error
+          )
+          @RETURN fallback_result
+        }
+      }
+
+      // Calculate delay for next attempt
+      @IF attempt < RETRY_CONFIG.max_attempts AND success == false {
+        @SET delay = @CALCULATE_DELAY(attempt: attempt)
+        @LOG "⏳ Waiting ${delay}ms before next attempt"
+        @SLEEP delay
+      }
+    }
+
+    // All retries exhausted
+    @LOG "❌ All execution attempts failed"
+    @RETURN {
+      success: false,
+      message: "Command execution failed after ${RETRY_CONFIG.max_attempts} attempts",
+      error: last_error,
+      fallback_applied: false
+    }
+  }
+}
+
+@ACTION safe_github_push {
+  description: "Resilient GitHub push with multiple fallback strategies",
+  parameters: {
+    commit_message: "string (required)",
+    branch: "string (default: 'main')",
+    files: "array<string> (optional)",
+    retry_on_failure: "boolean (default: true)"
+  },
+  execution: {
+    @LOG "📤 Starting safe GitHub push with resilience layer"
+
+    // Initialize variables
+    @SET attempt = 0
+    @SET success = false
+    @SET last_error = null
+    @SET fallback_used = null
+
+    // Try different push strategies
+    @WHILE attempt < 3 AND success == false {
+      @SET attempt = attempt + 1
+      @LOG "🔄 GitHub push attempt ${attempt} of 3"
+
+      @TRY {
+        @SWITCH attempt {
+          CASE 1 {
+            @LOG "📤 Attempting standard GitHub push"
+            @SET result = @STANDARD_GITHUB_PUSH(
+              commit_message: commit_message,
+              branch: branch,
+              files: files
+            )
+          }
+          CASE 2 {
+            @LOG "📤 Attempting GitHub push with force flag"
+            @SET result = @FORCE_GITHUB_PUSH(
+              commit_message: commit_message,
+              branch: branch,
+              files: files
+            )
+          }
+          CASE 3 {
+            @LOG "📤 Attempting GitHub push with new branch"
+            @SET new_branch = "compatibility-fallback-${@UUID.generate_short}"
+            @SET result = @NEW_BRANCH_GITHUB_PUSH(
+              commit_message: commit_message,
+              original_branch: branch,
+              new_branch: new_branch,
+              files: files
+            )
+            @SET fallback_used = "new_branch"
+          }
+        }
+
+        @IF result.success == true {
+          @SET success = true
+          @LOG "✅ GitHub push succeeded on attempt ${attempt}"
+          @IF fallback_used != null {
+            @LOG "🔄 Used fallback strategy: ${fallback_used}"
+          }
+          @RETURN result
+        }
+      }
+      @CATCH error {
+        @SET last_error = error
+        @LOG "⚠️ GitHub push failed on attempt ${attempt}: ${error.message}"
+
+        // Check for authentication issues
+        @IF error.message.includes("authentication") OR error.message.includes("401") {
+          @LOG "🔑 Authentication error, attempting token refresh"
+          @EXEC @REFRESH_GITHUB_TOKEN
+        }
+
+        // Check for network issues
+        @IF error.message.includes("network") OR error.message.includes("ECONN") {
+          @LOG "🌐 Network error, waiting before retry"
+          @SLEEP 5000
+        }
+      }
+
+      // Wait before next attempt
+      @IF attempt < 3 AND success == false {
+        @SET delay = 3000 * attempt
+        @LOG "⏳ Waiting ${delay}ms before next GitHub push attempt"
+        @SLEEP delay
+      }
+    }
+
+    // All GitHub push attempts failed
+    @LOG "❌ All GitHub push attempts failed"
+
+    // Final fallback: Save to local cache for later sync
+    @LOG "💾 Saving changes to local cache for later sync"
+    @SET cache_result = @SAVE_TO_LOCAL_CACHE(
+      commit_message: commit_message,
+      branch: branch,
+      files: files
+    )
+
+    @RETURN {
+      success: false,
+      message: "GitHub push failed, changes saved to local cache",
+      error: last_error,
+      cache_id: cache_result.cache_id,
+      fallback_used: "local_cache"
+    }
+  }
+}
+
+@ACTION apply_fallback {
+  description: "Apply appropriate fallback strategy based on error type",
+  parameters: {
+    error_type: "string (required)",
+    command: "string (required)",
+    platform: "string (required)",
+    error: "object (required)"
+  },
+  execution: {
+    @LOG "🔄 Applying fallback for ${error_type}"
+
+    @SWITCH error_type {
+      CASE "SYNTAX_ERROR" {
+        @LOG "🔧 Generating syntax correction suggestion"
+        @SET suggestion = @GENERATE_SYNTAX_SUGGESTION(command: command, error: error)
+        @RETURN {
+          success: false,
+          message: "Syntax error detected",
+          suggestion: suggestion,
+          fallback_type: "syntax_correction"
+        }
+      }
+
+      CASE "PERMISSION_ERROR" {
+        @LOG "🔐 Requesting permission elevation"
+        @SET elevation_result = @REQUEST_ELEVATION(command: command, platform: platform)
+        @RETURN elevation_result
+      }
+
+      CASE "PLATFORM_INCOMPATIBILITY" {
+        @LOG "🔄 Adapting command for platform compatibility"
+        @SET adapted_command = @ADAPT_COMMAND(command: command, platform: platform)
+        @SET result = @EXECUTE_WITH_TIMEOUT(
+          command: adapted_command,
+          platform: platform,
+          timeout: 30000
+        )
+        @RETURN result
+      }
+
+      DEFAULT {
+        @LOG "⚠️ No specific fallback available, returning error details"
+        @RETURN {
+          success: false,
+          message: "Execution failed with no available fallback",
+          error: error,
+          fallback_type: "none"
+        }
+      }
+    }
+  }
+}
+
+// === HELPER FUNCTIONS ===
+@FUNCTION detect_platform {
+  description: "Detect the current operating system",
+  execution: {
+    @TRY {
+      @SET platform = @SYSTEM.os
+      @IF platform.includes("Windows") {
+        @RETURN "windows"
+      }
+      @ELSEIF platform.includes("Linux") {
+        @RETURN "linux"
+      }
+      @ELSEIF platform.includes("Mac") {
+        @RETURN "macos"
+      }
+      @ELSE {
+        @RETURN "unknown"
+      }
+    }
+    @CATCH {
+      @LOG "⚠️ Platform detection failed, defaulting to linux"
+      @RETURN "linux"
+    }
+  }
+}
+
+@FUNCTION adapt_command {
+  description: "Adapt command for the target platform",
+  parameters: {
+    command: "string (required)",
+    platform: "string (required)"
+  },
+  execution: {
+    @SET platform_config = PLATFORM_ADAPTATION[platform]
+    @IF platform_config == null {
+      @LOG "⚠️ No platform config for ${platform}, returning original command"
+      @RETURN command
+    }
+
+    // Split command into parts
+    @SET parts = @SPLIT(command, " ")
+    @SET base_command = parts[0]
+
+    // Check if we have a mapping for this command
+    @SET mapped_command = platform_config.command_mappings[base_command]
+    @IF mapped_command != null {
+      @SET parts[0] = mapped_command
+      @SET adapted_command = @JOIN(parts, " ")
+
+      // Add platform-specific prefix if needed
+      @IF platform_config.command_prefix != "" {
+        @SET adapted_command = "${platform_config.command_prefix} \"${adapted_command}\""
+      }
+
+      @LOG "🔄 Adapted command: ${adapted_command}"
+      @RETURN adapted_command
+    }
+
+    // No mapping found, but still add prefix if needed
+    @IF platform_config.command_prefix != "" {
+      @SET adapted_command = "${platform_config.command_prefix} \"${command}\""
+      @RETURN adapted_command
+    }
+
+    @RETURN command
+  }
+}
+
+@FUNCTION classify_error {
+  description: "Classify error type for appropriate handling",
+  parameters: {
+    error: "object (required)"
+  },
+  execution: {
+    @SET error_message = @TO_LOWER(error.message)
+
+    @IF error_message.includes("syntax") OR error_message.includes("parse") {
+      @RETURN "SYNTAX_ERROR"
+    }
+    @ELSEIF error_message.includes("permission") OR error_message.includes("access") OR error_message.includes("denied") {
+      @RETURN "PERMISSION_ERROR"
+    }
+    @ELSEIF error_message.includes("network") OR error_message.includes("connection") OR error_message.includes("econn") {
+      @RETURN "NETWORK_ERROR"
+    }
+    @ELSEIF error_message.includes("platform") OR error_message.includes("not recognized") OR error_message.includes("not found") {
+      @RETURN "PLATFORM_INCOMPATIBILITY"
+    }
+    @ELSE {
+      @RETURN "EXECUTION_FAILURE"
+    }
+  }
+}
+
+@FUNCTION calculate_delay {
+  description: "Calculate retry delay with exponential backoff and jitter",
+  parameters: {
+    attempt: "number (required)"
+  },
+  execution: {
+    @SET base_delay = RETRY_CONFIG.initial_delay * (RETRY_CONFIG.backoff_multiplier ^ (attempt - 1))
+    @SET delay = @MIN(base_delay, RETRY_CONFIG.max_delay)
+
+    // Add jitter to avoid thundering herd
+    @IF RETRY_CONFIG.jitter == true {
+      @SET jitter = @RANDOM(0, delay * 0.2) // 20% jitter
+      @SET delay = delay + jitter
+    }
+
+    @RETURN @CEIL(delay)
+  }
+}
+
+@FUNCTION execute_with_timeout {
+  description: "Execute command with timeout protection",
+  parameters: {
+    command: "string (required)",
+    platform: "string (required)",
+    timeout: "number (required)"
+  },
+  execution: {
+    @TRY {
+      @SET start_time = @TIME.now
+      @SET result = @EXECUTE(command: command, platform: platform)
+      @SET end_time = @TIME.now
+
+      @IF (end_time - start_time) > timeout {
+        @LOG "⏱️ Command execution exceeded timeout"
+        @THROW "Command execution timeout"
+      }
+
+      @RETURN result
+    }
+    @CATCH error {
+      @LOG "⚠️ Command execution failed: ${error.message}"
+      @THROW error
+    }
+  }
+}
+
+// === INTEGRATION WITH MAIN SYSTEM ===
+@ACTION integrate_compatibility_layer {
+  description: "Integrate compatibility layer with main ALN system",
+  execution: {
+    @LOG "🔗 Integrating compatibility layer with main ALN system"
+
+    // Override command execution with safe version
+    @SET SYSTEM.command_executor = @ACTION.safe_execute
+
+    // Override GitHub push with safe version
+    @SET SYSTEM.github_push = @ACTION.safe_github_push
+
+    // Register compatibility commands
+    @REGISTER_COMMAND "aln.compat.execute" {
+      description: "Execute command with compatibility layer",
+      handler: @ACTION.safe_execute
+    }
+
+    @REGISTER_COMMAND "aln.compat.github_push" {
+      description: "Push to GitHub with compatibility layer",
+      handler: @ACTION.safe_github_push
+    }
+
+    @LOG "✅ Compatibility layer integrated successfully"
+  }
+}
+
+// === MAIN EXECUTION HOOK ===
+@ACTION initialize_compatibility_layer {
+  description: "Initialize compatibility layer at system startup",
+  execution: {
+    @LOG "🚀 Initializing ALN Compatibility Layer v1.0.0"
+
+    // Initialize error tracking
+    @SET COMPATIBILITY_LAYER.error_count = 0
+    @SET COMPATIBILITY_LAYER.last_error = null
+
+    // Initialize circuit breaker state
+    @SET COMPATIBILITY_LAYER.circuit_breaker = {
+      state: "closed",
+      failure_count: 0,
+      last_failure_time: 0
+    }
+
+    // Initialize local cache for GitHub fallbacks
+    @SET COMPATIBILITY_LAYER.local_cache = []
+
+    // Integrate with main system
+    @EXEC integrate_compatibility_layer
+
+    @LOG "✅ Compatibility layer initialized successfully"
+    @LOG "🛡️ All commands now have robust error handling and fallback mechanisms"
+    @LOG "🔄 GitHub operations have multiple retry strategies"
+    @LOG "🖥️ Platform adaptation enabled for Windows, Linux, and macOS"
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

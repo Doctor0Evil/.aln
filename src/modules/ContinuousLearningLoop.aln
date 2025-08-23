@@ -1,0 +1,41 @@
+module ContinuousLearningLoop
+
+  ACTION run_learning_loop
+    EXEC
+      LOG "[LearningLoop] Starting..."
+      WHILE GAME.is_active
+        event = GAME.next_event()
+        decision = AI.decide(event, GAME.player_state, GAME.env_state)
+        MEMORY.cache(event.id, decision)
+
+        alt_path = AI.spawn_alternate(event, GAME.player_state, GAME.env_state)
+        IF alt_path != null
+          QUEUE.enqueue(alt_path)
+        ENDIF
+
+        ETHICS.check(decision)
+
+        IF QUEUE.needs_offload() OR event.is_terminated()
+          batch = QUEUE.dequeue()
+          HARDWARE.prewarm(batch)
+          GAME.swap_event(batch)
+        ENDIF
+
+        SLEEP RANDOM(5,23)
+      ENDWHILE
+      LOG "[LearningLoop] Terminated."
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

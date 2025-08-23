@@ -32,22 +32,22 @@ Based on the provided knowledge base, I've interpreted and created comprehensive
     @EXEC {
         @LOG "Initializing ALN-Dev-Shell v${aln_version}"
         @LOG "Checking dependencies..."
-        
+
         # Check for essential dependencies
         DEPENDENCIES = ["git", "curl", "unzip", "tar", "jq", "python3", "node", "go", "rustc", "cmake"]
         MISSING_DEPS = []
-        
+
         for dep in DEPENDENCIES {
             if ! command -v dep &> /dev/null {
                 MISSING_DEPS += dep
             }
         }
-        
+
         # Install missing dependencies if possible
         if MISSING_DEPS.length > 0 {
             @LOG "Missing dependencies: ${MISSING_DEPS.join(', ')}"
             @LOG "Attempting to install..."
-            
+
             # Try to install dependencies based on OS
             if [ -f /etc/os-release ] {
                 . /etc/os-release
@@ -72,7 +72,7 @@ Based on the provided knowledge base, I've interpreted and created comprehensive
                 @THROW "OS detection failed"
             }
         }
-        
+
         @LOG "All dependencies satisfied. Proceeding with initialization."
     }
 }
@@ -92,7 +92,7 @@ Based on the provided knowledge base, I've interpreted and created comprehensive
         mkdir -p ~/.aln/codex
         mkdir -p ~/.aln/ai_models
         mkdir -p ~/.aln/virtual_hardware
-        
+
         # Initialize configuration
         CONFIG = {
             "aln_version": aln_version,
@@ -115,7 +115,7 @@ Based on the provided knowledge base, I've interpreted and created comprehensive
         for platform in AI_PLATFORMS {
             echo -e "  - Integrating ${platform}..." >> ~/.aln/config/ai_platforms.txt
         }
-        
+
         # Initialize AI models
         echo -e "ALN AI Models v${aln_version}\n\nGPT-5, DALL-E, Stable Diffusion, and custom NPC behavior models." > ~/.aln/codex/ai_models.md
     }
@@ -135,7 +135,7 @@ Based on the provided knowledge base, I've interpreted and created comprehensive
         } else {
             @LOG "Game Development Tools already initialized."
         }
-        
+
         # Initialize virtual hardware
         if ! -d ~/.aln/virtual_hardware {
             @LOG "Setting up Virtual Hardware Emulation..."
@@ -169,20 +169,20 @@ Based on the provided knowledge base, I've interpreted and created comprehensive
         if force_trigger == "ALN_BOOT" || force_trigger == "DEV_BOOT" || force_trigger == "GAME_DEV_BOOT" || force_trigger == "ALN_INIT" {
             @LOG "STRICT & STICKY TRIGGER DETECTED: ${force_trigger}"
             @LOG "Initiating ALN-Dev-Shell boot sequence..."
-            
+
             # Run all initialization steps
             pre_init_checks()
             system_config()
             ai_integration()
             game_dev_env()
             codex_books_init()
-            
+
             # Apply zero-downtime hot patches
             for patch in ~/.aln/hot_patches/*.sh {
                 @LOG "Applying hot patch: ${patch}"
                 bash ${patch}
             }
-            
+
             # Initialize command interface
             aln_command_interface()
         } else {
@@ -221,7 +221,7 @@ Based on the provided knowledge base, I've interpreted and created comprehensive
                 @LOG "Usage: aln game.create --name \"<game_name>\""
                 return
             }
-            
+
             GAME_NAME = args[1]
             @LOG "Creating new game project: ${GAME_NAME}"
             mkdir -p ~/.aln/projects/${GAME_NAME}
@@ -233,7 +233,7 @@ Based on the provided knowledge base, I've interpreted and created comprehensive
                 @LOG "Usage: aln sprite.create --name \"<sprite_name>\" --size \"<width>x<height>\""
                 return
             }
-            
+
             SPRITE_NAME = args[1]
             SIZE = args[2]
             @LOG "Creating sprite: ${SPRITE_NAME} (${SIZE})"
@@ -245,7 +245,7 @@ Based on the provided knowledge base, I've interpreted and created comprehensive
                 @LOG "Usage: aln npc.create --name \"<npc_name>\" --type \"<npc_type>\""
                 return
             }
-            
+
             NPC_NAME = args[1]
             NPC_TYPE = args[2]
             @LOG "Creating NPC: ${NPC_NAME} (${NPC_TYPE})"
@@ -257,7 +257,7 @@ Based on the provided knowledge base, I've interpreted and created comprehensive
                 @LOG "Usage: aln world.create --name \"<world_name>\""
                 return
             }
-            
+
             WORLD_NAME = args[1]
             @LOG "Creating world: ${WORLD_NAME}"
             echo -e "World: ${WORLD_NAME}\nVersion: ${aln_version}\nCompliance: ${compliance}" > ~/.aln/projects/current_project/worlds/${WORLD_NAME}.world
@@ -268,7 +268,7 @@ Based on the provided knowledge base, I've interpreted and created comprehensive
                 @LOG "Usage: aln quest.create --name \"<quest_name>\" --description \"<description>\""
                 return
             }
-            
+
             QUEST_NAME = args[1]
             DESCRIPTION = args[2]
             @LOG "Creating quest: ${QUEST_NAME}"
@@ -299,3 +299,18 @@ Based on the provided knowledge base, I've interpreted and created comprehensive
     }
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

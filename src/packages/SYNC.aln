@@ -1,0 +1,48 @@
+```aln
+PACKAGE SYNC
+
+    SETTINGS
+        SERVER_ENDPOINT string = "https://api.alnfantasia.world"
+
+    # Broadcast: When a path is opened, tell all UIs/bots/clients
+    ACTION broadcast_open
+        INPUT user string, path string, platform string
+        EXEC
+            payload = { "user": user, "path": path, "platform": platform }
+            API.POST SERVER_ENDPOINT + "/broadcast/open" payload
+            LOG "🌐 Broadcast open event: " + STRING.stringify payload
+
+    # Sync any event (global/user/party)
+    ACTION sync_event
+        INPUT event_type string, path string, scope string
+        EXEC
+            payload = {
+                "event_type": event_type,
+                "path": path,
+                "scope": scope,
+                "timestamp": TIME.now()
+            }
+            API.POST SERVER_ENDPOINT + "/sync/event" payload
+
+    # Presence: show users at a directory
+    ACTION who_here
+        INPUT path string
+        EXEC
+            presence = API.GET SERVER_ENDPOINT + "/presence?path=" + path
+            LOG "🌍 Who’s here: " + STRING.join presence ", "
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

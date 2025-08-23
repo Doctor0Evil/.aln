@@ -1,0 +1,96 @@
+name: Sync README to Discord Pin (Thread Mode + Diff Aware + Dry Run)
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ "README.md" ]
+
+  pull_request:
+    paths: [ "README.md" ]
+
+  schedule:
+    - cron: "0 12 */6 * *"  # every 6 days keep-alive to unarchive threads
+
+jobs:
+  sync-discord-pin-thread:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Validate & Extract Scroll Section
+        id: extract
+        run: |
+          if ! grep -q "^# 💬 Discord Pinned Scroll" README.md; then
+            echo "❌ Missing '# 💬 Discord Pinned Scroll' section in README.md"
+            exit 1
+          fi
+          if ! grep -q "^---" README.md; then
+            echo "❌ Missing terminating '---' marker after scroll section"
+            exit 1
+          fi
+
+          # Extract pinned scroll block
+          awk '/^# 💬 Discord Pinned Scroll/{flag=1;next}/^---/{flag=0}flag' README.md > pinned_scroll.txt
+
+          echo "PINNED_SCROLL<<EOF" >> $GITHUB_ENV
+          cat pinned_scroll.txt >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          sha=$(sha256sum pinned_scroll.txt | cut -d' ' -f1)
+          echo "SCROLL_HASH=$sha" >> $GITHUB_ENV
+          echo "✅ Scroll extracted and hashed: $sha"
+
+      - name: Restore Previous Hash
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: .scroll-hash
+          key: scroll-hash-${{ env.SCROLL_HASH }}
+          restore-keys: |
+            scroll-hash-
+
+      - name: Check for Change
+        id: check
+        run: |
+          if [ -f .scroll-hash/hash.txt ]; then
+            old=$(cat .scroll-hash/hash.txt)
+            if [ "$old" = "$SCROLL_HASH" ]; then
+              echo "NO_CHANGE=true" >> $GITHUB_ENV
+              echo "⚡ No change in scroll text (skip sync)"
+              exit 0
+            fi
+            echo "🔄 Scroll changed!"
+            echo "== Diff Preview =="
+            diff -u .scroll-hash/scroll.txt pinned_scroll.txt || true
+          fi
+          mkdir -p .scroll-hash
+          echo "$SCROLL_HASH" > .scroll-hash/hash.txt
+          cp pinned_scroll.txt .scroll-hash/scroll.txt
+          echo "NO_CHANGE=false" >> $GITHUB_ENV
+
+      - name: Install Dependencies
+        if: (env.NO_CHANGE == 'false') && (github.event_name == 'push')
+        run: npm install node-fetch@3
+
+      - name: Run Discord Scroll Sync
+        if: (env.NO_CHANGE == 'false') && (github.event_name == 'push')
+        run: node scripts/update-discord-pin-thread.js
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+          DISCORD_MESSAGE_ID: ${{ secrets.DISCORD_MESSAGE_ID }}
+          PINNED_SCROLL: ${{ env.PINNED_SCROLL }}
+    
+      - name: Capture Commit Message
+        run: |
+          msg=$(git log -1 --pretty=%B)
+          echo "GITHUB_COMMIT_MESSAGE<<EOF" >> $GITHUB_ENV
+          echo "$msg" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV

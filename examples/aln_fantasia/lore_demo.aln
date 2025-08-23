@@ -1,0 +1,49 @@
+```aln
+// ... existing example code ...
+
+// Sample Event Creation + Integration
+// Simulate an in-game event trigger
+event_milestone = {
+    type: "Milestone",
+    era: "Year 3, Cometfall",
+    desc: "the Ashen Comets defeated the Draconic Apex",
+    title: "Milestone: Ashen Comets Triumph",
+    impact: "Vault of Champions unlocked",
+    links: ["VaultOfChampions"]
+}
+lore1 = LoreComposer_on_event(event_milestone)
+
+event_holiday = {
+    type: "Holiday",
+    era: "Year 3, Frostlight",
+    desc: "Lantern Blaze festival united the cities",
+    impact: "Special lantern items, wisp appearances",
+    links: ["LanternBazaar"]
+}
+lore2 = LoreComposer_on_event(event_holiday)
+
+// Community votes it up
+LoreComposer_vote(lore1.id, true)
+
+// Retcon with a new history update
+LoreComposer_retcon(
+    lore2.id,
+    "The Lantern Blaze, once a peaceful festival, became legendary after the Will-o-the-Wisps invaded the city as living lights.",
+    "LoreCouncil"
+)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

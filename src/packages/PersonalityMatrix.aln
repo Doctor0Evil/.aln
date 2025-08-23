@@ -1,0 +1,23 @@
+PersonalityMatrix
+text
+module PersonalityMatrix {
+  traits = {aggression:float, patience:float, humor:float, skepticism:float}
+  function synthesize(personality_seed, history):
+    # Use simple hash and stateless merge; no private or game IP
+    return hash(personality_seed + str(history) + "ALN")
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

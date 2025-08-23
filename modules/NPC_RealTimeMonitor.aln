@@ -1,0 +1,40 @@
+module NPC_RealTimeMonitor
+
+ACTION monitor_npc_states
+  description "Track, log, and trigger alerts on NPC state changes"
+  INIT var seen = Set()
+  LOOP WHILE game.active
+    VAR npclist = npc.list()
+    FOR npc IN npclist
+      IF seen.contains(npc.id)
+        LOG "Monitoring: ", npc.id, "Behavior:", npc.behavior, "[", npc.state, "]"
+      ELSE
+        LOG "Spawned: ", npc.id, "Behavior:", npc.behavior, "[", npc.state, "]"
+        seen.add(npc.id)
+      IF npc.state == "critical" OR npc.health < 20
+        TRIGGER alert.npc.critical npc
+        LOG "ALERT: Critical state on NPC", npc.id
+    SLEEP 2
+  ENDLOOP
+END
+
+ACTION alert.npc.critical npc
+  SEND email.to("admin@yourgame.com", "CRITICAL: NPC "+npc.id, "State:"+npc.state+" Health:"+npc.health)
+  LOG "Admin alerted for NPC:", npc.id
+
+ENDMODULE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

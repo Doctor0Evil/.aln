@@ -1,0 +1,18 @@
+```json
+{
+  "/": ["players", "lore", "artifacts", "quests", "governance", "spells", "assets"],
+  "/players": ["alice", "bob"],
+  "/players/alice": ["character.aln", "inventory.aln", "questlog.aln"],
+  "/players/bob": ["character.aln", "inventory.aln", "questlog.aln"],
+  "/lore": ["events", "prophecies"],
+  "/lore/events": ["solstice.aln", "prophecy_001.aln"],
+  "/artifacts": ["staff_of_dreams.aln", "iron_fang_blade.aln"],
+  "/quests": ["crypt_mystery"],
+  "/quests/crypt_mystery": ["main.aln", "branches"],
+  "/quests/crypt_mystery/branches": ["branch-1.aln", "branch-2.aln"],
+  "/governance": ["proposals.json", "votes.json"],
+  "/spells": ["fireball.aln", "mutation_grasp.aln"],
+  "/assets": ["images"],
+  "/assets/images": ["worldmap.png", "sword_of_dawn.png"]
+}
+```

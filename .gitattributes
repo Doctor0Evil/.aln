@@ -1,0 +1,22 @@
+#ALN Source-Files
+*.aln linguist-language=ALN
+*.aln text eol=lf
+*.aln linguist-detectable=true
+
+# ALN scripts and configs
+*.psm1 text eol=lf
+*.ps1 text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# GitHub Actions workflow files
+.github/workflows/*.yml linguist-language=YAML
+.github/workflows/*.yaml linguist-language=YAML
+.github/scripts/*.ps1 text eol=lf
+
+# Kubernetes manifests
+k8s-manifests/*.yaml linguist-language=YAML
+k8s-manifests/*.yml linguist-language=YAML
+
+# Allow executables in scripts folder
+.github/scripts/* text eol=lf

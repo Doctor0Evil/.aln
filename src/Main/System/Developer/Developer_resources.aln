@@ -26,22 +26,22 @@
     @EXEC {
         @LOG "Initializing ALN-Developer-Resources v${version}"
         @LOG "Checking dependencies..."
-        
+
         # Check for essential dependencies
         DEPENDENCIES = ["git", "curl", "jq", "python3"]
         MISSING_DEPS = []
-        
+
         for dep in DEPENDENCIES {
             if ! command -v dep &> /dev/null; then
                 MISSING_DEPS += dep
             fi
         }
-        
+
         # Install missing dependencies if possible
         if MISSING_DEPS.length > 0 {
             @LOG "Missing dependencies: ${MISSING_DEPS.join(', ')}"
             @LOG "Attempting to install..."
-            
+
             # Try to install dependencies based on OS
             if [ -f /etc/os-release ]; then
                 . /etc/os-release
@@ -66,7 +66,7 @@
                 @THROW "OS detection failed"
             }
         }
-        
+
         @LOG "All dependencies satisfied. Proceeding with initialization."
     }
 }
@@ -87,7 +87,7 @@
         mkdir -p ~/.aln/dev_resources/cheatsheets
         mkdir -p ~/.aln/dev_resources/configs
         mkdir -p ~/.aln/dev_resources/logs
-        
+
         # Initialize configuration
         CONFIG = {
             "version": version,
@@ -109,43 +109,43 @@
     @EXEC {
         # Initialize developer resources
         echo -e "ALN Developer Resources v${version}\n\nThis is the comprehensive resource hub for all ALN development needs, including syntax examples, tutorials, and code samples." > ~/.aln/dev_resources/docs/overview.md
-        
+
         # Initialize documentation
         if [ ! -d ~/.aln/dev_resources/docs ]; then
             mkdir -p ~/.aln/dev_resources/docs
             @LOG "Documentation directory created."
         fi
-        
+
         # Initialize examples
         if [ ! -d ~/.aln/dev_resources/examples ]; then
             mkdir -p ~/.aln/dev_resources/examples
             @LOG "Examples directory created."
         fi
-        
+
         # Initialize tutorials
         if [ ! -d ~/.aln/dev_resources/tutorials ]; then
             mkdir -p ~/.aln/dev_resources/tutorials
             @LOG "Tutorials directory created."
         fi
-        
+
         # Initialize cheatsheets
         if [ ! -d ~/.aln/dev_resources/cheatsheets ]; then
             mkdir -p ~/.aln/dev_resources/cheatsheets
             @LOG "Cheatsheets directory created."
         fi
-        
+
         # Initialize configuration
         if [ ! -f ~/.aln/dev_resources/config.json ]; then
             echo -e "{\n  \"version\": \"${version}\",\n  \"compliance\": \"${compliance}\",\n  \"platform\": \"${platform}\",\n  \"runtime\": \"REAL\",\n  \"self_evolution\": true\n}" > ~/.aln/dev_resources/config.json
             @LOG "Developer resources configuration initialized."
         fi
-        
+
         # Initialize self-evolution
         if [ ! -f ~/.aln/dev_resources/evolution_log.json ]; then
             echo -e "{\n  \"evolution_log\": [],\n  \"last_evolution\": \"${version}\"\n}" > ~/.aln/dev_resources/evolution_log.json
             @LOG "Self-evolution log initialized."
         fi
-        
+
         @LOG "Developer resources integration complete. All components initialized."
     }
 }
@@ -160,7 +160,7 @@
         mkdir -p ~/.aln/dev_resources/hot_patches
         echo -e "#!/bin/bash\n# ALN Developer Resources Hot Patching Script\n# Automatically applied during boot\n\n# Update documentation\naln.dev_resources.update --docs\n\n# Apply security patches\naln.dev_resources.patch --security\n\n# Update examples\naln.dev_resources.update --examples" > ~/.aln/dev_resources/hot_patches/patch_001.sh
         chmod +x ~/.aln/dev_resources/hot_patches/patch_001.sh
-        
+
         @LOG "Hot patching system initialized."
     }
 }
@@ -238,19 +238,19 @@
         if force_trigger == "DEV_RESOURCES" || force_trigger == "RESOURCES_BOOT" || force_trigger == "ALN_RESOURCES" || force_trigger == "DEV_BOOT" {
             @LOG "STRICT & STICKY TRIGGER DETECTED: ${force_trigger}"
             @LOG "Initiating ALN-Developer-Resources boot sequence..."
-            
+
             # Run all initialization steps
             pre_init_checks()
             system_config()
             developer_resources_integration()
             hot_patching()
-            
+
             # Apply hot patches
             for patch in ~/.aln/dev_resources/hot_patches/*.sh; do
                 @LOG "Applying hot patch: ${patch}"
                 bash ${patch}
             }
-            
+
             # Initialize command interface
             aln_command_interface()
         } else {
@@ -301,22 +301,22 @@
     @EXEC {
         @LOG "Initializing ALN-User-Game-Setup v${version}"
         @LOG "Checking dependencies..."
-        
+
         # Check for essential dependencies
         DEPENDENCIES = ["git", "curl", "jq", "python3"]
         MISSING_DEPS = []
-        
+
         for dep in DEPENDENCIES {
             if ! command -v dep &> /dev/null; then
                 MISSING_DEPS += dep
             fi
         }
-        
+
         # Install missing dependencies if possible
         if MISSING_DEPS.length > 0 {
             @LOG "Missing dependencies: ${MISSING_DEPS.join(', ')}"
             @LOG "Attempting to install..."
-            
+
             # Try to install dependencies based on OS
             if [ -f /etc/os-release ]; then
                 . /etc/os-release
@@ -341,7 +341,7 @@
                 @THROW "OS detection failed"
             }
         }
-        
+
         @LOG "All dependencies satisfied. Proceeding with initialization."
     }
 }
@@ -360,7 +360,7 @@
         mkdir -p ~/.aln/user_game/profiles
         mkdir -p ~/.aln/user_game/saves
         mkdir -p ~/.aln/user_game/logs
-        
+
         # Initialize configuration
         CONFIG = {
             "version": version,
@@ -382,31 +382,31 @@
     @EXEC {
         # Initialize user game setup
         echo -e "ALN User Game Setup v${version}\n\nThis framework enables personalized game configuration and setup for all users." > ~/.aln/user_game/docs/setup.md
-        
+
         # Initialize user profiles
         if [ ! -d ~/.aln/user_game/profiles ]; then
             mkdir -p ~/.aln/user_game/profiles
             @LOG "User profiles directory created."
         fi
-        
+
         # Create default user profile
         if [ ! -f ~/.aln/user_game/profiles/default.profile ]; then
             echo -e "User: Default\nVersion: ${version}\nCompliance: ${compliance}\nTheme: Light\nLanguage: English" > ~/.aln/user_game/profiles/default.profile
             @LOG "Default user profile created."
         fi
-        
+
         # Initialize game saves
         if [ ! -d ~/.aln/user_game/saves ]; then
             mkdir -p ~/.aln/user_game/saves
             @LOG "Game saves directory created."
         fi
-        
+
         # Initialize configuration
         if [ ! -f ~/.aln/user_game/config.json ]; then
             echo -e "{\n  \"version\": \"${version}\",\n  \"compliance\": \"${compliance}\",\n  \"platform\": \"${platform}\",\n  \"runtime\": \"REAL\",\n  \"user_profile\": \"default\"\n}" > ~/.aln/user_game/config.json
             @LOG "User game configuration initialized."
         fi
-        
+
         @LOG "User game setup integration complete. All components initialized."
     }
 }
@@ -421,7 +421,7 @@
         mkdir -p ~/.aln/user_game/hot_patches
         echo -e "#!/bin/bash\n# ALN User Game Setup Hot Patching Script\n# Automatically applied during boot\n\n# Update user profiles\naln.user_game.update --profiles\n\n# Apply security patches\naln.user_game.patch --security\n\n# Update game saves\naln.user_game.update --saves" > ~/.aln/user_game/hot_patches/patch_001.sh
         chmod +x ~/.aln/user_game/hot_patches/patch_001.sh
-        
+
         @LOG "Hot patching system initialized."
     }
 }
@@ -455,7 +455,7 @@
                 @LOG "Usage: aln profile.create --name \"<profile_name>\""
                 return
             }
-            
+
             PROFILE_NAME = args[1]
             @LOG "Creating new user profile: ${PROFILE_NAME}"
             if [ ! -f ~/.aln/user_game/profiles/${PROFILE_NAME}.profile ]; then
@@ -470,7 +470,7 @@
                 @LOG "Usage: aln profile.select --name \"<profile_name>\""
                 return
             }
-            
+
             PROFILE_NAME = args[1]
             @LOG "Selecting user profile: ${PROFILE_NAME}"
             if [ -f ~/.aln/user_game/profiles/${PROFILE_NAME}.profile ]; then
@@ -493,7 +493,7 @@
                 @LOG "Usage: aln save.load --name \"<save_name>\""
                 return
             }
-            
+
             SAVE_NAME = args[1]
             @LOG "Loading game save: ${SAVE_NAME}"
             if [ -f ~/.aln/user_game/saves/${SAVE_NAME}.save ]; then
@@ -508,7 +508,7 @@
                 @LOG "Usage: aln save.create --name \"<save_name>\""
                 return
             }
-            
+
             SAVE_NAME = args[1]
             @LOG "Creating new game save: ${SAVE_NAME}"
             if [ ! -f ~/.aln/user_game/saves/${SAVE_NAME}.save ]; then
@@ -540,19 +540,19 @@
         if force_trigger == "USER_GAME_BOOT" || force_trigger == "GAME_SETUP" || force_trigger == "USER_SETUP" || force_trigger == "GAME_BOOT" {
             @LOG "STRICT & STICKY TRIGGER DETECTED: ${force_trigger}"
             @LOG "Initiating ALN-User-Game-Setup boot sequence..."
-            
+
             # Run all initialization steps
             pre_init_checks()
             system_config()
             user_game_setup_integration()
             hot_patching()
-            
+
             # Apply hot patches
             for patch in ~/.aln/user_game/hot_patches/*.sh; do
                 @LOG "Applying hot patch: ${patch}"
                 bash ${patch}
             }
-            
+
             # Initialize command interface
             aln_command_interface()
         } else {
@@ -572,3 +572,18 @@
     }
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

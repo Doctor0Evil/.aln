@@ -1,0 +1,24 @@
+LiveGraphizer
+text
+module LiveGraphizer {
+  function render(graph_structure):
+    # Outputs generic, non-game/IP structure as event-flow
+    for node in graph_structure:
+      print("|", node.label, "→", node.children)
+    return "Graph Render Complete"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

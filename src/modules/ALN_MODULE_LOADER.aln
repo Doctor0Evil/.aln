@@ -1,0 +1,46 @@
+PACKAGE ALN_MODULE_LOADER
+
+  GLOBAL loaded_modules = {}
+
+  ACTION load_module
+    INPUT module_name string
+    EXEC
+      IF NOT EXISTS loaded_modules[module_name] THEN
+        MODULE_REGISTRY.load module_name
+        loaded_modules[module_name] = true
+        LOG "[Loader] Module loaded: " + module_name
+      ELSE
+        LOG "[Loader] Module already loaded: " + module_name
+      ENDIF
+
+  ACTION integrate_all
+    EXEC
+      modules = [
+        "AI_Combat_Logic",
+        "ContinuousLearningLoop",
+        "NPC_Dialogue_Procedural",
+        "CommunityGovernance",
+        "CommunityMemoryBridge",
+        "CollectorCards",
+        "ReplayAudit",
+        "NPC_AI_MultiAgent"
+      ]
+      FOR mod IN modules
+        ACTION load_module mod
+      ENDFOR
+      LOG "[Loader] All modules integrated successfully."
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

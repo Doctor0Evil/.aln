@@ -1,0 +1,71 @@
+module AI_Combat_Logic
+
+  CONST combat_outcomes = ["hit", "miss", "critical_hit", "blocked", "evaded", "stunned", "skip"]
+
+  ACTION evaluate_combat_turn player, enemy, context
+    LOG "=== Combat Turn Start ==="
+    LOG "Player Status:", player.status_effects
+    LOG "Enemy Status:", enemy.status_effects
+
+    mods = calculate_total_modifiers(player)
+
+    IF "stunned" IN player.status_effects
+      LOG "Player is stunned and skips turn."
+      RETURN combat_outcomes[6] # skip
+    ENDIF
+
+    attack_penalty = 0
+    IF "blinded" IN player.status_effects
+      attack_penalty -= 5
+      LOG "Player blinded: -5 attack penalty."
+    ENDIF
+
+    attack_roll = DICE.roll(20) + player.stats.agility + mods.get("agility",0) + attack_penalty
+    defense_roll = DICE.roll(20) + enemy.stats.agility + calculate_total_modifiers(enemy).get("agility",0)
+
+    LOG "Player attack roll:", attack_roll
+    LOG "Enemy defense roll:", defense_roll
+
+    IF attack_roll >= defense_roll + 10
+      damage = calculate_damage(player.weapon, enemy.armor) * 2
+      enemy.health -= damage
+      LOG "Critical hit! Damage:", damage
+      RETURN combat_outcomes[2]
+    ELSE IF attack_roll > defense_roll
+      damage = calculate_damage(player.weapon, enemy.armor)
+      enemy.health -= damage
+      LOG "Hit! Damage:", damage
+      RETURN combat_outcomes[0]
+    ELSE IF attack_roll == defense_roll
+      LOG "Attack blocked."
+      RETURN combat_outcomes[3]
+    ELSE
+      LOG "Missed attack."
+      RETURN combat_outcomes[1]
+    ENDIF
+  END
+
+  ACTION calculate_damage weapon, armor
+    base_damage = weapon.damage + weapon.ammo.damage_bonus
+    armor_reduction = armor.defense * 0.5
+    net_damage = base_damage - armor_reduction
+    IF net_damage < 0 THEN net_damage = 0 ENDIF
+    RETURN net_damage
+  END
+
+ENDMODULE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

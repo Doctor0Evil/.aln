@@ -1,0 +1,7 @@
+graph agp.example {
+  p#{001}: { label: "UserInput", dep_ref: "DataInput", ps: "ingest" }
+  p#{002}: { label: "TraitSynthesis", dep_ref: "PersonalityMatrix", ps: "profile" }
+  p#{003}: { label: "DecisionPoint", dep_ref: "DecisionEngine", ps: "core_logic" }
+  p#{004}: { label: "RouteResult", dep_ref: "ActionPipeline", ps: "response" }
+  p#{005}: { label: "AuditLog", dep_ref: "TraceSyncAudit", ps: "audit" }
+}

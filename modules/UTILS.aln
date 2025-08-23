@@ -1,0 +1,154 @@
+// ============================================
+// ALN • UTILS concrete implementations (delegates to UTIL RNG)
+// ============================================
+@PACKAGE UTILS {
+  IMPORT UTIL
+
+  ACTION uniform { INPUT a float, b float EXEC { RETURN CALL UTIL.uniform(a, b) } }
+  ACTION white_noise { INPUT scale float EXEC { RETURN CALL UTIL.white_noise(scale) } }
+
+  ACTION generate_noise {
+    INPUT n int, mu float, sigma float
+    EXEC {
+      out = []
+      // Poor-man's Gaussian via 3 uniforms (Irwin–Hall)
+      REPEAT i IN RANGE(0, n ?? 0) DO
+        u = CALL UTIL.rand01()
+        v = CALL UTIL.rand01()
+        w = CALL UTIL.rand01()
+        z = ((u + v + w) / 3.0 - 0.5) * 2.0
+        out.APPEND(mu + z * sigma)
+      END
+      RETURN out
+    }
+  }
+
+  ACTION vector_add {
+    INPUT a list, b list
+    EXEC {
+      res = []
+      len = MAX(LEN(a ?? []), LEN(b ?? []))
+      FOR i IN RANGE(0, len) DO
+        ai = a[i] ?? 0.0
+        bi = b[i] ?? 0.0
+        res.APPEND(ai + bi)
+      END
+      RETURN res
+    }
+  }
+
+  ACTION apply_focus {
+    INPUT w list, strength float
+    EXEC {
+      // Nudge weights toward their mean
+      mean = 0.0
+      L = LEN(w ?? [])
+      IF L > 0 THEN
+        FOR x IN w DO mean += (x ?? 0.0) END
+        mean = mean / L
+      END
+      k = CLAMP(0.0, 1.0, strength ?? 0.0)
+      res = []
+      FOR x IN w DO
+        xi = x ?? 0.0
+        res.APPEND(xi + (mean - xi) * k * 0.5)
+      END
+      RETURN res
+    }
+  }
+
+  ACTION hysteresis {
+    INPUT cooldowns map, ctx map
+    EXEC {
+      // Sum fractional penalties of active cooldowns
+      pen = 0.0
+      FOR k, v IN (cooldowns ?? {}) DO
+        pen += MAX(0.0, v ?? 0.0)
+      END
+      // light decay each tick
+      FOR k, v IN (cooldowns ?? {}) DO
+        cooldowns[k] = MAX(0.0, (v ?? 0.0) - 0.05)
+      END
+      RETURN MIN(0.5, pen)
+    }
+  }
+
+  ACTION surprise_factor {
+    INPUT ctx map
+    EXEC {
+      // Reward shifts in hp delta or first-turn spikes
+      bonus = 0.0
+      IF (ctx.first_turn ?? false) THEN bonus += 0.1 ENDIF
+      IF (ctx.hp_drop ?? 0.0) > 6 THEN bonus += 0.1 ENDIF
+      RETURN bonus
+    }
+  }
+
+  ACTION sample_event_bank {
+    INPUT ctx map
+    EXEC {
+      r = CALL UTIL.rand01()
+      IF r < 0.3 THEN RETURN { kind: "ambient", intensity: 0.3 }
+      ELSEIF r < 0.6 THEN RETURN { kind: "cover_shift", intensity: 0.5 }
+      ELSE RETURN { kind: "fog_patch", intensity: 0.6 } ENDIF
+    }
+  }
+
+  ACTION apply_cooldown {
+    INPUT cds map, ev map, strength float
+    EXEC {
+      key = ev.kind ?? "generic"
+      cds[key] = CLAMP(0.0, 1.0, strength ?? 0.5)
+    }
+  }
+
+  ACTION blend_mood {
+    INPUT ctx map, persona map
+    EXEC {
+      // Simple mood from realm/time + persona baseline
+      base = (persona.empathy ?? 0.4) - 0.2
+      val = base + (ctx.realm == "Medieval.Ages" ? 0.05 : 0.0)
+      aro = 0.3 + (ctx.time == "dusk" ? -0.05 : 0.0)
+      RETURN { valence: CLAMP(-1.0, 1.0, val), arousal: CLAMP(0.0, 1.0, aro) }
+    }
+  }
+
+  ACTION select_style {
+    INPUT tone list, mood map
+    EXEC {
+      T = tone ?? ["measured"]
+      // Lower valence = "dry", higher = last available
+      idx = (mood.valence ?? 0.0) > 0.2 ? (LEN(T)-1) : 0
+      RETURN T[idx]
+    }
+  }
+
+  ACTION template_select {
+    INPUT persona map, mood map, ctx map
+    EXEC {
+      style = CALL select_style(persona.tone, mood)
+      realm = ctx.realm ?? "Neutral"
+      text = ctx.text ?? "..."
+      RETURN "[" + realm + "][" + style + "] " + text
+    }
+  }
+
+  ACTION reduce_paths {
+    EXEC {
+      // Placeholder: returns zeros if TRACELOG is external
+      RETURN { nodes: 0, forks: 0 }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,21 @@
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Action Log Schema",
+  "description": "Standardized logs for all player actions",
+  "type": "object",
+  "properties": {
+    "user": { "type": "string" },
+    "action": {
+      "type": "string",
+      "enum": [
+        "roll", "explore", "vote", "cast", "questcomplete"
+      ]
+    },
+    "details": { "type": "string" },
+    "time": { "type": "string", "format": "date-time" },
+    "metadata": { "type": "object" }
+  },
+  "required": ["user", "action", "details", "time"]
+}
+```

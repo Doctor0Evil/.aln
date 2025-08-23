@@ -1,0 +1,176 @@
+// =========================================================
+//  ALN_INSTANT_GENERATOR.aln
+//  Universal ALN Input Handler & Mythos Engine
+//  Path: src/packages/ALN_INSTANT_GENERATOR.aln
+// =========================================================
+
+PACKAGE ALN_INSTANT_GENERATOR
+
+GLOBAL registry        // Registered expansion handlers (quests, artifacts, lore, AI, etc.)
+GLOBAL endpoint_map    // Pattern → endpoint routing
+GLOBAL log_history     // All actions, as living world-mythos
+
+# --- Main Invocation ---
+ACTION handle_input
+    INPUT aln_input string
+    EXEC
+        LOG 🌌 "The world listens: '" + aln_input + "'"
+        type = detect_type(aln_input)
+        context = analyze_structure(aln_input)
+        route = determine_route(aln_input, type, context)
+
+        IF context["trigger"] == "lore_quest_proposal" THEN
+            LOG 📖 "A tale in the Grimoire becomes prophecy..."
+            result = expand_quest_from_lore(context)
+            distribute_result(result, context)
+            RETURN result
+        ENDIF
+
+        IF context["trigger"] == "mutation_special" THEN
+            LOG 🔥 "A mutation stirs — custom quests emerge."
+            result = trigger_mutation_expansion(context)
+            distribute_result(result, context)
+            RETURN result
+        ENDIF
+
+        IF context["trigger"] == "governance_ai_vote" THEN
+            LOG 🏛️ "Decree passed: the AI forges something new."
+            result = ai_governance_creation(context)
+            distribute_result(result, context)
+            RETURN result
+        ENDIF
+
+        expansion = expand_aln(aln_input, context, route)
+        dispatch_to_endpoints(expansion, route)
+        distribute_result(expansion, context)
+        log_action(aln_input, expansion, context)
+        RETURN expansion
+
+# --- Input Analysis ---
+ACTION detect_type
+    INPUT source string
+    EXEC
+        IF source.endswith(".aln") THEN RETURN "aln_script"
+        IF source.startswith("@system") THEN RETURN "system_directive"
+        IF source.contains("#quest_proposal") THEN RETURN "lore_metaquest"
+        IF source.contains("gov_vote_passed") THEN RETURN "governance_trigger"
+        RETURN "unknown"
+
+ACTION analyze_structure
+    INPUT source string
+    EXEC
+        meta = {filename: source, length_est: RANDOM(12,64), trigger: ""}
+        IF source.contains("#quest_proposal") THEN meta["trigger"] = "lore_quest_proposal"
+        IF PLAYER.exists AND PLAYER.PLAYERBASE[current_user]["mutations"].length > 0 THEN
+            meta["trigger"] = "mutation_special"
+            meta["mutation"] = PLAYER.PLAYERBASE[current_user]["mutations"]
+        ENDIF
+        IF source.contains("gov_vote_passed") THEN
+            meta["trigger"] = "governance_ai_vote"
+            meta["proposal"] = extract_proposal(source)
+        ENDIF
+        RETURN meta
+
+ACTION determine_route
+    INPUT name string, type string, context map
+    EXEC
+        IF context["trigger"] == "lore_quest_proposal" THEN RETURN registry["quest_branch_handler"]
+        IF context["trigger"] == "mutation_special" THEN RETURN registry["mutation_handler"]
+        IF context["trigger"] == "governance_ai_vote" THEN RETURN registry["ai_governance"]
+        IF type == "aln_script" THEN RETURN registry["aln_handler"]
+        IF type == "system_directive" THEN RETURN endpoint_map["system"]
+        RETURN registry["default"]
+
+# --- Expansion Logic ---
+ACTION expand_quest_from_lore
+    INPUT context map
+    EXEC
+        quest_name = "QuestOf_" + SLUGIFY(context["filename"])
+        QUEST_ENGINE.create_branch quest_name
+        LORE.add_entry("A new quest is woven from the lore: " + quest_name)
+        LOG ⚔️ "Quest branch born: " + quest_name
+        RETURN {"type": "quest", "name": quest_name}
+
+ACTION trigger_mutation_expansion
+    INPUT context map
+    EXEC
+        mut = context["mutation"][0]
+        quest = "ShadowPath_" + mut + "_" + RANDOM(1000,9999)
+        QUEST_ENGINE.create_branch quest
+        LOG "🧬 Mutation " + mut + " shapes a hidden story: " + quest
+        LORE.add_entry("Mutation-generated quest: " + quest)
+        RETURN {"type": "quest", "mutation": mut, "name": quest}
+
+ACTION ai_governance_creation
+    INPUT context map
+    EXEC
+        desc = context["proposal"] OR "Unspecified"
+        ai_output = AI.GENERATE_ALN_CODE("New artifact for: " + desc)
+        ARTIFACTS.craft_artifact ai_output["name"] ai_output["power"]
+        LORE.add_entry("AI-forged artifact: " + ai_output["name"])
+        LOG "🤖 AI has spoken: " + ai_output["name"]
+        RETURN {"type": "artifact", "name": ai_output["name"]}
+
+ACTION expand_aln
+    INPUT name string, context map, route string
+    EXEC
+        expansion = []
+        FOR i IN RANGE(1, RANDOM(10,41)) DO
+            expansion.ADD("// Generated line " + TO_STRING(i) + ": magic = incant('"+name+"',"+TO_STRING(i)+")")
+        ENDFOR
+        LOG "✨ Expansion: " + TO_STRING(expansion[0:3]) + "..."
+        RETURN expansion
+
+ACTION dispatch_to_endpoints
+    INPUT output, route
+    EXEC
+        IF route == "system" THEN
+            SYSTEM.API.dispatch output
+        ELSE IF route == "quest_branch_handler" THEN
+            QUEST_ENGINE.load output
+        ELSE IF route == "ai_governance" THEN
+            ARTIFACTS.save output
+        ELSE
+            OUTPUT.push output
+        ENDIF
+
+ACTION distribute_result
+    INPUT res, context
+    EXEC
+        LOG "🌠 Distribution complete — the world remembers."
+        // Could trigger in-game alerts, broadcasts, etc.
+
+ACTION log_action
+    INPUT inp, outp, ctx
+    EXEC
+        log_history.APPEND({input: inp, output: outp, context: ctx, time: TIME.now()})
+        LOG "📜 HISTORY: " + inp
+
+// ----- Support -----
+ACTION extract_proposal
+    INPUT src string
+    EXEC
+        # Example: extract after "gov_vote_passed:" (if any)
+        idx = INDEXOF(src, "gov_vote_passed:")
+        IF idx == -1 THEN RETURN "Unknown"
+        RETURN TRIM(SUBSTR(src, idx+16, 96))
+
+// =========================================================
+// End of ALN_INSTANT_GENERATOR
+// Worlds are now ready to expand on any input.
+// =========================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

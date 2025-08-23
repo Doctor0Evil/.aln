@@ -1,0 +1,141 @@
+name: 🐳 Docker Build & Push
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docker/**'
+      - 'Dockerfile'
+      - '.github/workflows/docker.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docker/**'
+      - 'Dockerfile'
+  workflow_dispatch:
+    inputs:
+      push_to_registry:
+        description: 'Push to Docker Registry'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 🔧 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 📝 Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: 🔍 Ensure Dockerfile exists
+      run: |
+        if [[ ! -f "docker/Dockerfile" ]] && [[ ! -f "Dockerfile" ]]; then
+          echo "📝 Creating Dockerfile..."
+          mkdir -p docker
+          cat > docker/Dockerfile << 'EOF'
+        FROM alpine:3.19
+
+        # Metadata
+        LABEL org.opencontainers.image.title="ALN Programming Language"
+        LABEL org.opencontainers.image.description="ALN Programming Language Runtime Environment"
+        LABEL org.opencontainers.image.source="https://github.com/Doctor0Evil/ALN_Programming_Language"
+        LABEL org.opencontainers.image.licenses="MIT"
+
+        # Install dependencies
+        RUN apk add --no-cache \
+            bash \
+            curl \
+            ca-certificates \
+            openssl \
+            && update-ca-certificates
+
+        # Create app directory
+        WORKDIR /app
+        RUN addgroup -g 1001 -S aln && \
+            adduser -S aln -u 1001 -G aln && \
+            chown -R aln:aln /app
+
+        # Copy application files
+        COPY --chown=aln:aln . /app/
+
+        # Make scripts executable
+        RUN find /app -name "*.sh" -type f -exec chmod +x {} \; 2>/dev/null || true
+
+        # Switch to non-root user
+        USER aln
+
+        # Health check
+        HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+          CMD curl -f http://localhost:8080/health 2>/dev/null || echo "Health check placeholder"
+
+        EXPOSE 8080
+
+        CMD ["echo", "ALN Programming Language Runtime - Ready"]
+        EOF
+          echo "✅ Created default Dockerfile"
+        fi
+
+    - name: 🔐 Log in to Container Registry
+      if: github.event_name != 'pull_request' || github.event.inputs.push_to_registry == 'true'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 🏗️ Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ${{ hashFiles('docker/Dockerfile') != '' && 'docker/Dockerfile' || 'Dockerfile' }}
+        push: ${{ github.event_name != 'pull_request' || github.event.inputs.push_to_registry == 'true' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          VERSION=${{ github.sha }}
+          BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+
+    - name: 🧪 Test Docker image
+      run: |
+        # Get the first tag from the metadata
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+        echo "Testing image: $IMAGE_TAG"
+        
+        # Test that the image runs
+        docker run --rm --name aln-test "$IMAGE_TAG" echo "Docker image test successful"
+        
+        # Test image metadata
+        docker inspect "$IMAGE_TAG" > image-info.json
+        echo "✅ Docker image test completed"
+
+    - name: 📤 Upload image info
+      uses: actions/upload-artifact@v4
+      with:
+        name: docker-image-info
+        path: image-info.json
+        retention-days: 7

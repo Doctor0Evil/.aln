@@ -1,0 +1,34 @@
+name: Run PowerShell cross-platform
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  run-powershell:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install PowerShell
+        uses: PSModule/install-powershell@v1
+        with:
+          Version: 'latest'
+
+      - name: Run cross-platform PowerShell script
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell version in this runner:"
+          $PSVersionTable
+          # Example: run repo-linked script (edit as needed)
+          ./scripts/your-script.ps1
+
+# Notes:
+# - This workflow runs on pushes and PRs to main/develop, and is manually triggerable.
+# - PowerShell is installed on Ubuntu runners via PSModule/install-powershell@v1.
+# - shell: pwsh will work on all OSes after the install step; change run value to target your script.

@@ -1,0 +1,54 @@
+```aln
+PACKAGE POS_NAV_DEMO
+
+    IMPORT ALN_POS_NAVIGATION
+
+    # Boot system and navigation
+    ACTION main_demo
+        EXEC
+            LOG "=== ALN POS DEMO ==="
+            ACTION ALN_POS_NAVIGATION.initialize_navigation_tree()
+
+            # Demo users: cashier, manager, auditor, admin
+            users = [
+                { "id": "alice",  "roles": ["cashier"] },
+                { "id": "bobby",  "roles": ["manager"] },
+                { "id": "claude", "roles": ["auditor"] },
+                { "id": "dana",   "roles": ["admin"] }
+            ]
+
+            FOR user IN users
+                LOG "\n--- Demo for {user['id'].capitalize()} ({user['roles'][0]}) ---"
+                ACTION ALN_POS_NAVIGATION.set_user_context(user["id"], "root")
+                ACTION ALN_POS_NAVIGATION.display_navigation_menu(user["id"], user["roles"])
+                # Try navigating each node
+                options = ACTION ALN_POS_NAVIGATION.get_navigation_options(user["id"], user["roles"])
+                FOR opt IN options
+                    LOG "* {user['id']} attempts to access {opt['id']}:"
+                    result = ACTION ALN_POS_NAVIGATION.navigate_to_node(user["id"], opt["id"], user["roles"])
+                    IF result THEN
+                        LOG "✓ Success!\nBreadcrumb: " + ACTION ALN_POS_NAVIGATION.get_breadcrumb(user["id"])
+                    ELSE
+                        LOG "✗ Access Denied."
+                    ENDIF
+                ENDFOR
+            ENDFOR
+
+    # Run
+    main_demo()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

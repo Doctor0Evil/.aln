@@ -1,0 +1,35 @@
+```aln
+// Timeline listing
+FUNCTION LoreComposer_generate_timeline_json(): json { ... }
+
+// Lore map query
+FUNCTION LoreComposer_lore_by_location(location: string): list<LoreEntry> { ... }
+
+// Vote, comment, retcon
+FUNCTION LoreComposer_vote(lore_id: uuid, up: bool) { ... }
+FUNCTION LoreComposer_add_comment(lore_id: uuid, author: string, comment: string) { ... }
+FUNCTION LoreComposer_get_history(lore_id: uuid): list<LoreEntryVersion> { ... }
+
+// Community proposals
+FUNCTION LoreComposer_propose(event: Event, author: string): LoreEntry { ... }
+FUNCTION LoreComposer_approve_proposal(lore_id: uuid, approver: string): bool { ... }
+
+// Personal collections
+FUNCTION User_add_favourite(user_id: uuid, lore_id: uuid): void { ... }
+FUNCTION User_add_collection(user_id: uuid, name: string, lore_ids: list<uuid>): void { ... }
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

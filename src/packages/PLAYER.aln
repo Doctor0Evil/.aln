@@ -1,0 +1,77 @@
+```aln
+PACKAGE PLAYER
+
+    GLOBAL PLAYERBASE
+
+    ACTION create
+        INPUT username string
+        EXEC
+            PLAYERBASE[username] = {
+                "health": 100,
+                "luck": 0,
+                "creativity": 1,
+                "gp": 0,
+                "level": 1,
+                "xp": 0,
+                "mutations": [],
+                "spells": [],
+                "inventory": []
+            }
+            LOG 🧙 New adventurer {username} enters ALNFantasia.
+            RETURN PLAYERBASE[username]
+
+    ACTION add_gp
+        INPUT username string, amount int
+        EXEC
+            PLAYERBASE[username]["gp"] += amount
+            LOG {username} gains {amount} Grimoire Points! (Total = {PLAYERBASE[username]["gp"]})
+            RETURN PLAYERBASE[username]["gp"]
+
+    ACTION add_xp
+        INPUT username string, xp int
+        EXEC
+            PLAYERBASE[username]["xp"] += xp
+            IF PLAYERBASE[username]["xp"] >= (100 * PLAYERBASE[username]["level"]) THEN
+                PLAYERBASE[username]["level"] += 1
+                PLAYERBASE[username]["xp"] = 0
+                LOG 🌟 {username} leveled up! Now level {PLAYERBASE[username]["level"]}.
+            ENDIF
+            RETURN PLAYERBASE[username]["xp"]
+
+    ACTION add_mutation
+        INPUT username string, mutation string
+        EXEC
+            APPEND PLAYERBASE[username]["mutations"] mutation
+            LOG ⚡ Mutation gained by {username}: {mutation}!
+            RETURN PLAYERBASE[username]["mutations"]
+
+    ACTION learn_spell
+        INPUT username string, spell string
+        EXEC
+            APPEND PLAYERBASE[username]["spells"] spell
+            LOG ✨ {username} learned spell: {spell}.
+            RETURN PLAYERBASE[username]["spells"]
+
+    ACTION status
+        INPUT username string
+        EXEC
+            stats = PLAYERBASE[username]
+            LOG 🔎 Status of {username} → HP: {stats["health"]}, Luck: {stats["luck"]}, Level: {stats["level"]}, GP: {stats["gp"]}
+            LOG Spells: {stats["spells"]}, Mutations: {stats["mutations"]}, Inventory: {stats["inventory"]}
+            RETURN stats
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

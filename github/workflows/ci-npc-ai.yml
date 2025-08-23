@@ -1,0 +1,34 @@
+name: NPC AI CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup ALN Runtime
+        run: |
+          echo "Installing ALN runtime..."
+          # Replace with actual install step when available
+          # Example: curl -sL https://aln-lang.org/install.sh | sh
+
+      - name: Run CI Pipeline
+        run: |
+          aln run modules/CI_NPC_AI_Pipeline.aln
+          echo "✅ NPC AI CI Pipeline completed successfully."
+
+      - name: Upload Dashboard Log
+        uses: actions/upload-artifact@v3
+        if: success()
+        with:
+          name: behavior-log
+          path: dashboards/behavior-log.aln

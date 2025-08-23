@@ -25,22 +25,22 @@
     @EXEC {
         @LOG "Initializing ALN-Regex-Pattern-Evolution v${version}"
         @LOG "Checking dependencies..."
-        
+
         # Check for essential dependencies
         DEPENDENCIES = ["python3", "jq"]
         MISSING_DEPS = []
-        
+
         for dep in DEPENDENCIES {
             if ! command -v dep &> /dev/null {
                 MISSING_DEPS += dep
             }
         }
-        
+
         # Install missing dependencies if possible
         if MISSING_DEPS.length > 0 {
             @LOG "Missing dependencies: ${MISSING_DEPS.join(', ')}"
             @LOG "Attempting to install..."
-            
+
             # Try to install dependencies based on OS
             if [ -f /etc/os-release ] {
                 . /etc/os-release
@@ -65,7 +65,7 @@
                 @THROW "OS detection failed"
             }
         }
-        
+
         @LOG "All dependencies satisfied. Proceeding with initialization."
     }
 }
@@ -79,14 +79,14 @@
     @EXEC {
         # Create regex patterns directory
         mkdir -p ~/.aln/regex_patterns
-        
+
         # Initialize regex pattern database
         echo -e "ALN Regex Pattern Database v${version}\n\nThis is the master repository for all regex patterns used in game development, dialogue parsing, and content analysis." > ~/.aln/regex_patterns/regex_database.md
-        
+
         # Create pattern evolution system
         echo -e "#!/bin/bash\n# ALN Regex Evolution Script\n# Automatically applies pattern improvements\n\n# Optimize pattern relevance\naln.regex.optimize --relevance\n\n# Enhance pattern accuracy\naln.regex.optimize --accuracy\n\n# Apply zero-downtime patch\naln.regex.patch --apply" > ~/.aln/regex_patterns/evolution_patch.sh
         chmod +x ~/.aln/regex_patterns/evolution_patch.sh
-        
+
         @LOG "Regex evolution system initialized successfully."
     }
 }
@@ -100,7 +100,7 @@
     }
     @EXEC {
         @LOG "Optimizing regex patterns for ${pattern_type}..."
-        
+
         # Optimization algorithm
         OPTIMIZATION = {
             "relevance": 0.92,
@@ -108,16 +108,16 @@
             "contextual_relevance": 0.93,
             "adaptability": 0.91
         }
-        
+
         # Apply optimization techniques
         @LOG "Applying optimization techniques..."
         @LOG "  - Relevance boost: ${OPTIMIZATION.relevance * 100}%"
         @LOG "  - Accuracy boost: ${OPTIMIZATION.accuracy * 100}%"
         @LOG "  - Contextual relevance: ${OPTIMIZATION.contextual_relevance * 100}%"
-        
+
         # Update pattern database
         echo -e "Pattern: ${pattern_type}\nRelevance: ${OPTIMIZATION.relevance}\nAccuracy: ${OPTIMIZATION.accuracy}\nContextual Relevance: ${OPTIMIZATION.contextual_relevance}" >> ~/.aln/regex_patterns/regex_database.md
-        
+
         @LOG "Regex pattern optimization complete. New relevance score: ${relevance_score + 5}"
     }
 }
@@ -131,14 +131,14 @@
     }
     @EXEC {
         @LOG "Integrating regex patterns with ALN framework..."
-        
+
         # Apply all optimizations
         regex_optimization(pattern_type: pattern_type, relevance_score: relevance_score, accuracy_score: accuracy_score)
-        
+
         # Apply universal pattern patch
         echo -e "#!/bin/bash\n# ALN Universal Regex Patch\n# Automatically applied during boot\n\n# Apply all pattern optimizations\naln.regex.optimize --all" > ~/.aln/regex_patterns/universal_patch.sh
         chmod +x ~/.aln/regex_patterns/universal_patch.sh
-        
+
         @LOG "Regex pattern integration complete. All patterns now optimized for ${pattern_type} analysis."
     }
 }
@@ -173,7 +173,7 @@
                 @LOG "Usage: aln pattern.test --string \"<test_string>\""
                 return
             }
-            
+
             TEST_STRING = args[1]
             @LOG "Testing regex patterns with string: ${TEST_STRING}"
             # In a real implementation, this would run regex tests
@@ -194,19 +194,19 @@
         if force_trigger == "EVOLVE_REGEX" || force_trigger == "PATTERN_ADAPT" || force_trigger == "REGEX_UPDATE" {
             @LOG "STRICT & STICKY TRIGGER DETECTED: ${force_trigger}"
             @LOG "Initiating ALN-Regex-Pattern-Evolution boot sequence..."
-            
+
             # Run all evolution steps
             system_check()
             pre_init_checks()
             regex_evolution_system()
             system_integration()
-            
+
             # Apply hot patches
             for patch in ~/.aln/regex_patterns/*.sh {
                 @LOG "Applying pattern patch: ${patch}"
                 bash ${patch}
             }
-            
+
             # Initialize command interface
             aln_command_interface()
         } else {
@@ -226,3 +226,18 @@
     }
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

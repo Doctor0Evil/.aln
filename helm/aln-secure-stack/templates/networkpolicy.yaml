@@ -1,0 +1,25 @@
+ ```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: aln-allow-https
+  namespace: aln-namespace
+spec:
+  podSelector:
+    matchLabels:
+      app: aln-fastapi
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 443
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443
+```

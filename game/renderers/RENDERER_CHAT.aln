@@ -1,0 +1,47 @@
+PACKAGE RENDERER_CHAT
+
+    ACTION show_dice_roll
+        INPUT player string, roll int, sides int
+        EXEC
+            LOG 🎲 {player} rolled a {roll} on a d{sides}!
+
+    ACTION show_prompt_crafting
+        INPUT prompt_text string
+        EXEC
+            LOG ✍️ Craft your prompt: {prompt_text}
+
+    ACTION show_inventory
+        INPUT player string, inventory list
+        EXEC
+            LOG 🎒 {player}'s Inventory:
+            FOR item IN inventory
+                LOG  - {item}
+            ENDFOR
+
+    ACTION show_menu
+        INPUT options list
+        EXEC
+            LOG 📜 Menu Options:
+            FOR i, option IN ENUMERATE options
+                LOG  [{i+1}] {option}
+            ENDFOR
+
+    ACTION display_message
+        INPUT message string
+        EXEC
+            LOG 💬 {message}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,81 @@
+PACKAGE SESSION_MANAGER
+
+    GLOBAL SESSIONS
+    GLOBAL LEADERBOARD
+
+    ACTION create_session
+        INPUT session_id string, players list
+        EXEC
+            IF NOT EXISTS SESSIONS[session_id] THEN
+                SESSIONS[session_id] = {
+                    "players": players,
+                    "start_time": TIME.now(),
+                    "state": "active"
+                }
+                LOG 🕹️ Session {session_id} created with players: {players}
+                RETURN session_id
+            ELSE
+                LOG ❌ Session {session_id} already exists.
+                RETURN NULL
+            ENDIF
+
+    ACTION end_session
+        INPUT session_id string
+        EXEC
+            IF EXISTS SESSIONS[session_id] THEN
+                SESSIONS[session_id]["state"] = "ended"
+                LOG 🛑 Session {session_id} ended.
+                RETURN TRUE
+            ELSE
+                LOG ❌ Session {session_id} not found.
+                RETURN FALSE
+            ENDIF
+
+    ACTION add_player
+        INPUT session_id string, player string
+        EXEC
+            IF EXISTS SESSIONS[session_id] THEN
+                APPEND SESSIONS[session_id]["players"] player
+                LOG ➕ Player {player} added to session {session_id}.
+                RETURN TRUE
+            ELSE
+                LOG ❌ Session {session_id} not found.
+                RETURN FALSE
+            ENDIF
+
+    ACTION remove_player
+        INPUT session_id string, player string
+        EXEC
+            IF EXISTS SESSIONS[session_id] THEN
+                REMOVE SESSIONS[session_id]["players"] player
+                LOG ➖ Player {player} removed from session {session_id}.
+                RETURN TRUE
+            ELSE
+                LOG ❌ Session {session_id} not found.
+                RETURN FALSE
+            ENDIF
+
+    ACTION update_leaderboard
+        INPUT player string, gp int, level int
+        EXEC
+            LEADERBOARD[player] = {
+                "gp": gp,
+                "level": level,
+                "last_update": TIME.now()
+            }
+            LOG 🏆 Leaderboard updated for {player}: GP={gp}, Level={level}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,91 @@
+```aln
+PACKAGE IOM
+
+IMPORT AIHELPER  # (see below)
+IMPORT UTILS
+
+GLOBAL IOM_DB
+GLOBAL IOM_SOLVED
+
+# Submit a new memory/fragments
+ACTION submitmemory INPUT memory string, meta map, files array
+  EXEC id UTILS.generateid()
+  record {
+    id: id
+    memory: memory
+    meta: meta
+    files: files
+    status: "unsolved"
+    matches: []
+    confirmations: []
+    votes: 0
+  }
+  IOM_DB[id] = record
+  LOG "Memory submitted with ID " + id
+
+  # AI attempt to solve instantly
+  ai_response AIHELPER.suggest(memory, meta)
+  IF ai_response IS NOT NULL THEN
+    LOG "AI Suggestion: " + ai_response.suggestion
+    APPEND IOM_DB[id].matches ai_response
+  ENDIF
+  RETURN id
+
+# Add a community or AI match suggestion
+ACTION suggestmatch INPUT id string, matchdata map
+  IF IOM_DB[id].status = "solved" THEN
+    LOG "Entry already solved."
+    RETURN
+  ENDIF
+  APPEND IOM_DB[id].matches matchdata
+  LOG "Match suggestion recorded."
+
+# Confirm a match (by OP)
+ACTION confirmmatch INPUT id string, matchindex int, confirmer string
+  IF confirmer != IOM_DB[id].meta.submitter THEN
+    LOG "Only original submitter may confirm."
+    RETURN
+  ENDIF
+  IOM_DB[id].matches[matchindex].confirmation = true
+  APPEND IOM_DB[id].confirmations confirmer
+  IOM_DB[id].status = "solved"
+
+  # Write to constantly expanding IOM archive
+  solved_id UTILS.generate_iom_id()
+  solution_record IOM_DB[id]
+  solution_record.iom_entry_id = solved_id
+  IOM_SOLVED[solved_id] = solution_record
+  LOG "Entry confirmed, catalogued in IOM as " + solved_id
+
+# Query/search, with fallback to AI helper
+ACTION query INPUT q string
+  matches UTILS.fuzzy_search(IOM_DB, q)
+  IF LENGTH(matches) > 0 THEN
+    LOG "Matches found: " + STRING.join(matches, ", ")
+    RETURN matches
+  ENDIF
+  # No direct match - try AI helper
+  ai_suggestion AIHELPER.suggest(q, NULL)
+  IF ai_suggestion IS NOT NULL THEN
+    LOG "AI Suggestion: " + ai_suggestion.suggestion
+    RETURN ai_suggestion
+  ELSE
+    LOG "No match found."
+    RETURN NULL
+  ENDIF
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,25 @@
+DecisionEngine
+text
+module DecisionEngine {
+  function decide(context, personality_profile):
+    # Use formal logic/stochastic control—no proprietary methods
+    choice = "default"
+    if random()<0.2: choice = "alternate"
+    return choice
+  # Output may feed ActionPipeline, always returns generic/non-IP result
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

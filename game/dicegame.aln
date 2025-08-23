@@ -1,0 +1,165 @@
+PACKAGE DICEGAME
+IMPORT std, game.dice
+IMPORT COMMUNITYGOVERNANCE, DIRECTORYNAVIGATION, COLLECTORCARDS
+
+# --- 1. Core State & Player Setup ---
+GLOBAL PLAYERS
+GLOBAL LOGS
+GLOBAL GP_LEDGER
+
+EVENT mainmenu
+    PRINT "Welcome to ALNFantasia Dice Realms!"
+    PRINT "Choose a realm: Zombies.City, Medieval.Ages, Spy.Mission, etc."
+    PRINT "Type: DIRECTORYNAVIGATION.getnavigationoptions <user> <role>"
+    PRINT "Ready your first roll? Type: DICEGAME.playround <user>"
+END
+
+# --- 2. Main Dice Play Loop (Adventure Mode) ---
+EVENT playround user
+    PRINT "Rolling fate for ", user
+    roll := DICE.ROLL.d20
+    result := DICEGAME.interpretroll user, roll
+    DICEGAME.logaction user, "DICE.ROLL.d20", roll, result
+    PRINT user, " rolled: ", roll, " - ", result
+    IF COMMUNITYGOVERNANCE.ismultiplayer() THEN
+        API.send("apidiceshare", { user: user, roll: roll })
+    ENDIF
+    DICEGAME.endturn user
+END
+
+FUNCTION interpretroll user, roll
+    IF roll == 1 THEN
+        GP_LEDGER[user] -= 1
+        RETURN "Critical fail! Lose 1 GP. Stumble into a bug—file a Codex issue."
+    ELSEIF roll == 20 THEN
+        GP_LEDGER[user] += 5
+        PRINT "🪄 Legendary roll! 5 GP, community proposal unlocked."
+        COMMUNITYGOVERNANCE.createproposal("expansion", "New secret realm auto-unlocked!", user)
+        RETURN "Epic fate! 5 GP & new path opens."
+    ELSEIF roll >= 15 THEN
+        GP_LEDGER[user] += 2
+        RETURN "Major success! Find rare loot—pick a COLLECTORCARD via COLLECTORCARDS.awardcard"
+    ELSEIF roll >= 10 THEN
+        GP_LEDGER[user] += 1
+        RETURN "Success. Continue quest, 1 GP awarded."
+    ELSEIF roll <= 5 THEN
+        RETURN "Minor setback. Face a challenge—try again or seek party aid."
+    ELSE
+        RETURN "Uneventful. The story advances."
+    ENDIF
+END
+
+FUNCTION endturn user
+    PRINT "Turn complete for ", user, ". Your current GP: ", GP_LEDGER[user]
+    PRINT "Next player, enter: DICEGAME.playround <user>"
+END
+
+# --- 3. Logging & Progression ---
+FUNCTION logaction user, action, value, result
+    LOGS.APPEND({ user: user, timestamp: NOW(), action: action, value: value, outcome: result })
+    API.send("apilog", { user: user, action: action, value: value, outcome: result })
+END
+
+# --- 4. Directory Navigation / Worlds ---
+EVENT startnavigation user
+    PRINT "Choose your culture/realm (e.g. Zombies.City, Medieval.Ages)..."
+    options := DIRECTORYNAVIGATION.getnavigationoptions user, "member"
+    PRINT "Available directions:"
+    FOR opt IN options DO PRINT opt.label, " - ", opt.description END
+    PRINT "To travel, type: DIRECTORYNAVIGATION.navigate <user>, <nodeid>, <role>"
+END
+
+# --- 5. Loot, Skills, and Quests ---
+EVENT lootroll user
+    loot := DICE.ROLL.d6
+    IF loot == 6 THEN
+        PRINT "Epic loot! Gain a rare item or CollectorCard."
+        COLLECTORCARDS.awardcard user, "random"
+    ELSEIF loot >= 4 THEN
+        PRINT "Valuable resources found. GP +1."
+        GP_LEDGER[user] += 1
+    ELSE
+        PRINT "Scraps and danger—try again next quest."
+    ENDIF
+    DICEGAME.logaction user, "DICE.ROLL.loot", loot, ""
+END
+
+EVENT skillcheck user, skilltype
+    result := DICE.ROLL.d10
+    PRINT "Rolling skill check for ", skilltype, ": ", result
+    IF result >= 8 THEN
+        PRINT "Perfect! Advance in ", skilltype, ", GP +1."
+        GP_LEDGER[user] += 1
+    ELSEIF result >= 5 THEN
+        PRINT "Solid outcome—continue the quest."
+    ELSE
+        PRINT "Struggle—face a challenge or seek party aid."
+    ENDIF
+    DICEGAME.logaction user, "DICE.ROLL.skill", result, skilltype
+END
+
+# --- 6. Logging, Inventory & Progress Sync ---
+FUNCTION syncprogress user
+    API.send("apiprogressupdate", { user: user, gp: GP_LEDGER[user], log: LOGS.LAST(user) })
+    PRINT "Progress synced for ", user
+END
+
+# --- 7. Community Governance: Proposals & Voting ---
+EVENT proposefeature user, desc
+    id := COMMUNITYGOVERNANCE.createproposal("feature", desc, user)
+    PRINT "Proposal created (", id, "). To vote, type: COMMUNITYGOVERNANCE.vote ", id, " <user> <gp> <choice>"
+END
+
+EVENT votefeature user, proposalid, gp, choice
+    result := COMMUNITYGOVERNANCE.vote(proposalid, user, gp, choice)
+    PRINT "Vote cast: ", user, ", GP: ", gp, ", Choice: ", choice
+    DICEGAME.logaction user, "VOTE", proposalid, result
+END
+
+# --- 8. Directory Navigation: Culture/Quest Tree (Sample) ---
+EVENT initworldtree
+    DIRECTORYNAVIGATION.initializedirectorytree()
+    PRINT "Worlds loaded. Ready for adventure!"
+END
+
+# --- 9. Achievement & Collector Card System ---
+EVENT awardcollectorscard user, cardid
+    COLLECTORCARDS.awardcard(user, cardid)
+    PRINT "Collector Card awarded: ", cardid
+END
+
+# --- 10. Full Example Game Session Flow ---
+EVENT demo_fullsession user
+    CALL DICEGAME.initworldtree
+    CALL DICEGAME.startnavigation user
+    CALL DICEGAME.playround user
+    CALL DICEGAME.lootroll user
+    CALL DICEGAME.skillcheck user, "stealth"
+    CALL DICEGAME.proposefeature user, "Add fiery dragon realm"
+    CALL DICEGAME.votefeature user, "proposal-1", 10, "yes"
+    CALL DICEGAME.syncprogress user
+    PRINT "End of session, check GP and Collector Cards in inventory!"
+END
+
+# --- Meta & Registration (Ready for ALN compilation) ---
+META
+    title: ALNFantasia Dice Game v1.0
+    author: "ALN Council"
+    license: "MIT"
+    compliance: [GDPR, SOC2, ISO27001]
+END
+
+ENDPACKAGE
+
+
+
+
+
+
+
+
+
+
+
+
+

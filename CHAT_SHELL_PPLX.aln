@@ -1,0 +1,22 @@
+// ============================================
+// ALN • Perplexity Chat Shell (Encounter flows)
+// Integrates AI_CORE_SYSTEM + Behavior/Personality
+// ============================================
+@PACKAGE CHAT_SHELL_PPLX {
+  IMPORT CORE, ENV_SIM, STATUS, PERSONALITY, DIRECTOR, COMBAT, DIALOG, UTIL
+  IMPORT AI_CORE_SYSTEM, AI_BEHAVIOR_DATABASE, AI_PERSONALITY_MATRIX
+  IMPORT COMET_CONTEXT
+
+  GLOBAL CONFIG {
+    rate_ms: 1100,
+    share_urls: false,
+    default_realm: "Neutral",
+    narrator_persona: "default"
+  }
+
+  // ... (rest of ALN script section goes here)
+}
+
+
+
+

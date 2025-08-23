@@ -1,0 +1,58 @@
+```aln
+rpg_wastes_apoc_ruins {
+  start {
+    display("🏜️ RPG_Wastes.Apocalyptic.Ruins")
+    display("You awake in the dust-plagued ruins. The world is encoded with secrets and debris...")
+    show_menu([
+      { key:"r", label:"Roll dice", event:"roll_dice" },
+      { key:"e", label:"Explore ruins", event:"explore" },
+      { key:"d", label:"Dev Actions", event:"dev_actions" },
+      { key:"s", label:"System", event:"system" }
+    ])
+  }
+  event roll_dice {
+    dice = random(1,100)
+    case {
+      dice < 40: display("You find broken tech — scavenged code module!"),
+      dice > 75: display("You discover a hidden dev terminal. Try a CLI/dev command!"),
+      else: display("Just dust... Try again?")
+    }
+  }
+  event explore {
+    paths = ["South to Null Canyon", "East to the Compiler’s Pit", "Down into /var/ruins"]
+    display("Paths: " + paths.join(", "))
+    // Optionally: More branches, enter battle/special subscenes
+  }
+  event dev_actions {
+    display("Dev Actions (choose): [1] Refactor Renderer [1] Patch Logic  Export State  Inject Tool")
+    get_input =>
+      case {
+        "1": call_event("refactor_renderer"),
+        "2": call_event("patch_logic"),
+        "3": call_event("export_state"),
+        "4": call_event("inject_tool"),
+        default: display("Choose a number from 1 to 4.")
+      }
+  }
+  event refactor_renderer { display("Renderer refactored! Performance up +10%.") }
+  event patch_logic { display("Patched core logic. Game stability up!") }
+  event export_state { context.export("ruins_save_" + now() + ".json"); display("State exported.") }
+  event inject_tool { context.inject_frame("cli_env_game_dev"); }
+  event system { context.enter_shell("cli_env_game_dev") }
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

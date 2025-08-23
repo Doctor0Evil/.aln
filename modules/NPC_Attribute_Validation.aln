@@ -1,0 +1,33 @@
+module NPC_Attribute_Validation
+
+ACTION validate_npc_csv file
+  required_columns ["npc_id","name","type","aggression","speed","dialogue_profile","spawn_time","allowed_zones"]
+  table = csv.read(file)
+  FOR col IN required_columns
+    IF NOT table.hascolumn(col)
+      RAISE "Missing required column: "+col
+  FOR row IN table.rows
+    IF row.aggression < 0 OR row.aggression > 1 OR row.speed < 0 OR row.speed > 1
+      RAISE "Aggression/Speed out of range in row "+row.npc_id
+    IF any(row.value IS null for value IN row.values)
+      RAISE "Null value found in row "+row.npc_id
+  LOG "Validation PASSED:", file
+END
+
+# Call as: aln run NPC_Attribute_Validation.validate_npc_csv data/npc_attributes.aln.csv
+endmodule
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,29 @@
+{
+  "id": "e1",
+  "title": "Rise of the Ashen Comets",
+  "body": "...",
+  "era": "Year 7, Eclipse",
+  "type": "Milestone",
+  "author": "Player42",
+  "contributors": ["Player42", "LoreAI"],
+  "links": ["VaultOfChampions"],
+  "impact": "...",
+  "votes": 57,
+  "comments": [
+    { "author": "Opal", "text": "My favorite battle!", "time": "2025-08-22T01:44:12Z" }
+  ],
+  "history": [
+    {
+      "version": 1,
+      "body": "...old text...",
+      "changed_by": "Player42",
+      "time": "2025-07-01T13:00:00Z",
+      "reason": "original"
+    }
+  ],
+  "location": {
+    "name": "Aether Spires",
+    "coordinates": { "x": 80, "y": 5 }
+  },
+  "saga_id": "saga123"
+}

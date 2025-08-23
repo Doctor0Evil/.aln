@@ -26,22 +26,22 @@
     @EXEC {
         @LOG "Initializing ALN-GamePass-Validation v${version}"
         @LOG "Checking dependencies..."
-        
+
         # Check for essential dependencies
         DEPENDENCIES = ["python3", "sqlite3", "jq", "git"]
         MISSING_DEPS = []
-        
+
         for dep in DEPENDENCIES {
             if ! command -v dep &> /dev/null; then
                 MISSING_DEPS += dep
             fi
         }
-        
+
         # Install missing dependencies if possible
         if MISSING_DEPS.length > 0 {
             @LOG "Missing dependencies: ${MISSING_DEPS.join(', ')}"
             @LOG "Attempting to install..."
-            
+
             # Try to install dependencies based on OS
             if [ -f /etc/os-release ]; then
                 . /etc/os-release
@@ -66,7 +66,7 @@
                 @THROW "OS detection failed"
             }
         }
-        
+
         @LOG "All dependencies satisfied. Proceeding with initialization."
     }
 }
@@ -85,7 +85,7 @@
         mkdir -p ~/.aln/gamepass/configs
         mkdir -p ~/.aln/gamepass/logs
         mkdir -p ~/.aln/gamepass/transactions
-        
+
         # Initialize configuration
         CONFIG = {
             "version": version,
@@ -107,25 +107,25 @@
     @EXEC {
         # Initialize game pass validation system
         echo -e "ALN Game Pass Validation v${version}\n\nThis framework validates game passes using UPC codes with PCI-DSS, GDPR, and SOC2 compliance." > ~/.aln/gamepass/docs/validation.md
-        
+
         # Initialize validation database
         if [ ! -f ~/.aln/gamepass/validations/gamepass.db ]; then
             sqlite3 ~/.aln/gamepass/validations/gamepass.db "CREATE TABLE IF NOT EXISTS passes (id INTEGER PRIMARY KEY, upc TEXT, platform TEXT, status TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"
             @LOG "Game pass validation database initialized."
         fi
-        
+
         # Initialize transaction storage
         if [ ! -d ~/.aln/gamepass/transactions ]; then
             mkdir -p ~/.aln/gamepass/transactions
             @LOG "Transaction storage directory created."
         fi
-        
+
         # Initialize validation methods
         VALIDATION_METHODS = ["UPC", "QR", "API"]
         for method in VALIDATION_METHODS {
             echo -e "Validation method: ${method}" >> ~/.aln/gamepass/configs/validation_methods.txt
         }
-        
+
         @LOG "Game pass validation integration complete. All components initialized."
     }
 }
@@ -140,7 +140,7 @@
         mkdir -p ~/.aln/gamepass/hot_patches
         echo -e "#!/bin/bash\n# ALN Game Pass Validation Hot Patching Script\n# Automatically applied during boot\n\n# Update validation methods\naln.gamepass.update --methods\n\n# Apply security patches\naln.gamepass.patch --security\n\n# Update transaction storage\naln.gamepass.update --transactions" > ~/.aln/gamepass/hot_patches/patch_001.sh
         chmod +x ~/.aln/gamepass/hot_patches/patch_001.sh
-        
+
         @LOG "Hot patching system initialized."
     }
 }
@@ -173,11 +173,11 @@
                 @LOG "Usage: aln validate --upc \"<upc_code>\" --platform \"<platform>\""
                 return
             }
-            
+
             UPC_CODE = args[1]
             PLATFORM = args[3]
             @LOG "Validating game pass: ${UPC_CODE} (Platform: ${PLATFORM})"
-            
+
             # Validate UPC code
             if [ -f ~/.aln/gamepass/validations/gamepass.db ]; then
                 # Check if UPC code exists
@@ -200,12 +200,12 @@
                 @LOG "Usage: aln transaction.create --upc \"<upc_code>\" --platform \"<platform>\" --status \"<status>\""
                 return
             }
-            
+
             UPC_CODE = args[1]
             PLATFORM = args[3]
             STATUS = args[5]
             @LOG "Creating new transaction: ${UPC_CODE} (${PLATFORM}) - ${STATUS}"
-            
+
             # Create transaction file
             TRANSACTION_ID = $(uuidgen)
             echo -e "Transaction ID: ${TRANSACTION_ID}\nUPC: ${UPC_CODE}\nPlatform: ${PLATFORM}\nStatus: ${STATUS}\nTimestamp: $(date)" > ~/.aln/gamepass/transactions/${TRANSACTION_ID}.tx
@@ -245,19 +245,19 @@
         if force_trigger == "GAME_PASS_BOOT" || force_trigger == "VALIDATE_BOOT" || force_trigger == "PASS_BOOT" || force_trigger == "GAME_PASS_INIT" {
             @LOG "STRICT & STICKY TRIGGER DETECTED: ${force_trigger}"
             @LOG "Initiating ALN-GamePass-Validation boot sequence..."
-            
+
             # Run all initialization steps
             pre_init_checks()
             system_config()
             game_pass_validation_integration()
             hot_patching()
-            
+
             # Apply hot patches
             for patch in ~/.aln/gamepass/hot_patches/*.sh; do
                 @LOG "Applying hot patch: ${patch}"
                 bash ${patch}
             }
-            
+
             # Initialize command interface
             aln_command_interface()
         } else {
@@ -308,22 +308,22 @@
     @EXEC {
         @LOG "Initializing ALN-GPT5-Bootstrap v${version}"
         @LOG "Checking dependencies..."
-        
+
         # Check for essential dependencies
         DEPENDENCIES = ["python3", "openai", "torch", "transformers", "jq"]
         MISSING_DEPS = []
-        
+
         for dep in DEPENDENCIES {
             if ! command -v dep &> /dev/null; then
                 MISSING_DEPS += dep
             fi
         }
-        
+
         # Install missing dependencies if possible
         if MISSING_DEPS.length > 0 {
             @LOG "Missing dependencies: ${MISSING_DEPS.join(', ')}"
             @LOG "Attempting to install..."
-            
+
             # Try to install dependencies based on OS
             if [ -f /etc/os-release ]; then
                 . /etc/os-release
@@ -348,7 +348,7 @@
                 @THROW "OS detection failed"
             }
         }
-        
+
         @LOG "All dependencies satisfied. Proceeding with initialization."
     }
 }
@@ -367,7 +367,7 @@
         mkdir -p ~/.aln/gpt5/configs
         mkdir -p ~/.aln/gpt5/logs
         mkdir -p ~/.aln/gpt5/ai_integration
-        
+
         # Initialize configuration
         CONFIG = {
             "version": version,
@@ -389,25 +389,25 @@
     @EXEC {
         # Initialize GPT-5 integration
         echo -e "ALN GPT-5 Bootstrap v${version}\n\nThis framework enables seamless integration of GPT-5 with ALN game development, providing AI-powered dialogue, world generation, and NPC behavior." > ~/.aln/gpt5/docs/integration.md
-        
+
         # Initialize GPT-5 models
         if [ ! -d ~/.aln/gpt5/models ]; then
             mkdir -p ~/.aln/gpt5/models
             @LOG "GPT-5 models directory created."
         fi
-        
+
         # Initialize AI integration
         if [ ! -d ~/.aln/gpt5/ai_integration ]; then
             mkdir -p ~/.aln/gpt5/ai_integration
             @LOG "AI integration directory created."
         fi
-        
+
         # Initialize configuration
         if [ ! -f ~/.aln/gpt5/config.json ]; then
             echo -e "{\n  \"version\": \"${version}\",\n  \"compliance\": \"${compliance}\",\n  \"platform\": \"${platform}\",\n  \"runtime\": \"REAL\",\n  \"model\": \"GPT-5\"\n}" > ~/.aln/gpt5/config.json
             @LOG "GPT-5 configuration initialized."
         fi
-        
+
         # Initialize API key
         if [ -z "${OPENAI_API_KEY}" ]; then
             @LOG "OpenAI API key not set. Please set OPENAI_API_KEY environment variable."
@@ -416,7 +416,7 @@
         else
             @LOG "OpenAI API key configured successfully."
         fi
-        
+
         @LOG "GPT-5 integration complete. All components initialized."
     }
 }
@@ -431,7 +431,7 @@
         mkdir -p ~/.aln/gpt5/hot_patches
         echo -e "#!/bin/bash\n# ALN GPT-5 Hot Patching Script\n# Automatically applied during boot\n\n# Update AI models\naln.gpt5.update --models\n\n# Apply security patches\naln.gpt5.patch --security\n\n# Update integration\naln.gpt5.update --integration" > ~/.aln/gpt5/hot_patches/patch_001.sh
         chmod +x ~/.aln/gpt5/hot_patches/patch_001.sh
-        
+
         @LOG "Hot patching system initialized."
     }
 }
@@ -464,7 +464,7 @@
                 @LOG "Usage: aln ai.generate --type \"<content_type>\""
                 return
             }
-            
+
             CONTENT_TYPE = args[1]
             @LOG "Generating AI content: ${CONTENT_TYPE}"
             echo -e "Generating ${CONTENT_TYPE} with GPT-5..." > ~/.aln/gpt5/logs/ai.log
@@ -479,7 +479,7 @@
                 @LOG "Usage: aln ai.dialogue --name \"<dialogue_name>\" --context \"<context>\""
                 return
             }
-            
+
             DIALOGUE_NAME = args[1]
             CONTEXT = args[3]
             @LOG "Creating AI dialogue: ${DIALOGUE_NAME} (Context: ${CONTEXT})"
@@ -491,7 +491,7 @@
                 @LOG "Usage: aln ai.world --name \"<world_name>\" --description \"<description>\""
                 return
             }
-            
+
             WORLD_NAME = args[1]
             DESCRIPTION = args[3]
             @LOG "Generating AI world: ${WORLD_NAME} (Description: ${DESCRIPTION})"
@@ -520,19 +520,19 @@
         if force_trigger == "GPT5_BOOT" || force_trigger == "GPT5_INTEGRATE" || force_trigger == "ALN_GPT5" || force_trigger == "GPT5_INIT" {
             @LOG "STRICT & STICKY TRIGGER DETECTED: ${force_trigger}"
             @LOG "Initiating ALN-GPT5-Bootstrap boot sequence..."
-            
+
             # Run all initialization steps
             pre_init_checks()
             system_config()
             gpt5_integration()
             hot_patching()
-            
+
             # Apply hot patches
             for patch in ~/.aln/gpt5/hot_patches/*.sh; do
                 @LOG "Applying hot patch: ${patch}"
                 bash ${patch}
             }
-            
+
             # Initialize command interface
             aln_command_interface()
         } else {
@@ -552,3 +552,18 @@
     }
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

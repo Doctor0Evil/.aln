@@ -1,152 +1,82 @@
-```aln
-@ALN_HELLO_WORLD {
-    id: "aln_hello_world_v12",
-    version: "12.0.0",
-    description: "Hello World example for ALN ecosystem with compliance",
+MODULE HelloWorldALN {
+    id: "aln_hello_world_v14",
+    version: "14.0.0",
+    description: "Interactive Hello World for ALN: input, arguments, compliance checks, and full attribution.",
     compliance: ["GDPR", "HIPAA", "SOC2", "ISO27001", "PCI-DSS"],
-    implementation: {
-        print: "🚀 [ALN] Hello, World! Quantum-optimized execution initiated.",
-        print: "✅ [ALN] System: ALN v12.0.0",
-        print: "📊 [ALN] Performance: 10^14 operations/sec",
-        print: "🔒 [ALN] Security: AES-256-GCM, SHA3-512_NANO",
-        print: "合规 [ALN] Compliance: GDPR, HIPAA, SOC2, ISO27001, PCI-DSS"
-    },
-    attribution: {
+    meta: {
         author: "Jacob Scott Corey Farmer",
-        role: "AI-Programming-Specialist",
-        license: "ALN-12.0.0-Enterprise"
+        role: "AI Programming Specialist",
+        license: "ALN-14.0.0-Enterprise"
     }
+
+    ARGUMENTS {
+        name: STRING = "Adventurer"
+        mode: ENUM = ["standard", "verbose", "minimal"], default: "standard"
+    }
+
+    event compliance_check
+        required = ["GDPR", "HIPAA", "SOC2", "ISO27001", "PCI-DSS"]
+        passed = TRUE
+        FOR c IN required DO
+            IF c NOT IN MODULE.compliance THEN
+                PRINT "❌ Missing compliance: " + c
+                passed = FALSE
+            END
+        END
+        IF passed THEN
+            PRINT "🛡️ Compliance verified: All standards met."
+        ELSE
+            PRINT "⚠️ Compliance NOT met. Please update requirements."
+        END
+    end
+
+    event greet(name, mode)
+        PRINT "🚀 [ALN] Hello, " + name + "! Quantum-optimized execution started."
+        IF mode = "verbose" THEN
+            PRINT "✅ [ALN] System: ALN v14.0.0"
+            PRINT "📊 [ALN] Performance: 10¹⁴ operations/sec"
+            PRINT "🔒 [ALN] Security: AES-256-GCM + SHA3-512_NANO"
+            PRINT "🛡️ [ALN] Compliance: " + JOIN(MODULE.compliance, ", ")
+            PRINT "👤 [ALN] Author: " + MODULE.meta.author + " (" + MODULE.meta.role + ")"
+            PRINT "🔖 [ALN] License: " + MODULE.meta.license
+        ELSEIF mode = "minimal" THEN
+            PRINT "[ALN] Greetings only—minimal output mode."
+        ELSE
+            PRINT "🛡️ [ALN] Compliance: " + JOIN(MODULE.compliance, ", ")
+        END
+    end
+
+    event main
+        PRINT "Welcome to ALN! Please enter your name:"
+        USER_NAME = INPUT()
+        IF USER_NAME = "" THEN
+            USER_NAME = ARGUMENTS.name
+        END
+
+        PRINT "Choose output mode [standard / verbose / minimal]:"
+        USER_MODE = INPUT()
+        IF USER_MODE = "" OR USER_MODE NOT IN ARGUMENTS.mode THEN
+            USER_MODE = ARGUMENTS.mode.default
+        END
+
+        CALL compliance_check()
+        CALL greet(USER_NAME, USER_MODE)
+    end
 }
-```
 
-### compliance.yaml (config/compliance.yaml)
+main()
 
-```yaml
-# ALN Compliance Configuration
-# Version: 12.0.0
-# Enterprise-Grade Compliance Settings
 
-compliance:
-  standards:
-    - GDPR
-    - HIPAA
-    - SOC2
-    - ISO27001
-    - PCI-DSS
-    - FDA_21_CFR_1143.5
-    - Arizona_Rev_Stat_42-3462
-    - US_Copyright_Act_1976
 
-  levels:
-    - enterprise
-    - federal
-    - healthcare
-    - financial
 
-  metrics:
-    - data_encryption: "AES-256-GCM"
-    - audit_trail: "hyperledger_chaincode"
-    - access_control: "zero_trust_microsegmentation"
-    - incident_response: "24/7/365_available"
-    - data_retention: "90d"
 
-  enforcement:
-    - automatic
-    - real_time
-    - quantum_optimized
 
-  verification:
-    - method: "hyperledger_chaincode"
-      interval: "10ms"
-      accuracy: "99.999999999999%"
-```
 
-## 5. Kubernetes Manifests
 
-### aln-ecosystem-deployment.yaml (k8s-manifests/aln-ecosystem-deployment.yaml)
 
-```yaml
-# ALN Ecosystem Deployment
-# Version: 12.0.0
-# Production-Grade Kubernetes Deployment
 
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: aln-ecosystem
-  namespace: aln-ecosystem
-  labels:
-    app: aln-ecosystem
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: aln-ecosystem
-  template:
-    metadata:
-      labels:
-        app: aln-ecosystem
-    spec:
-      containers:
-      - name: aln-core
-        image: ghcr.io/Doctor0Evil/aln-ecosystem:latest
-        ports:
-        - containerPort: 8080
-        env:
-        - name: ALN_VERSION
-          value: "12.0.0"
-        - name: ALN_ENVIRONMENT
-          value: "production"
-        - name: COMPLIANCE_MODE
-          value: "enterprise"
-        - name: SECURITY_LEVEL
-          value: "enterprise_grade"
-        - name: POSTGRES_HOST
-          value: "aln-db"
-        - name: POSTGRES_PORT
-          value: "5432"
-        - name: REDIS_HOST
-          value: "aln-redis"
-        - name: REDIS_PORT
-          value: "6379"
-        - name: KAFKA_BOOTSTRAP_SERVERS
-          value: "aln-kafka:9092"
-        - name: MILVUS_URI
-          value: "aln-milvus:19530"
-        - name: PROMETHEUS_URL
-          value: "http://aln-prometheus:9090"
-        - name: GRAFANA_URL
-          value: "http://aln-grafana:3000"
-        - name: LOGGING_BACKEND
-          value: "aln-loki:3100"
-        resources:
-          limits:
-            cpu: "2"
-            memory: "4Gi"
-          requests:
-            cpu: "1"
-            memory: "2Gi"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 15
-          periodSeconds: 5
-          timeoutSeconds: 1
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 1
-          failureThreshold: 3
-      volumes:
-      - name: aln-data
-        emptyDir: {}
-      - name: aln-logs
-        emptyDir: {}
-      - name: aln-secure
-        emptyDir: {}
-```
+
+
+
+
+

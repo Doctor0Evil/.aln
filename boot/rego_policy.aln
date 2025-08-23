@@ -1,0 +1,43 @@
+PACKAGE REGO_POLICY
+
+    GLOBAL ACTIVE
+
+    ACTION activate
+        EXEC
+            ACTIVE = TRUE
+            LOG 🔐 Rego Policy activated: sandbox enforced
+
+    ACTION deactivate
+        EXEC
+            ACTIVE = FALSE
+            LOG 🔓 Rego Policy deactivated
+
+    ACTION enforce
+        INPUT module_name string, action_name string
+        EXEC
+            IF NOT ACTIVE THEN
+                RETURN TRUE
+            ENDIF
+            # Placeholder: check policy rules
+            LOG 🔍 Checking policy for {module_name}.{action_name}
+            # Deny unsafe actions (example)
+            IF action_name == "delete_files" THEN
+                LOG ❌ Action denied by policy!
+                RETURN FALSE
+            ENDIF
+            RETURN TRUE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

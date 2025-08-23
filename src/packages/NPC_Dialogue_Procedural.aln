@@ -1,0 +1,62 @@
+module NPC_Dialogue_Procedural
+
+  intents { GREET, WARN, ATTACK, FLEE, THANK, SUSPICION, CURIOUS, DESPAIR }
+
+  dialogue_map {
+    GREET:   ["Halt! Who goes there?", "Greetings, traveler.", "State your business!"],
+    WARN:    ["Do not cross that line!", "You are not welcome here.", "Leave, now."],
+    ATTACK:  ["For the clan!", "Now you die!", "No mercy!"],
+    FLEE:    ["Retreat!", "This isn't over...", "I'll be back!"],
+    THANK:   ["You’ve helped us. We won’t forget.", "Our gratitude runs deep."],
+    SUSPICION: ["What are you really after?", "Your story changes every time."],
+    CURIOUS:   ["What brings you to these parts?", "You seem unfamiliar."],
+    DESPAIR:  ["Nothing helps. Maybe nothing can.", "We've lost so much..."]
+  }
+
+  emotion_layers {
+    pragmatic{weight 1.0},
+    sarcastic{weight 0.6},
+    wary{weight 0.8},
+    hope{weight 0.1},
+    despair{weight 0.6}
+  }
+
+  ACTION getDialogues intent, context
+    MODIFIERS = context.emotion_overrides or []
+    options = dialogue_map[intent]
+    if MODIFIERS.length > 0
+      options = options.map(o => context.emotion_prefix+o+context.emotion_suffix)
+    end
+    return RAND.select(options)
+  end
+
+  EVENT on_player_action action, context
+    LOG "Player action received:", action, context
+    SWITCH action
+      CASE greet: RESPONSE = getDialogues(GREET, context)
+      CASE threaten: RESPONSE = getDialogues(WARN, context)
+      CASE attack: RESPONSE = getDialogues(ATTACK, context)
+      CASE flee: RESPONSE = getDialogues(FLEE, context)
+      # ... additional cases ...
+    end
+    LOG "NPC Response:", RESPONSE
+    TRACE.add(context.session_id, action, RESPONSE)
+    RETURN RESPONSE
+  end
+
+endmodule
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,60 @@
+// examples/aln_fantasia/multi_sync_demo.aln
+
+IMPORT DICE
+IMPORT LORE
+IMPORT GOVERNANCE
+IMPORT PLAYER
+IMPORT SYNC
+IMPORT QUEST_ENGINE
+IMPORT QUEST_STORY
+IMPORT ARTIFACTS
+
+ACTION demo_run
+    EXEC
+        # Create players
+        PLAYER.create "Alice"
+        PLAYER.create "Bob"
+
+        # Players explore and fight
+        room = QUEST_ENGINE.create_room "Ancient Crypt" 3
+        monster = QUEST_ENGINE.spawn_monster 3
+        QUEST_ENGINE.combat "Alice" monster
+
+        # Quest story branching
+        quest = QUEST_STORY.generate_quest "Crypt Mystery" 3
+        QUEST_STORY.add_choice "Crypt Mystery" "Start" "Enter the dark hallway" "Dark Hallway"
+        QUEST_STORY.add_choice "Crypt Mystery" "Start" "Search for hidden doors" "Hidden Chamber"
+        next_branch = QUEST_STORY.advance_branch "Crypt Mystery" "Start" 0
+
+        # Governance proposal
+        GOVERNANCE.create_proposal "001" "Add new artifact: Sword of Dawn" "Alice"
+        GOVERNANCE.vote "001" "Alice" 5 "yes"
+        GOVERNANCE.vote "001" "Bob" 3 "yes"
+        GOVERNANCE.tally "001" 10
+
+        # Artifact crafting and spell learning
+        ARTIFACTS.craft_artifact "Sword of Dawn" 10
+        ARTIFACTS.enchant_artifact "Sword of Dawn" "Flame" 3
+        ARTIFACTS.learn_spell "Alice" "Fireball" "Deals fire damage to enemies"
+        ARTIFACTS.cast_spell "Alice" "Fireball"
+
+        # Sync all actions
+        SYNC.save_player "Alice"
+        SYNC.save_player "Bob"
+
+        LORE.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

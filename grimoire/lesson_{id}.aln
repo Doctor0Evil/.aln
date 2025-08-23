@@ -1,0 +1,40 @@
+PACKAGE GRIMOIRE
+
+ACTION add_lesson
+    INPUT lesson_id string, title string, content string, tasks list
+    EXEC
+        LESSONS[lesson_id] = {
+            "title": title,
+            "content": content,
+            "tasks": tasks,
+            "completed": FALSE
+        }
+        LOG 📚 Lesson added: {title}
+
+# Example Lesson
+
+CALL add_lesson(
+    "lesson_ds_101",
+    "Intro to Data Structures",
+    "Learn how to create and use lists, trees, and maps in ALN.",
+    [
+        {"description": "Declare a list with at least 3 elements", "completed": FALSE},
+        {"description": "Write a for loop to print each element", "completed": FALSE},
+        {"description": "Add/remove an element and show result", "completed": FALSE}
+    ]
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

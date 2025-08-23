@@ -1,0 +1,24 @@
+name: ALN AI/NPC CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-ai:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Style Checks
+        run: pwsh scripts/lint.ps1
+      - name: Test AI-Behavior-Modules
+        run: pwsh scripts/test_ai.ps1
+      - name: Simulate-Combat-Loops
+        run: pwsh scripts/combat-sim.ps1
+      - name: Output Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-logs
+          path: logs/

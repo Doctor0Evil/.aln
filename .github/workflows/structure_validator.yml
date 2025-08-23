@@ -1,0 +1,44 @@
+﻿name: Validate Directory Structure & Enforce Layout
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  validate-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Check required directories and files
+        run: |
+          required=(
+            .github
+            .github/workflows
+            scripts
+            Modules/ALNCore
+            # ... add more as-needed
+          )
+          for dir in "${required[@]}"; do
+            if [ ! -d "$dir" ]; then
+              echo "❗Missing directory: $dir" && exit 1
+            fi
+          done
+          echo "✅ All critical directories are present."
+      - name: Ensure no obsolete directories
+        run: |
+          obsolete=(
+            OldDocs
+            backup
+            tmp
+            __old
+            .trash
+            legacy_code
+          )
+          for dir in "${obsolete[@]}"; do
+            if [ -d "$dir" ]; then
+              echo "❗Obsolete directory present: $dir" && exit 1
+            fi
+          done
+          echo "✅ No obsolete directories detected."

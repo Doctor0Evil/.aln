@@ -26,22 +26,22 @@
     @EXEC {
         @LOG "Initializing ALN-Game-Engine v${version}"
         @LOG "Checking dependencies..."
-        
+
         # Check for essential dependencies
         DEPENDENCIES = ["git", "python3", "pygame", "numpy", "pandas", "opencv-python"]
         MISSING_DEPS = []
-        
+
         for dep in DEPENDENCIES {
             if ! command -v dep &> /dev/null; then
                 MISSING_DEPS += dep
             fi
         }
-        
+
         # Install missing dependencies if possible
         if MISSING_DEPS.length > 0 {
             @LOG "Missing dependencies: ${MISSING_DEPS.join(', ')}"
             @LOG "Attempting to install..."
-            
+
             # Try to install dependencies based on OS
             if [ -f /etc/os-release ]; then
                 . /etc/os-release
@@ -66,7 +66,7 @@
                 @THROW "OS detection failed"
             }
         }
-        
+
         @LOG "All dependencies satisfied. Proceeding with initialization."
     }
 }
@@ -87,7 +87,7 @@
         mkdir -p ~/.aln/game_engine/quests
         mkdir -p ~/.aln/game_engine/configs
         mkdir -p ~/.aln/game_engine/logs
-        
+
         # Initialize configuration
         CONFIG = {
             "version": version,
@@ -110,37 +110,37 @@
     @EXEC {
         # Initialize game engine core
         echo -e "ALN Game Engine v${version}\n\nThis is the final game engine framework for pixel-art game development with GPT-5 AI integration." > ~/.aln/game_engine/docs/engine.md
-        
+
         # Initialize asset management
         if [ ! -d ~/.aln/game_engine/assets ]; then
             mkdir -p ~/.aln/game_engine/assets
             @LOG "Asset management directory created."
         fi
-        
+
         # Initialize level management
         if [ ! -d ~/.aln/game_engine/levels ]; then
             mkdir -p ~/.aln/game_engine/levels
             @LOG "Level management directory created."
         fi
-        
+
         # Initialize NPC management
         if [ ! -d ~/.aln/game_engine/npcs ]; then
             mkdir -p ~/.aln/game_engine/npcs
             @LOG "NPC management directory created."
         fi
-        
+
         # Initialize quest management
         if [ ! -d ~/.aln/game_engine/quests ]; then
             mkdir -p ~/.aln/game_engine/quests
             @LOG "Quest management directory created."
         fi
-        
+
         # Initialize AI integration
         if [ ! -d ~/.aln/game_engine/ai ]; then
             mkdir -p ~/.aln/game_engine/ai
             @LOG "AI integration directory created."
         fi
-        
+
         @LOG "Game engine integration complete. All components initialized."
     }
 }
@@ -155,7 +155,7 @@
         mkdir -p ~/.aln/game_engine/hot_patches
         echo -e "#!/bin/bash\n# ALN Game Engine Hot Patching Script\n# Automatically applied during boot\n\n# Update assets\naln.game.update --assets\n\n# Apply security patches\naln.game.patch --security\n\n# Update AI models\naln.game.update --ai" > ~/.aln/game_engine/hot_patches/patch_001.sh
         chmod +x ~/.aln/game_engine/hot_patches/patch_001.sh
-        
+
         @LOG "Hot patching system initialized."
     }
 }
@@ -189,7 +189,7 @@
                 @LOG "Usage: aln asset.create --name \"<asset_name>\""
                 return
             }
-            
+
             ASSET_NAME = args[1]
             @LOG "Creating new asset: ${ASSET_NAME}"
             if [ ! -f ~/.aln/game_engine/assets/${ASSET_NAME}.png ]; then
@@ -204,7 +204,7 @@
                 @LOG "Usage: aln level.create --name \"<level_name>\""
                 return
             }
-            
+
             LEVEL_NAME = args[1]
             @LOG "Creating new level: ${LEVEL_NAME}"
             if [ ! -f ~/.aln/game_engine/levels/${LEVEL_NAME}.lvl ]; then
@@ -219,7 +219,7 @@
                 @LOG "Usage: aln npc.create --name \"<npc_name>\""
                 return
             }
-            
+
             NPC_NAME = args[1]
             @LOG "Creating new NPC: ${NPC_NAME}"
             if [ ! -f ~/.aln/game_engine/npcs/${NPC_NAME}.npc ]; then
@@ -234,7 +234,7 @@
                 @LOG "Usage: aln quest.create --name \"<quest_name>\""
                 return
             }
-            
+
             QUEST_NAME = args[1]
             @LOG "Creating new quest: ${QUEST_NAME}"
             if [ ! -f ~/.aln/game_engine/quests/${QUEST_NAME}.quest ]; then
@@ -270,19 +270,19 @@
         if force_trigger == "GAME_ENGINE_BOOT" || force_trigger == "ENGINE_BOOT" || force_trigger == "ALN_ENGINE" || force_trigger == "GAME_BOOT" {
             @LOG "STRICT & STICKY TRIGGER DETECTED: ${force_trigger}"
             @LOG "Initiating ALN-Game-Engine boot sequence..."
-            
+
             # Run all initialization steps
             pre_init_checks()
             system_config()
             game_engine_integration()
             hot_patching()
-            
+
             # Apply hot patches
             for patch in ~/.aln/game_engine/hot_patches/*.sh; do
                 @LOG "Applying hot patch: ${patch}"
                 bash ${patch}
             }
-            
+
             # Initialize command interface
             aln_command_interface()
         } else {
@@ -333,22 +333,22 @@
     @EXEC {
         @LOG "Initializing ALN-Fallout-Dialogue-System v${version}"
         @LOG "Checking dependencies..."
-        
+
         # Check for essential dependencies
         DEPENDENCIES = ["python3", "jq", "git"]
         MISSING_DEPS = []
-        
+
         for dep in DEPENDENCIES {
             if ! command -v dep &> /dev/null; then
                 MISSING_DEPS += dep
             fi
         }
-        
+
         # Install missing dependencies if possible
         if MISSING_DEPS.length > 0 {
             @LOG "Missing dependencies: ${MISSING_DEPS.join(', ')}"
             @LOG "Attempting to install..."
-            
+
             # Try to install dependencies based on OS
             if [ -f /etc/os-release ]; then
                 . /etc/os-release
@@ -373,7 +373,7 @@
                 @THROW "OS detection failed"
             }
         }
-        
+
         @LOG "All dependencies satisfied. Proceeding with initialization."
     }
 }
@@ -392,7 +392,7 @@
         mkdir -p ~/.aln/fallout/factions
         mkdir -p ~/.aln/fallout/configs
         mkdir -p ~/.aln/fallout/logs
-        
+
         # Initialize configuration
         CONFIG = {
             "version": version,
@@ -414,25 +414,25 @@
     @EXEC {
         # Initialize dialogue system based on Fallout: New Vegas
         echo -e "ALN Fallout Dialogue System v${version}\n\nThis framework creates AI-driven NPC dialogue systems inspired by Fallout: New Vegas, with faction-specific dialogues and contextual responses." > ~/.aln/fallout/docs/dialogue_system.md
-        
+
         # Initialize faction-specific dialogues
         FACTIONS = ["NCR", "Legion", "Brotherhood of Steel", "Vegas"]
         for faction in FACTIONS {
             echo -e "Initializing ${faction} faction dialogue system..." >> ~/.aln/fallout/logs/faction.log
-            
+
             # Create faction directory
             if [ ! -d ~/.aln/fallout/factions/${faction} ]; then
                 mkdir -p ~/.aln/fallout/factions/${faction}
                 echo -e "Faction: ${faction}\nVersion: ${version}\nCompliance: ${compliance}" > ~/.aln/fallout/factions/${faction}/faction_info.md
             fi
         }
-        
+
         # Initialize dialogue database
         if [ ! -d ~/.aln/fallout/dialogues ]; then
             mkdir -p ~/.aln/fallout/dialogues
             echo -e "Fallout Dialogue Database v${version}\n\nThis is the master repository for all dialogue files used in the system." > ~/.aln/fallout/dialogues/dialogue_database.md
         fi
-        
+
         @LOG "Dialogue system integration complete. All factions and dialogue databases initialized."
     }
 }
@@ -447,7 +447,7 @@
         mkdir -p ~/.aln/fallout/hot_patches
         echo -e "#!/bin/bash\n# ALN Fallout Dialogue Hot Patching Script\n# Automatically applied during boot\n\n# Update faction dialogues\naln.fallout.update --factions\n\n# Apply security patches\naln.fallout.patch --security\n\n# Update dialogue context\naln.fallout.update --context" > ~/.aln/fallout/hot_patches/patch_001.sh
         chmod +x ~/.aln/fallout/hot_patches/patch_001.sh
-        
+
         @LOG "Hot patching system initialized."
     }
 }
@@ -480,7 +480,7 @@
                 @LOG "Usage: aln faction.create --name \"<faction_name>\""
                 return
             }
-            
+
             FACTION_NAME = args[1]
             @LOG "Creating new faction: ${FACTION_NAME}"
             if [ ! -d ~/.aln/fallout/factions/${FACTION_NAME} ]; then
@@ -496,7 +496,7 @@
                 @LOG "Usage: aln dialogue.create --name \"<dialogue_name>\" --faction \"<faction_name>\""
                 return
             }
-            
+
             DIALOGUE_NAME = args[1]
             FACTION_NAME = args[2]
             @LOG "Creating new dialogue: ${DIALOGUE_NAME} (Faction: ${FACTION_NAME})"
@@ -541,19 +541,19 @@
         if force_trigger == "FALLOUT_BOOT" || force_trigger == "DIALOGUE_BOOT" || force_trigger == "NPC_BOOT" || force_trigger == "DIALOGUE_INIT" {
             @LOG "STRICT & STICKY TRIGGER DETECTED: ${force_trigger}"
             @LOG "Initiating ALN-Fallout-Dialogue-System boot sequence..."
-            
+
             # Run all initialization steps
             pre_init_checks()
             system_config()
             dialogue_system_integration()
             hot_patching()
-            
+
             # Apply hot patches
             for patch in ~/.aln/fallout/hot_patches/*.sh; do
                 @LOG "Applying hot patch: ${patch}"
                 bash ${patch}
             }
-            
+
             # Initialize command interface
             aln_command_interface()
         } else {
@@ -573,3 +573,18 @@
     }
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

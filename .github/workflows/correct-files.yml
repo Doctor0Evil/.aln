@@ -1,0 +1,38 @@
+name: correct-files
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  correct-files:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-24.04]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # --- Linux: Install PowerShell if missing (for Ubuntu) ---
+      - name: Install PowerShell on Linux
+        if: runner.os == 'Linux'
+        uses: PSModule/install-powershell@v1
+        with:
+          Version: 'latest'
+      
+      # --- Windows: PowerShell 5.1+ pre-installed, no install needed ---
+      # --- Universal PowerShell runner ---
+      - name: Run ALN file correction script (cross-platform)
+        shell: pwsh
+        run: ./scripts/correct-aln-files.ps1
+
+      - name: Commit & push corrections
+        shell: bash
+        run: |
+          git config user.name "ALN File Corrector"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Automated ALN file correction" || echo "No changes to commit"
+          git push

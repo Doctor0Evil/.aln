@@ -26,22 +26,22 @@
     @EXEC {
         @LOG "Initializing ALN-GitHub-Integration v${version}"
         @LOG "Checking dependencies..."
-        
+
         # Check for essential dependencies
         DEPENDENCIES = ["git", "curl", "jq", "gh"]
         MISSING_DEPS = []
-        
+
         for dep in DEPENDENCIES {
             if ! command -v dep &> /dev/null {
                 MISSING_DEPS += dep
             }
         }
-        
+
         # Install missing dependencies if possible
         if MISSING_DEPS.length > 0 {
             @LOG "Missing dependencies: ${MISSING_DEPS.join(', ')}"
             @LOG "Attempting to install..."
-            
+
             # Try to install dependencies based on OS
             if [ -f /etc/os-release ] {
                 . /etc/os-release
@@ -66,7 +66,7 @@
                 @THROW "OS detection failed"
             }
         }
-        
+
         @LOG "All dependencies satisfied. Proceeding with initialization."
     }
 }
@@ -84,7 +84,7 @@
         mkdir -p ~/.aln/github/repos
         mkdir -p ~/.aln/github/configs
         mkdir -p ~/.aln/github/logs
-        
+
         # Initialize configuration
         CONFIG = {
             "version": version,
@@ -106,7 +106,7 @@
     @EXEC {
         # Initialize GitHub integration
         echo -e "ALN GitHub Integration v${version}\n\nThis framework enables seamless GitHub integration for game development, including repository management, pull requests, and issue tracking." > ~/.aln/github/docs/integration.md
-        
+
         # Create GitHub API token
         if [ -z "${GITHUB_TOKEN}" ]; then
             @LOG "GitHub API token not set. Please set GITHUB_TOKEN environment variable."
@@ -115,19 +115,19 @@
         else
             @LOG "GitHub API token configured successfully."
         fi
-        
+
         # Initialize GitHub repositories
         if [ ! -d ~/.aln/github/repos ]; then
             mkdir -p ~/.aln/github/repos
             @LOG "GitHub repositories directory created."
         fi
-        
+
         # Initialize GitHub configuration
         if [ ! -f ~/.aln/github/config.json ]; then
             echo -e "{\n  \"version\": \"${version}\",\n  \"compliance\": \"${compliance}\",\n  \"platform\": \"${platform}\",\n  \"runtime\": \"REAL\",\n  \"github_token\": \"${GITHUB_TOKEN}\"\n}" > ~/.aln/github/config.json
             @LOG "GitHub configuration initialized."
         fi
-        
+
         @LOG "GitHub integration complete. All repositories and configurations initialized."
     }
 }
@@ -142,7 +142,7 @@
         mkdir -p ~/.aln/github/hot_patches
         echo -e "#!/bin/bash\n# ALN GitHub Hot Patching Script\n# Automatically applied during boot\n\n# Update repository structure\naln.github.update --repos\n\n# Apply security patches\naln.github.patch --security\n\n# Update GitHub integration\naln.github.update --integration" > ~/.aln/github/hot_patches/patch_001.sh
         chmod +x ~/.aln/github/hot_patches/patch_001.sh
-        
+
         @LOG "Hot patching system initialized."
     }
 }
@@ -174,7 +174,7 @@
                 @LOG "Usage: aln repo.create --name \"<repo_name>\""
                 return
             }
-            
+
             REPO_NAME = args[1]
             @LOG "Creating new GitHub repository: ${REPO_NAME}"
             if [ ! -d ~/.aln/github/repos/${REPO_NAME} ]; then
@@ -208,7 +208,7 @@
                 @LOG "Usage: aln issue.create --title \"<issue_title>\""
                 return
             }
-            
+
             ISSUE_TITLE = args[1]
             @LOG "Creating new GitHub issue: ${ISSUE_TITLE}"
             echo -e "Creating issue on GitHub..." >> ~/.aln/github/logs/issues.log
@@ -242,19 +242,19 @@
         if force_trigger == "GITHUB_INTEGRATE" || force_trigger == "GIT_SYNC" || force_trigger == "GITHUB_BOOT" || force_trigger == "REPO_BOOT" {
             @LOG "STRICT & STICKY TRIGGER DETECTED: ${force_trigger}"
             @LOG "Initiating ALN-GitHub-Integration boot sequence..."
-            
+
             # Run all initialization steps
             pre_init_checks()
             system_config()
             github_integration()
             hot_patching()
-            
+
             # Apply hot patches
             for patch in ~/.aln/github/hot_patches/*.sh {
                 @LOG "Applying hot patch: ${patch}"
                 bash ${patch}
             }
-            
+
             # Initialize command interface
             aln_command_interface()
         } else {
@@ -274,3 +274,18 @@
     }
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

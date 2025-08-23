@@ -1,0 +1,24 @@
+name: Auto Correct and Push
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  auto-correct:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run auto-correction on all files
+        run: |
+          find . -type f ! -path "./.git/*" -exec dos2unix {} \;
+          find . -type f ! -path "./.git/*" -exec sed -i "s/[ \t]*$//" {} \;
+      - name: Auto-commit & Push changes
+        run: |
+          git config user.name "ALN-AutoFix"
+          git config user.email "aln-autofix@example.com"
+          git add .
+          git commit -m "Auto-corrected files via workflow" || echo "No changes to commit"
+          git push

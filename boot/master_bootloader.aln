@@ -1,0 +1,58 @@
+```aln
+bootloader {
+  state: "idle"
+  menu: master_menu
+
+  master_menu = [
+    { icon: "🧑‍💻", label: "Start Game", event: "start_game" },
+    { icon: "🎲", label: "Drop Game In-Frame", event: "drop_in_frame" },
+    { icon: "🕹️", label: "Open CLI (Dev)", event: "open_cli" },
+    { icon: "🏜️", label: "RPG_Wastes.Apocalyptic.Ruins", event: "load_rpg_wastes" },
+    { icon: "⚙️", label: "System Control", event: "system_control" }
+  ]
+
+  event start_game {
+    call menu "game_selection_menu"
+  }
+  event drop_in_frame {
+    if context_supports("frame_injection") then {
+      let choices = ["dice_engine", "story_engine", "rpg_wastes"]
+      display_menu(choices)
+      on_select(choice) {
+        registry.load(choice)
+        if context == "chat" or context == "frame" {
+          context.inject_frame(choice.renderer)
+        }
+      }
+    }
+    else display("Drop-in not supported in this environment.")
+  }
+  event open_cli {
+    registry.load("cli_env_game_dev")
+    shell.activate("cli_env_game_dev")
+  }
+  event load_rpg_wastes {
+    registry.load("rpg_wastes_apoc_ruins")
+    boot("rpg_wastes_apoc_ruins")
+  }
+  event system_control {
+    enable_full_control(secure_policy)
+    display("System commands allowed (all IO sanitized)")
+  }
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
