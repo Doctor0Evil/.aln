@@ -6,3 +6,4 @@
   ACTION log_step { INPUT tick int, actor string, action string, metadata map EXEC { TRACELOG.APPEND({tick: tick, actor: actor, action: action, meta: metadata}) } }
   ACTION export_path_summary { EXEC { RETURN { nodes: LEN(TRACELOG), forks: 0 } } }
 }
+
