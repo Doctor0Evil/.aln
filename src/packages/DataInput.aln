@@ -1,0 +1,8 @@
+module DataInput {
+  function preprocess(input):
+    input = trim(input)
+    input = regex.replace(input, /[^a-zA-Z0-9 _\-.,:;]/g, "")
+    assert(len(input)<512, "Input too long")
+    return input
+  # Accepts: user actions, world state, API
+}
