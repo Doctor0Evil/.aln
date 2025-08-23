@@ -1,0 +1,63 @@
+PACKAGE COMMUNITY_GOVERNANCE
+
+    GLOBAL PROPOSALS = {}
+    GLOBAL VOTES = {}
+
+    # Create a proposal with description and creator
+    ACTION create_proposal
+        INPUT proposal_id string, description string, creator string
+        EXEC
+            PROPOSALS[proposal_id] = {"desc": description, "creator": creator}
+            VOTES[proposal_id] = {"yes": 0, "no": 0}
+            LOG 📜 Proposal #{proposal_id} created by {creator}: {description}
+            RETURN proposal_id
+
+    # Cast a vote weighted by Grimoire Points (GP)
+    ACTION vote
+        INPUT proposal_id string, voter string, gp int, choice string
+        EXEC
+            IF gp <= 0 THEN
+                LOG ❌ {voter} has no Grimoire Points to vote.
+                RETURN "No GP"
+            ENDIF
+            VOTES[proposal_id][choice] += gp
+            LOG 🗳️ {voter} voted {choice.upper()} with {gp} GP on proposal #{proposal_id}
+            RETURN choice
+
+    # Tally votes and determine result based on quorum and threshold
+    ACTION tally_votes
+        INPUT proposal_id string, total_gp int, quorum float = 0.3, pass_threshold float = 0.6
+        EXEC
+            yes = VOTES[proposal_id]["yes"]
+            no = VOTES[proposal_id]["no"]
+            total_votes = yes + no
+            IF total_votes / total_gp < quorum THEN
+                LOG ❌ Proposal #{proposal_id} disqualified: insufficient quorum
+                RETURN "Disqualified"
+            ELSE IF yes / total_votes >= pass_threshold THEN
+                LOG ✅ Proposal #{proposal_id} passed
+                ACTION trigger_autonomous_development proposal_id
+                RETURN "Passed"
+            ELSE
+                LOG ❌ Proposal #{proposal_id} rejected
+                RETURN "Rejected"
+            ENDIF
+
+    # Trigger AI autonomous development after proposal passes
+    ACTION trigger_autonomous_development
+        INPUT proposal_id string
+        EXEC
+            desc = PROPOSALS[proposal_id]["desc"]
+            creator = PROPOSALS[proposal_id]["creator"]
+            # Mock AI generation call
+            ai_output = "AI-generated content based on proposal: " + desc
+            LOG 🤖 AI interpreted proposal #{proposal_id}: {ai_output}
+            confirm = INPUT.prompt "{creator}, accept AI output? (y/n)"
+            IF confirm == "y" THEN
+                # Append to lore or world state
+                LOG 🌍 World expanded by AI: {ai_output}
+                RETURN "World Expanded"
+            ELSE
+                LOG 🔄 Proposal #{proposal_id} sent back for revision
+                RETURN "Rejected by Creator"
+            ENDIF
