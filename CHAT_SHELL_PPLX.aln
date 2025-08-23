@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // ALN • Perplexity Chat Shell (Encounter flows)
 // Integrates AI_CORE_SYSTEM + Behavior/Personality
 // ============================================
@@ -16,3 +16,4 @@
 
   // ... (rest of ALN script section goes here)
 }
+
