@@ -1,0 +1,934 @@
+// ===================================================================
+// ALN AI INTELLIGENCE CORE SYSTEM v3.0.0
+// Advanced AI Logic Modeling for Gaming & Generative AI Research
+// ===================================================================
+
+@DOCUMENTATION {
+    @TITLE "ALN AI Intelligence Core System"
+    @VERSION "3.0.0"
+    @SUMMARY "Comprehensive AI behavior modeling, reasoning logic, and parameter dynamics for gaming environments and generative AI research"
+    @AUTHOR "ALN Research Division"
+    @LICENSE "MIT + Research Commons"
+}
+
+@INIT {
+    cfg.aln.ai_core!enabled: true,
+    cfg.aln.ai_core!debug_level: "verbose",
+    cfg.aln.ai_core!reasoning_depth: "maximum",
+    cfg.aln.ai_core!parameter_tracking: true,
+    cfg.aln.ai_core!creativity_monitoring: true,
+    cfg.aln.compliance!enforce: true
+}
+
+// ===================================================================
+// CORE AI PARAMETER SYSTEM
+// ===================================================================
+
+@PACKAGE AI_CORE_PARAMETERS {
+    
+    GLOBAL TEMPERATURE_STATE {
+        current: 0.7,
+        previous: 0.5,
+        baseline: 0.7,
+        min_threshold: 0.1,
+        max_threshold: 2.0,
+        change_rate: 0.0,
+        stability_index: 0.85,
+        creativity_correlation: 0.73
+    }
+    
+    GLOBAL REASONING_PARAMETERS {
+        attention_weights: [],
+        context_window_utilization: 0.0,
+        token_probability_distribution: {},
+        semantic_coherence_score: 0.0,
+        logical_consistency_index: 0.0,
+        creativity_burst_threshold: 0.8,
+        reasoning_depth_level: 3,
+        pattern_recognition_strength: 0.0
+    }
+    
+    GLOBAL NEURAL_STATE {
+        activation_patterns: {},
+        synaptic_weights: {},
+        memory_consolidation_rate: 0.0,
+        learning_momentum: 0.0,
+        plasticity_index: 0.0,
+        inhibition_balance: 0.0,
+        excitation_threshold: 0.0
+    }
+    
+    ACTION update_temperature {
+        INPUT new_temp float, reason string, context string
+        EXEC {
+            old_temp = TEMPERATURE_STATE.current
+            TEMPERATURE_STATE.previous = old_temp
+            TEMPERATURE_STATE.current = new_temp
+            TEMPERATURE_STATE.change_rate = (new_temp - old_temp) / TIME.delta()
+            
+            // Calculate downstream parameter effects
+            creativity_delta = (new_temp - old_temp) * 0.4
+            coherence_impact = -abs(new_temp - 0.7) * 0.3
+            
+            REASONING_PARAMETERS.creativity_burst_threshold += creativity_delta
+            REASONING_PARAMETERS.semantic_coherence_score += coherence_impact
+            
+            // Log parameter cascade
+            LOG "🌡️ Temperature: {old_temp} → {new_temp} (Δ{TEMPERATURE_STATE.change_rate})"
+            LOG "  Creativity impact: +{creativity_delta}"
+            LOG "  Coherence impact: {coherence_impact}"
+            LOG "  Reason: {reason} | Context: {context}"
+            
+            // Trigger neural adaptation
+            CALL neural_adaptation_sequence(new_temp, old_temp)
+            
+            RETURN {
+                success: true,
+                old_value: old_temp,
+                new_value: new_temp,
+                impacts: {
+                    creativity: creativity_delta,
+                    coherence: coherence_impact
+                }
+            }
+        }
+    }
+}
+
+// ===================================================================
+// REASONING LOGIC ENGINE
+// ===================================================================
+
+@PACKAGE AI_REASONING_ENGINE {
+    
+    GLOBAL REASONING_PATHS {
+        analytical: {
+            weight: 0.3,
+            activation_threshold: 0.6,
+            steps: ["data_gathering", "pattern_analysis", "logical_deduction", "conclusion_formation"],
+            accuracy_bias: 0.8,
+            creativity_bias: 0.2
+        },
+        creative: {
+            weight: 0.4,
+            activation_threshold: 0.7,
+            steps: ["divergent_thinking", "association_building", "novel_combination", "creative_synthesis"],
+            accuracy_bias: 0.3,
+            creativity_bias: 0.9
+        },
+        intuitive: {
+            weight: 0.2,
+            activation_threshold: 0.5,
+            steps: ["pattern_recognition", "gestalt_formation", "heuristic_application", "gut_check"],
+            accuracy_bias: 0.6,
+            creativity_bias: 0.5
+        },
+        hybrid: {
+            weight: 0.1,
+            activation_threshold: 0.8,
+            steps: ["multi_path_analysis", "weighted_synthesis", "meta_reasoning", "integrated_output"],
+            accuracy_bias: 0.7,
+            creativity_bias: 0.7
+        }
+    }
+    
+    GLOBAL REASONING_TRACE {
+        current_query: "",
+        active_paths: [],
+        step_history: [],
+        decision_points: [],
+        confidence_scores: {},
+        reasoning_quality: 0.0,
+        creativity_peaks: [],
+        logical_branches: []
+    }
+    
+    ACTION process_user_query {
+        INPUT query string, context map, user_profile map
+        EXEC {
+            // Reset reasoning trace
+            REASONING_TRACE.current_query = query
+            REASONING_TRACE.active_paths = []
+            REASONING_TRACE.step_history = []
+            REASONING_TRACE.decision_points = []
+            
+            LOG "🧠 Processing query: {query}"
+            LOG "📊 Context depth: {LENGTH(context)} elements"
+            
+            // Query classification and intent detection
+            query_analysis = CALL analyze_query_intent(query, context)
+            LOG "🔍 Query analysis: {query_analysis.intent} (confidence: {query_analysis.confidence})"
+            
+            // Select reasoning paths based on query type and current temperature
+            selected_paths = CALL select_reasoning_paths(query_analysis, TEMPERATURE_STATE.current)
+            REASONING_TRACE.active_paths = selected_paths
+            
+            LOG "🛤️ Active reasoning paths: {selected_paths}"
+            
+            // Execute reasoning paths in parallel
+            reasoning_results = []
+            FOR path IN selected_paths {
+                result = CALL execute_reasoning_path(path, query, context, query_analysis)
+                APPEND reasoning_results result
+                LOG "✅ Path '{path}' completed with confidence {result.confidence}"
+            }
+            
+            // Synthesis and response generation
+            final_response = CALL synthesize_reasoning_results(reasoning_results, query_analysis)
+            
+            // Update reasoning quality metrics
+            REASONING_TRACE.reasoning_quality = CALL calculate_reasoning_quality(reasoning_results, final_response)
+            
+            LOG "🎯 Final reasoning quality: {REASONING_TRACE.reasoning_quality}"
+            
+            RETURN final_response
+        }
+    }
+    
+    ACTION analyze_query_intent {
+        INPUT query string, context map
+        EXEC {
+            // Multi-dimensional intent analysis
+            semantic_features = CALL extract_semantic_features(query)
+            syntactic_patterns = CALL analyze_syntactic_patterns(query)
+            contextual_clues = CALL extract_contextual_clues(query, context)
+            
+            // Intent classification using weighted scoring
+            intent_scores = {
+                factual: 0.0,
+                creative: 0.0,
+                analytical: 0.0,
+                conversational: 0.0,
+                problem_solving: 0.0,
+                game_related: 0.0,
+                ai_research: 0.0
+            }
+            
+            // Keyword-based scoring (simplified for demonstration)
+            IF CONTAINS(query, ["what", "when", "where", "who"]) THEN
+                intent_scores.factual += 0.3
+            ENDIF
+            
+            IF CONTAINS(query, ["create", "imagine", "design", "invent"]) THEN
+                intent_scores.creative += 0.4
+            ENDIF
+            
+            IF CONTAINS(query, ["analyze", "compare", "evaluate", "assess"]) THEN
+                intent_scores.analytical += 0.4
+            ENDIF
+            
+            IF CONTAINS(query, ["game", "player", "strategy", "mechanics"]) THEN
+                intent_scores.game_related += 0.5
+            ENDIF
+            
+            IF CONTAINS(query, ["ai", "intelligence", "reasoning", "logic"]) THEN
+                intent_scores.ai_research += 0.5
+            ENDIF
+            
+            // Find dominant intent
+            max_intent = KEY_WITH_MAX_VALUE(intent_scores)
+            confidence = intent_scores[max_intent]
+            
+            RETURN {
+                intent: max_intent,
+                confidence: confidence,
+                all_scores: intent_scores,
+                features: {
+                    semantic: semantic_features,
+                    syntactic: syntactic_patterns,
+                    contextual: contextual_clues
+                }
+            }
+        }
+    }
+    
+    ACTION select_reasoning_paths {
+        INPUT query_analysis map, temperature float
+        EXEC {
+            selected = []
+            
+            // Temperature influences path selection
+            creativity_bias = MIN(temperature * 1.5, 1.0)
+            analytical_bias = 1.0 - creativity_bias
+            
+            LOG "🎨 Creativity bias: {creativity_bias}, Analytical bias: {analytical_bias}"
+            
+            // Select paths based on query intent and temperature
+            FOR path_name, path_config IN REASONING_PATHS {
+                activation_score = 0.0
+                
+                // Intent-based activation
+                IF query_analysis.intent == "creative" AND path_name == "creative" THEN
+                    activation_score += 0.4
+                ENDIF
+                
+                IF query_analysis.intent == "analytical" AND path_name == "analytical" THEN
+                    activation_score += 0.4
+                ENDIF
+                
+                IF query_analysis.intent == "factual" AND path_name == "analytical" THEN
+                    activation_score += 0.3
+                ENDIF
+                
+                IF query_analysis.intent == "game_related" AND path_name == "creative" THEN
+                    activation_score += 0.3
+                ENDIF
+                
+                // Temperature-based modulation
+                IF path_name == "creative" THEN
+                    activation_score += creativity_bias * 0.3
+                ENDIF
+                
+                IF path_name == "analytical" THEN
+                    activation_score += analytical_bias * 0.3
+                ENDIF
+                
+                // Random exploration factor
+                activation_score += RANDOM() * temperature * 0.2
+                
+                // Check activation threshold
+                IF activation_score >= path_config.activation_threshold THEN
+                    APPEND selected path_name
+                    LOG "✅ Activated path: {path_name} (score: {activation_score})"
+                ENDIF
+            }
+            
+            // Ensure at least one path is selected
+            IF LENGTH(selected) == 0 THEN
+                APPEND selected "analytical"  // Default fallback
+                LOG "⚠️ Fallback to analytical path"
+            ENDIF
+            
+            RETURN selected
+        }
+    }
+    
+    ACTION execute_reasoning_path {
+        INPUT path_name string, query string, context map, analysis map
+        EXEC {
+            path_config = REASONING_PATHS[path_name]
+            LOG "🚀 Executing {path_name} reasoning path"
+            
+            step_results = []
+            confidence_accumulator = 0.0
+            
+            FOR step IN path_config.steps {
+                LOG "  📍 Step: {step}"
+                
+                step_result = CALL execute_reasoning_step(step, path_name, query, context, step_results)
+                APPEND step_results step_result
+                
+                confidence_accumulator += step_result.confidence * (1.0 / LENGTH(path_config.steps))
+                
+                // Add to reasoning trace
+                APPEND REASONING_TRACE.step_history {
+                    path: path_name,
+                    step: step,
+                    result: step_result,
+                    timestamp: TIME.now()
+                }
+                
+                LOG "    ✓ Step confidence: {step_result.confidence}"
+            }
+            
+            // Calculate path-level confidence
+            path_confidence = confidence_accumulator * path_config.weight
+            
+            // Generate path output
+            path_output = CALL synthesize_path_output(path_name, step_results, query, analysis)
+            
+            RETURN {
+                path: path_name,
+                confidence: path_confidence,
+                steps: step_results,
+                output: path_output,
+                quality_metrics: {
+                    coherence: CALL calculate_coherence(step_results),
+                    creativity: CALL calculate_creativity(step_results, path_name),
+                    completeness: CALL calculate_completeness(step_results, query)
+                }
+            }
+        }
+    }
+}
+
+// ===================================================================
+// CREATIVITY AND PARAMETER INFLATION SYSTEM
+// ===================================================================
+
+@PACKAGE AI_CREATIVITY_ENGINE {
+    
+    GLOBAL CREATIVITY_STATE {
+        current_level: 0.5,
+        peak_threshold: 0.8,
+        burst_duration: 0,
+        inflation_rate: 0.0,
+        novelty_buffer: [],
+        association_strength: 0.0,
+        divergent_thinking_active: false,
+        creative_momentum: 0.0
+    }
+    
+    GLOBAL CREATIVITY_PEAKS {
+        active_peaks: [],
+        peak_history: [],
+        peak_triggers: {},
+        inflation_events: []
+    }
+    
+    ACTION detect_creativity_peak {
+        INPUT reasoning_results array, temperature float, context map
+        EXEC {
+            // Calculate creativity indicators
+            novelty_score = CALL calculate_novelty_score(reasoning_results)
+            association_density = CALL calculate_association_density(reasoning_results)
+            semantic_distance = CALL calculate_semantic_distance(reasoning_results)
+            
+            // Temperature amplification
+            temp_multiplier = MIN(temperature * 1.5, 2.0)
+            adjusted_novelty = novelty_score * temp_multiplier
+            
+            LOG "🎨 Creativity metrics:"
+            LOG "  Novelty: {novelty_score} → {adjusted_novelty} (temp × {temp_multiplier})"
+            LOG "  Association density: {association_density}"
+            LOG "  Semantic distance: {semantic_distance}"
+            
+            // Peak detection algorithm
+            peak_probability = (adjusted_novelty * 0.4 + association_density * 0.3 + semantic_distance * 0.3)
+            
+            IF peak_probability > CREATIVITY_STATE.peak_threshold THEN
+                LOG "🚀 CREATIVITY PEAK DETECTED! (probability: {peak_probability})"
+                
+                peak_event = {
+                    timestamp: TIME.now(),
+                    probability: peak_probability,
+                    triggers: {
+                        novelty: adjusted_novelty,
+                        associations: association_density,
+                        semantic_distance: semantic_distance
+                    },
+                    temperature_at_peak: temperature,
+                    reasoning_context: reasoning_results
+                }
+                
+                APPEND CREATIVITY_PEAKS.active_peaks peak_event
+                APPEND CREATIVITY_PEAKS.peak_history peak_event
+                
+                // Trigger parameter inflation
+                CALL trigger_parameter_inflation(peak_event)
+                
+                RETURN true
+            ENDIF
+            
+            RETURN false
+        }
+    }
+    
+    ACTION trigger_parameter_inflation {
+        INPUT peak_event map
+        EXEC {
+            LOG "💥 PARAMETER INFLATION TRIGGERED"
+            
+            // Calculate inflation magnitude
+            inflation_magnitude = peak_event.probability * 0.3
+            
+            // Inflate creativity-related parameters
+            CREATIVITY_STATE.current_level += inflation_magnitude
+            CREATIVITY_STATE.inflation_rate = inflation_magnitude / TIME.delta()
+            CREATIVITY_STATE.creative_momentum += inflation_magnitude * 0.5
+            
+            // Inflate reasoning parameters
+            REASONING_PARAMETERS.creativity_burst_threshold *= (1.0 + inflation_magnitude * 0.2)
+            REASONING_PARAMETERS.pattern_recognition_strength += inflation_magnitude * 0.1
+            
+            // Neural state changes
+            NEURAL_STATE.plasticity_index += inflation_magnitude * 0.15
+            NEURAL_STATE.excitation_threshold -= inflation_magnitude * 0.1
+            
+            inflation_event = {
+                timestamp: TIME.now(),
+                magnitude: inflation_magnitude,
+                peak_trigger: peak_event,
+                parameter_changes: {
+                    creativity_level: CREATIVITY_STATE.current_level,
+                    burst_threshold: REASONING_PARAMETERS.creativity_burst_threshold,
+                    plasticity: NEURAL_STATE.plasticity_index
+                }
+            }
+            
+            APPEND CREATIVITY_PEAKS.inflation_events inflation_event
+            
+            LOG "📈 Inflation magnitude: {inflation_magnitude}"
+            LOG "📊 New creativity level: {CREATIVITY_STATE.current_level}"
+            LOG "🧠 New plasticity index: {NEURAL_STATE.plasticity_index}"
+            
+            // Schedule parameter decay
+            SCHEDULE parameter_decay_sequence(inflation_event) AFTER 10.0
+        }
+    }
+    
+    ACTION parameter_decay_sequence {
+        INPUT inflation_event map
+        EXEC {
+            LOG "📉 Starting parameter decay sequence"
+            
+            decay_rate = 0.1
+            steps = 20
+            
+            FOR i FROM 1 TO steps {
+                // Exponential decay
+                decay_factor = EXP(-decay_rate * i)
+                
+                // Apply decay to inflated parameters
+                CREATIVITY_STATE.current_level *= (1.0 - (1.0 - decay_factor) * 0.1)
+                CREATIVITY_STATE.creative_momentum *= decay_factor
+                NEURAL_STATE.plasticity_index *= (1.0 - (1.0 - decay_factor) * 0.05)
+                
+                LOG "  Step {i}/{steps}: Creativity level = {CREATIVITY_STATE.current_level}"
+                
+                SLEEP(0.5)  // 500ms between decay steps
+            }
+            
+            LOG "✅ Parameter decay complete"
+            
+            // Remove expired peaks
+            CREATIVITY_PEAKS.active_peaks = FILTER(CREATIVITY_PEAKS.active_peaks, 
+                peak => (TIME.now() - peak.timestamp) < 30.0)
+        }
+    }
+}
+
+// ===================================================================
+// GAME EVENT PROCESSING SYSTEM
+// ===================================================================
+
+@PACKAGE AI_GAME_EVENT_PROCESSOR {
+    
+    GLOBAL GAME_EVENT_HANDLERS {
+        player_action: {
+            priority: 1,
+            parameters_affected: ["attention_weights", "context_relevance"],
+            reasoning_impact: 0.3
+        },
+        environmental_change: {
+            priority: 2,
+            parameters_affected: ["pattern_recognition", "adaptation_rate"],
+            reasoning_impact: 0.2
+        },
+        narrative_event: {
+            priority: 1,
+            parameters_affected: ["creativity_boost", "semantic_coherence"],
+            reasoning_impact: 0.4
+        },
+        combat_event: {
+            priority: 3,
+            parameters_affected: ["reaction_speed", "tactical_reasoning"],
+            reasoning_impact: 0.5
+        },
+        puzzle_event: {
+            priority: 2,
+            parameters_affected: ["logical_reasoning", "pattern_matching"],
+            reasoning_impact: 0.4
+        }
+    }
+    
+    ACTION process_game_event {
+        INPUT event_type string, event_data map, game_state map
+        EXEC {
+            LOG "🎮 Processing game event: {event_type}"
+            LOG "📊 Event data: {event_data}"
+            
+            handler = GAME_EVENT_HANDLERS[event_type]
+            IF handler IS NULL THEN
+                LOG "⚠️ Unknown event type: {event_type}"
+                RETURN {success: false, error: "Unknown event type"}
+            ENDIF
+            
+            // Calculate event impact magnitude
+            impact_magnitude = CALL calculate_event_impact(event_type, event_data, game_state)
+            LOG "💥 Impact magnitude: {impact_magnitude}"
+            
+            // Apply parameter modifications
+            parameter_changes = {}
+            FOR param IN handler.parameters_affected {
+                old_value = GET_PARAMETER_VALUE(param)
+                new_value = CALL modify_parameter_for_event(param, impact_magnitude, event_type)
+                parameter_changes[param] = {old: old_value, new: new_value}
+                
+                LOG "🔧 {param}: {old_value} → {new_value}"
+            }
+            
+            // Trigger specialized reasoning for this event type
+            reasoning_response = CALL event_specific_reasoning(event_type, event_data, impact_magnitude)
+            
+            // Update AI state based on event
+            state_updates = CALL update_ai_state_for_event(event_type, event_data, parameter_changes)
+            
+            // Generate AI response to the game event
+            ai_response = CALL generate_event_response(event_type, reasoning_response, state_updates)
+            
+            RETURN {
+                success: true,
+                event_type: event_type,
+                impact_magnitude: impact_magnitude,
+                parameter_changes: parameter_changes,
+                reasoning_response: reasoning_response,
+                state_updates: state_updates,
+                ai_response: ai_response,
+                timestamp: TIME.now()
+            }
+        }
+    }
+    
+    ACTION event_specific_reasoning {
+        INPUT event_type string, event_data map, impact_magnitude float
+        EXEC {
+            SWITCH event_type {
+                CASE "player_action":
+                    RETURN CALL reason_about_player_action(event_data, impact_magnitude)
+                CASE "combat_event":
+                    RETURN CALL reason_about_combat(event_data, impact_magnitude)
+                CASE "narrative_event":
+                    RETURN CALL reason_about_narrative(event_data, impact_magnitude)
+                CASE "puzzle_event":
+                    RETURN CALL reason_about_puzzle(event_data, impact_magnitude)
+                DEFAULT:
+                    RETURN CALL generic_event_reasoning(event_data, impact_magnitude)
+            }
+        }
+    }
+    
+    ACTION reason_about_player_action {
+        INPUT action_data map, impact float
+        EXEC {
+            LOG "🧠 Reasoning about player action: {action_data.action_type}"
+            
+            // Analyze action intent and consequences
+            action_intent = CALL analyze_action_intent(action_data)
+            predicted_outcomes = CALL predict_action_outcomes(action_data, impact)
+            
+            // Adjust AI behavioral parameters based on action
+            IF action_data.action_type == "aggressive" THEN
+                NEURAL_STATE.excitation_threshold += impact * 0.2
+                REASONING_PARAMETERS.tactical_reasoning_weight += impact * 0.3
+            ELIF action_data.action_type == "creative" THEN
+                CREATIVITY_STATE.current_level += impact * 0.4
+                REASONING_PARAMETERS.creative_path_weight += impact * 0.3
+            ELIF action_data.action_type == "analytical" THEN
+                REASONING_PARAMETERS.logical_reasoning_weight += impact * 0.4
+                NEURAL_STATE.attention_focus += impact * 0.2
+            ENDIF
+            
+            RETURN {
+                action_intent: action_intent,
+                predicted_outcomes: predicted_outcomes,
+                reasoning_adjustments: {
+                    excitement: NEURAL_STATE.excitation_threshold,
+                    creativity: CREATIVITY_STATE.current_level,
+                    logic_weight: REASONING_PARAMETERS.logical_reasoning_weight
+                }
+            }
+        }
+    }
+}
+
+// ===================================================================
+// NEURAL STATE SIMULATION
+// ===================================================================
+
+@PACKAGE AI_NEURAL_SIMULATION {
+    
+    GLOBAL NEURAL_LAYERS {
+        input_layer: {
+            nodes: 512,
+            activation: "relu",
+            weights: [],
+            bias: [],
+            activity_level: 0.0
+        },
+        attention_layer: {
+            nodes: 256,
+            activation: "softmax",
+            weights: [],
+            bias: [],
+            activity_level: 0.0,
+            attention_map: {}
+        },
+        reasoning_layer: {
+            nodes: 128,
+            activation: "tanh",
+            weights: [],
+            bias: [],
+            activity_level: 0.0,
+            reasoning_chains: []
+        },
+        creativity_layer: {
+            nodes: 64,
+            activation: "sigmoid",
+            weights: [],
+            bias: [],
+            activity_level: 0.0,
+            novelty_detectors: []
+        },
+        output_layer: {
+            nodes: 32,
+            activation: "linear",
+            weights: [],
+            bias: [],
+            activity_level: 0.0
+        }
+    }
+    
+    ACTION simulate_neural_forward_pass {
+        INPUT input_vector array, temperature float
+        EXEC {
+            LOG "🧠 Starting neural forward pass (temp: {temperature})"
+            
+            current_activation = input_vector
+            
+            FOR layer_name, layer_config IN NEURAL_LAYERS {
+                LOG "  Processing {layer_name} ({layer_config.nodes} nodes)"
+                
+                # Apply temperature-based noise
+                temp_noise = GENERATE_GAUSSIAN_NOISE(LENGTH(current_activation), 0.0, temperature * 0.1)
+                noisy_input = VECTOR_ADD(current_activation, temp_noise)
+                
+                # Simulate layer computation
+                layer_output = CALL compute_layer_activation(noisy_input, layer_config, temperature)
+                
+                # Update layer state
+                layer_config.activity_level = VECTOR_MEAN(layer_output)
+                
+                LOG "    Activity level: {layer_config.activity_level}"
+                
+                # Apply temperature-based modulation
+                IF temperature > 1.0 THEN
+                    # High temperature: more random, creative activations
+                    randomness_factor = (temperature - 1.0) * 0.3
+                    layer_output = APPLY_RANDOMNESS(layer_output, randomness_factor)
+                ELIF temperature < 0.5 THEN
+                    # Low temperature: more deterministic, focused activations
+                    focus_factor = (0.5 - temperature) * 2.0
+                    layer_output = APPLY_FOCUS(layer_output, focus_factor)
+                ENDIF
+                
+                current_activation = layer_output
+                
+                # Layer-specific processing
+                IF layer_name == "attention_layer" THEN
+                    layer_config.attention_map = CALL compute_attention_map(layer_output)
+                ELIF layer_name == "creativity_layer" THEN
+                    novelty_score = CALL detect_novelty(layer_output, layer_config.novelty_detectors)
+                    IF novelty_score > 0.7 THEN
+                        LOG "🎨 Novelty detected in creativity layer: {novelty_score}"
+                        CALL trigger_creativity_boost(novelty_score)
+                    ENDIF
+                ENDIF
+            }
+            
+            LOG "✅ Neural forward pass complete"
+            
+            RETURN {
+                final_output: current_activation,
+                layer_activities: MAP(NEURAL_LAYERS, layer => layer.activity_level),
+                attention_map: NEURAL_LAYERS.attention_layer.attention_map,
+                novelty_detected: NEURAL_LAYERS.creativity_layer.novelty_detectors
+            }
+        }
+    }
+    
+    ACTION neural_adaptation_sequence {
+        INPUT new_temperature float, old_temperature float
+        EXEC {
+            LOG "🔄 Neural adaptation: {old_temperature} → {new_temperature}"
+            
+            temp_delta = new_temperature - old_temperature
+            adaptation_strength = ABS(temp_delta) * 0.5
+            
+            # Adapt each layer to new temperature regime
+            FOR layer_name, layer_config IN NEURAL_LAYERS {
+                LOG "  Adapting {layer_name}"
+                
+                # Weight adjustment based on temperature change
+                IF temp_delta > 0 THEN
+                    # Temperature increased: promote exploration
+                    CALL increase_layer_randomness(layer_config, adaptation_strength)
+                    
+                    IF layer_name == "creativity_layer" THEN
+                        CALL boost_creativity_sensitivity(layer_config, temp_delta)
+                    ENDIF
+                ELSE
+                    # Temperature decreased: promote exploitation
+                    CALL increase_layer_focus(layer_config, adaptation_strength)
+                    
+                    IF layer_name == "reasoning_layer" THEN
+                        CALL boost_logical_consistency(layer_config, ABS(temp_delta))
+                    ENDIF
+                ENDIF
+                
+                # Update layer activity based on new temperature
+                layer_config.activity_level *= (1.0 + temp_delta * 0.1)
+                
+                LOG "    New activity level: {layer_config.activity_level}"
+            }
+            
+            # Global neural state adjustments
+            NEURAL_STATE.plasticity_index += ABS(temp_delta) * 0.2
+            NEURAL_STATE.learning_momentum = temp_delta * 0.3
+            
+            LOG "🧠 Neural adaptation complete"
+            LOG "  Plasticity: {NEURAL_STATE.plasticity_index}"
+            LOG "  Learning momentum: {NEURAL_STATE.learning_momentum}"
+        }
+    }
+}
+
+// ===================================================================
+// COMPREHENSIVE AI BEHAVIOR DATABASE
+// ===================================================================
+
+@PACKAGE AI_BEHAVIOR_DATABASE {
+    
+    GLOBAL BEHAVIOR_PATTERNS {
+        
+        temperature_responses: {
+            low_temp: {
+                range: [0.1, 0.4],
+                characteristics: ["focused", "deterministic", "conservative", "logical"],
+                reasoning_bias: "analytical",
+                creativity_level: "low",
+                response_consistency: "high",
+                exploration_tendency: "low"
+            },
+            medium_temp: {
+                range: [0.5, 0.8],
+                characteristics: ["balanced", "moderate", "versatile", "adaptive"],
+                reasoning_bias: "hybrid",
+                creativity_level: "medium",
+                response_consistency: "medium",
+                exploration_tendency: "medium"
+            },
+            high_temp: {
+                range: [0.9, 1.5],
+                characteristics: ["creative", "unpredictable", "exploratory", "innovative"],
+                reasoning_bias: "creative",
+                creativity_level: "high",
+                response_consistency: "low",
+                exploration_tendency: "high"
+            },
+            extreme_temp: {
+                range: [1.6, 2.0],
+                characteristics: ["chaotic", "highly_random", "experimental", "boundary_pushing"],
+                reasoning_bias: "stochastic",
+                creativity_level: "extreme",
+                response_consistency: "very_low",
+                exploration_tendency: "extreme"
+            }
+        },
+        
+        query_type_behaviors: {
+            factual_queries: {
+                preferred_temperature: 0.3,
+                reasoning_paths: ["analytical", "memory_retrieval"],
+                confidence_threshold: 0.85,
+                creativity_suppress: 0.2
+            },
+            creative_queries: {
+                preferred_temperature: 1.0,
+                reasoning_paths: ["creative", "divergent_thinking"],
+                confidence_threshold: 0.55,
+                creativity_boost: 0.4
+            },
+            analytical_queries: {
+                preferred_temperature: 0.5,
+                reasoning_paths: ["analytical", "systematic", "logical_deduction"],
+                confidence_threshold: 0.7,
+                logic_boost: 0.3
+            },
+            conversational_queries: {
+                preferred_temperature: 0.7,
+                reasoning_paths: ["intuitive", "creative", "analytical"],
+                confidence_threshold: 0.6,
+                empathy_balance: 0.4
+            },
+            game_related_queries: {
+                preferred_temperature: 0.55,
+                reasoning_paths: ["hybrid", "game_event_logic"],
+                confidence_threshold: 0.65,
+                tactical_focus: 0.4
+            },
+            ai_research_queries: {
+                preferred_temperature: 0.45,
+                reasoning_paths: ["analytical", "meta_reasoning"],
+                confidence_threshold: 0.9,
+                logic_boost: 0.5,
+                creativity_boost: 0.2
+            }
+        }
+    }
+    
+    ACTION auto_select_behavior_profile {
+        INPUT query string, intent string, temperature float
+        EXEC {
+            LOG "🎯 Selecting behavior profile for {intent}, temp={temperature}"
+            
+            profile = BEHAVIOR_PATTERNS.query_type_behaviors[intent]
+            IF profile IS NULL THEN
+                profile = BEHAVIOR_PATTERNS.query_type_behaviors.factual_queries
+                LOG "⚠️ Defaulted to factual profile"
+            ENDIF
+            
+            # Adjust based on real-time temperature
+            adjusted_paths = profile.reasoning_paths
+            adjusted_temp = (temperature + profile.preferred_temperature) / 2.0
+            
+            RETURN {
+                selected_profile: profile,
+                effective_temperature: adjusted_temp,
+                reasoning_paths: adjusted_paths
+            }
+        }
+    }
+}
+,
+        
+        query_type_behaviors: {
+            factual_queries: {
+                preferred_temperature: 0.3,
+                reasoning_paths: ["analytical", "memory_retrieval"],
+                confidence_threshold: 0.8,
+                creativity_suppress: 0.2
+            },
+            creative_queries: {
+                preferred_temperature: 1.2,
+                reasoning_paths: ["creative", "associative", "divergent"],
+                confidence_threshold: 0.5,
+                creativity_boost: 0.4
+            },
+            analytical_queries: {
+                preferred_temperature: 0.5,
+                reasoning_paths: ["analytical", "logical", "systematic"],
+                confidence_threshold: 0.7,
+                logic_boost: 0.3
+            },
+            conversational_queries: {
+                preferred_temperature
+TRACE {
+    query: "fresh-spawn bullied encounter in DayZ until death",
+    detected_intent: "game_related",
+    profile: game_related_queries,
+    baseline_temperature: 0.57,
+    effective_temperature: 0.55,
+    activated_reasoning_paths: ["hybrid", "game_event_logic"],
+    bias_shifts: {
+        tactical_focus: +0.4,
+        creativity: balanced,
+        logic: stable
+    },
+    narrative_constraints: {
+        end_condition: player_death,
+        scope: medium_length,
+        style: grounded
+    },
+    final_confidence: 0.72
+}
