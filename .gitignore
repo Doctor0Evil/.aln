@@ -1,2 +1,7 @@
+gitignore
+# Ignore dynamic outputs
+dashboards/*.aln
+logs/*.log
+scripts/events/*.aln
    # Ignore local PowerShell cache
    __pycache__/
