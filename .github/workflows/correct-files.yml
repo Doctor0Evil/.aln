@@ -5,34 +5,87 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: correct-files-${{ github.ref_name }}
+  cancel-in-progress: false  # Let current job finish; queue new ones per branch
+
 jobs:
   correct-files:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-latest, ubuntu-24.04]
+
     steps:
+      # --- Checkout with full history for clean rebase ---
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      # --- Linux: Install PowerShell if missing (for Ubuntu) ---
+      # --- Install PowerShell on Linux runners ---
       - name: Install PowerShell on Linux
         if: runner.os == 'Linux'
         uses: PSModule/install-powershell@v1
         with:
           Version: 'latest'
-      
-      # --- Windows: PowerShell 5.1+ pre-installed, no install needed ---
-      # --- Universal PowerShell runner ---
+
+      # --- Run ALN file correction script ---
       - name: Run ALN file correction script (cross-platform)
         shell: pwsh
         run: ./scripts/correct-aln-files.ps1
 
-      - name: Commit & push corrections
+      # --- Show summary of changes for auditing ---
+      - name: Show Git status & diff summary
         shell: bash
         run: |
+          echo "===== GIT STATUS ====="
+          git status
+          echo
+          echo "===== DIFF SUMMARY ====="
+          git diff --stat || true
+          echo
+          echo "===== FULL DIFF SNIPPETS ====="
+          git diff || true
+
+      # --- Commit, rebase, safe push with retry ---
+      - name: Commit & safe push corrections (with auto-retry)
+        shell: bash
+        run: |
+          set -e
+
           git config user.name "ALN File Corrector"
           git config user.email "actions@github.com"
+
           git add .
-          git commit -m "Automated ALN file correction" || echo "No changes to commit"
-          git push
+
+          # Only commit if there are staged changes
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Automated ALN file correction"
+
+          attempt_push() {
+            git pull --rebase origin "${GITHUB_REF_NAME}" || return 1
+            if [ "$(git rev-list HEAD ^origin/${GITHUB_REF_NAME} --count)" -gt 0 ]; then
+              git push origin "${GITHUB_REF_NAME}" || return 1
+              echo "Push successful."
+            else
+              echo "No new commits to push after rebase."
+            fi
+          }
+
+          # Try up to 3 times with incremental backoff
+          for i in 1 2 3; do
+            if attempt_push; then
+              exit 0
+            fi
+            echo "Push failed (attempt $i). Retrying in $((i*5))s..."
+            sleep $((i*5))
+          done
+
+          echo "Push failed after 3 attempts."
+          exit 1
