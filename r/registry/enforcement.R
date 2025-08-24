@@ -1,4 +1,4 @@
-# Registry entries with tags
+# Action Registry with explicit parameters
 act_registry <- data.frame(
   action = c(
     "corpse manipulation",
@@ -32,7 +32,7 @@ act_registry <- data.frame(
   )
 )
 
-# Registry filtering function
+# Filter registry for context/restrictions
 filter_registry <- function(mode) {
   if (mode == "horror.sandbox") {
     subset(act_registry, tag == "horror-core" | tag == "theme-dependency")
@@ -43,24 +43,17 @@ filter_registry <- function(mode) {
   }
 }
 
-# Example usage
-sandbox_registry <- filter_registry("horror.sandbox")
-humor_registry   <- filter_registry("proc.gen.humor.engine")
-
-print("Horror Sandbox Registry:")
-print(sandbox_registry)
-
-print("Humor Engine Registry:")
-print(humor_registry)
-
-# Enforcement: block humor actions in horror.sandbox
+# Enforced action execution, throws error on policy breach
 run_action <- function(action, mode) {
   entry <- subset(act_registry, action == action)
   if (mode == "horror.sandbox" && entry$tag == "humor-only") {
-    stop(paste("ERROR: Attempted humor action in horror.sandbox:", action))
+    stop(sprintf("ERROR: Humor action ('%s') attempted in horror.sandbox!", action))
   }
-  paste("Action performed:", action)
+  # Allowed action
+  sprintf("Action performed: %s in mode: %s", action, mode)
 }
 
-# Example, triggers error:
-# run_action("booger consumption contests", "horror.sandbox")
+# Example usage
+print(filter_registry("horror.sandbox"))
+print(filter_registry("proc.gen.humor.engine"))
+# run_action("booger consumption contests", "horror.sandbox") # triggers error
