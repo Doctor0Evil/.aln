@@ -1,4 +1,5 @@
-﻿// ALN Compliance Module
+// ALN Compliance Module
 module ALNCompliance {
     // GDPR, HIPAA, SOC2, PCI-DSS compliance checks implemented here
 }
+

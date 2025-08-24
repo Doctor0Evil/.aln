@@ -1,4 +1,5 @@
-﻿// Terminal Command Processor Module
+// Terminal Command Processor Module
 module ALNTerminal {
     // Command execution and compliance enforcement
 }
+
