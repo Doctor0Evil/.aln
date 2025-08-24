@@ -1,0 +1,6 @@
+﻿# Frontend Dockerfile for ALN GUI
+FROM node:18-alpine
+WORKDIR /app
+COPY ./frontend/ .
+RUN npm install && npm run build
+CMD [""npm"", ""start""]

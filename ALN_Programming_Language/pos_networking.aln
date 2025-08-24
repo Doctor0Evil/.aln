@@ -1,0 +1,7 @@
+@DEF pos_net {
+  @CI_CD {
+    build: 'docker_build',
+    test: 'compliance_check',
+    deploy: 'aws_pos'
+  }
+}

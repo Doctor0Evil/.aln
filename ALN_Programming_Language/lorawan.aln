@@ -1,0 +1,6 @@
+@DEF lorawan_net {
+  @LORAWAN {
+    join: 'otaa',
+    keys: 'app_net_session'
+  }
+}
