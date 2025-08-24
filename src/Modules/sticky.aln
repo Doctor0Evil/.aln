@@ -6,7 +6,7 @@ PROC enforce_sticky_trigger(filepath)
     required_headers := [
         "aln_logic_parent", "sticky_horror", "content_rating", "horror_compliance", "last_audit"
     ]
-    
+
     # 1. Directory Check
     dir_ok := FALSE
     FOR dir IN approved_dirs DO
@@ -51,3 +51,4 @@ ENDPROC
 
 # Example invocation:
 # enforce_sticky_trigger("src/aln/procedure/my_horror_script.aln")
+
