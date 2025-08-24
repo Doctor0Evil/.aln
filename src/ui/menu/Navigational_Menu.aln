@@ -1,23 +1,24 @@
 ;; Navigational Menu System for ALN Game Engine
 ;; Handles menu states, transitions, and context-aware navigation
 
-(defparameter *menu-states* 
-  '((:main 
+(defparameter *menu-states*
+  '((:main
      :options ("New Game" "Load Game" "Settings" "Exit")
      :description "The Hollow's edge awaits your choice.")
-    (:new-game 
+    (:new-game
      :options ("Start Adventure" "Character Select" "Tutorial")
      :description "Choose your path through the haunted woods.")
-    (:load-game 
+    (:load-game
      :options ("Save 1: Wolfman's Shadow" "Save 2: Hollow's Echo" "Cancel")
      :description "Your journey continues where you left off.")
-    (:settings 
+    (:settings
      :options ("Audio" "Graphics" "Controls" "Back")
      :description "Adjust your experience of the haunted world.")
-    (:audio 
+    (:audio
      :options ("Volume" "Sound Effects" "Music" "Back")
      :description "Tune the whispers of the Hollow to your liking.")
-    (:graphics 
+    (:graphics
      :options ("Resolution" "Brightness" "VFX" "Back")
      :description "Adjust the visual shadows of the haunted forest."))
   )
+
