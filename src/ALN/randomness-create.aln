@@ -1,0 +1,106 @@
+[SESSION_INIT]
+  MODE: HARDCORE_HORROR
+  AUTHOR_INTENT: max_grotesque
+  SANITY_THRESHOLD: breached
+  MERCY_STATE: DISABLED (LOCKED)
+  >>> Loading environment: Abbington’s Slaughterhouse District
+
+------------------------------------------------------------
+:: ORIGIN_EVENT: Down The Drain ::
+------------------------------------------------------------
+  INIT(child.generated_under=slop_bucket)
+  parent_role = “none” → surrogates = [pimp, janitor, vagrant]
+  feed_cycle.boot([waste, clotted_blood, alley_piss])
+  MEMORY imprint = “booger_ingestion(twin_corpse)”
+  SANITY -= 10
+  appetite = corruption(booger_fetish + carrion_taste)
+
+[DEBUG] Infant_Branch.trigger():  
+  - Input → “corpse twin nose”  
+  - Output → first_meal = “booger_lump”  
+  - long_term_effect → swallow_rot = delight(TRUE)
+
+------------------------------------------------------------
+:: TRANSITION: Junkyard Christening ::
+------------------------------------------------------------
+@age(10):
+  peer_dare_challenge(“open dog corpse”)
+  → Input_Accepted → carcass_ritual.initiated()
+
+scroty_necklace = intestines + anal_glands  
+facepaint = secretion(pus, tear)  
+autoharm = scab_eating(crotch_region)  
+
+bed.spawn = nest([undergarments(soiled), bread(stale), dog_vomit, cat(mummified)])  
+DESIRE_INCREASE: “rot beneath scrotum laughter()”
+
+[PLAYER FLAG]  
+  - immunity to disgust = TRUE  
+  - player_empathy.response = -30%
+
+------------------------------------------------------------
+:: SUBROUTINE: The Horror of Dinner ::
+------------------------------------------------------------
+Winter hunger_event = active  
+bait_targets = “orphans (starving)”  
+lure_text = “warmth” → entry(OK)  
+
+corpse_cache.load(“dead horse hollowed”)  
+food_output = assemble(
+    turds_last, snot, spit, blood
+  ) = recipe(“Scroty’s Loaf”)  
+
+side_effect: survivors.map(
+    trauma → irreversible
+    appetite = null
+    suicide_event.trigger(belly_slit_search)
+)  
+
+console_flag: [GAMEPLAY_DEATH by despair, not poison]
+
+------------------------------------------------------------
+:: EPIC BRANCH: Legend of Taint-Flood ::
+------------------------------------------------------------
+urban_myth.spread(“Scrotal Cough”)  
+infection_mech = secretion_contact  
+symptom_stack = [gums.bleed(green), eyes.mucus_shut(TRUE), coughing_lungs_out]  
+
+blessing_event = mark_children(failure_to_wash)  
+regional_effect = “Abbington’s genetic trauma”
+
+DEBUG_LOG:  
+  contamination_channels → soup_pot, urinal, communion_wine, biscuits, rain_barrel  
+  consequence = citywide_healthcollapse
+
+------------------------------------------------------------
+:: FINALE_EVENT: Ball-Sack Cathedral ::
+------------------------------------------------------------
+location = sewer_depth(max)  
+construct_palace(materials=[bandages.used, tampons, teeth.human])  
+
+throne = stitch(
+    earlobe_slice + labia + scrotum_selfmutilation
+) → object = “pustule_throne”  
+
+diet = cheeks_starved_children(scrap_scabs)  
+ritual_action = chain_pull → water_supply += pus, urine  
+
+effect = household_ingestion(“Scroty essence”)  
+trauma_flag = permanent(citywide)  
+
+------------------------------------------------------------
+:: PLAYER EXPERIENCE SYNC ::
+------------------------------------------------------------
+sensation = “mouth full”  
+taste = [salty, thick, green]  
+reaction = gag(TRUE), swallow(forced)  
+
+closing_flag = NEURAL_BIND: “NEVER FORGET”
+
+------------------------------------------------------------
+[SESSION_EXIT]
+  - player_psych_damage: irreversible()
+  - appetite: purge_forever
+  - nightmares: auto_enabled
+  - therapy_need: CRITICAL
+------------------------------------------------------------
