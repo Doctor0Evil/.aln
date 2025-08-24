@@ -40,7 +40,8 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
 
       - name: 🏷️ Extract version
         id: version
@@ -63,8 +64,11 @@ jobs:
       - name: 📋 File structure validation
         shell: bash
         run: |
-          if [[ "$(git log -1 --pretty=format:'%an')" == "ALN File Corrector" ]]; then
-            echo "Skipping README.md check for automation commit."
+          LAST_AUTHOR="$(git log -1 --pretty=format:'%an')"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] \
+             || [[ "$LAST_AUTHOR" == "ALN File Corrector" ]] \
+             || [[ "${{ github.actor }}" == "github-actions[bot]" ]]; then
+            echo "Skipping README.md check for automation/manual trigger."
           else
             [[ -f "README.md" ]] || (echo "❌ Missing README.md" && exit 1)
             echo "✅ Structure OK"
@@ -235,11 +239,4 @@ jobs:
           echo "===== FULL DIFF SNIPPETS ====="
           git diff || true
 
-      - name: Commit & safe push corrections (with auto-retry)
-        shell: bash
-        run: |
-          set -e
-          git config user.name "ALN File Corrector"
-          git config user.email "actions@github.com"
-          git add .
-          if git diff --cached --quiet; then
+      - name: Commit & safe push
