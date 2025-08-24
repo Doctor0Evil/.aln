@@ -2,13 +2,13 @@
 ;; Core dialogue system for ALN game engine
 ;; Handles emotional state transitions, context awareness, and conversation branching
 
-(defparameter *dialogue-logic* 
-  '((:start 
+(defparameter *dialogue-logic*
+  '((:start
      :trigger "greet"
      :response "The Hollow whispers to those who listen."
      :next-state (:emotion :neutral :context :forest)
      :requires '(:player-present :forest))
-    (:forest 
+    (:forest
      :trigger "ask-about-forest"
      :response "The trees remember what you've forgotten."
      :next-state (:emotion :curious :context :forest)
@@ -29,3 +29,4 @@
      :next-state (:emotion :hope :context :escape)
      :requires '(:player-present :wolfman :morrin)))
   )
+
