@@ -1,0 +1,31 @@
+# NPC Dialogue Logic
+;; Core dialogue system for ALN game engine
+;; Handles emotional state transitions, context awareness, and conversation branching
+
+(defparameter *dialogue-logic* 
+  '((:start 
+     :trigger "greet"
+     :response "The Hollow whispers to those who listen."
+     :next-state (:emotion :neutral :context :forest)
+     :requires '(:player-present :forest))
+    (:forest 
+     :trigger "ask-about-forest"
+     :response "The trees remember what you've forgotten."
+     :next-state (:emotion :curious :context :forest)
+     :requires '(:player-present :forest))
+    (:curious
+     :trigger "ask-about-wolfman"
+     :response "Wolfman walks the shadows, seeking redemption. I owe him silence, you caution."
+     :next-state (:emotion :wary :context :wolfman)
+     :requires '(:player-present :wolfman))
+    (:wary
+     :trigger "ask-about-morrin"
+     :response "Morrin guards the path. He may guide or betray."
+     :next-state (:emotion :wary :context :morrin)
+     :requires '(:player-present :morrin))
+    (:morrin
+     :trigger "ask-about-escape"
+     :response "Wolfman knows hidden paths. Find him to escape."
+     :next-state (:emotion :hope :context :escape)
+     :requires '(:player-present :wolfman :morrin)))
+  )
