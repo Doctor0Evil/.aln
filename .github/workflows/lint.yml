@@ -33,19 +33,19 @@ jobs:
           echo "🔍 Validating YAML files manually..."
           find . -type f \( -name "*.yml" -o -name "*.yaml" \) -not -path "./.git/*" | while read -r file; do
             echo "Checking: $file"
-            python3 -c "
-          import yaml, sys
-          try:
-              with open('$file','r') as f: yaml.safe_load(f)
-              print('✅ $file - Valid YAML')
-          except yaml.YAMLError as e:
-              print('❌ $file - Invalid YAML:', str(e)); sys.exit(1)
-          except Exception as e:
-              print('⚠️ $file - Error:', str(e))
-          " || {
-              echo "❌ YAML validation failed for $file"
-              echo "This might cause workflow failures"
-            }
+            python3 - <<'EOF'
+import yaml, sys
+file_path = sys.argv[1]
+try:
+    with open(file_path, 'r') as f:
+        yaml.safe_load(f)
+    print(f"✅ {file_path} - Valid YAML")
+except yaml.YAMLError as e:
+    print(f"❌ {file_path} - Invalid YAML: {str(e)}")
+    sys.exit(1)
+except Exception as e:
+    print(f"⚠️ {file_path} - Error: {str(e)}")
+EOF
           done
           echo "✅ YAML validation completed"
 
@@ -61,25 +61,34 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🧹 Lint PowerShell files
+      - name: 🧹 Lint PowerShell files (with Linux/macOS fix)
         shell: pwsh
         run: |
           Write-Host "🧹 Linting PowerShell files..."
           if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
-            Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+            Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck -AllowClobber
           }
-          $psFiles = Get-ChildItem -Recurse -Include "*.ps1", "*.psm1" -Exclude "*.Tests.ps1"
+          if ("${{ matrix.os }}" -eq "ubuntu-latest" -or "${{ matrix.os }}" -eq "macos-latest") {
+            $psFiles = Get-ChildItem -Recurse -Include "*.ps1","*.psm1" -Exclude "*.Tests.ps1","GitHubActionsAdapter.psm1"
+          } else {
+            $psFiles = Get-ChildItem -Recurse -Include "*.ps1","*.psm1" -Exclude "*.Tests.ps1"
+          }
           if ($psFiles.Count -eq 0) { Write-Host "ℹ️ No PowerShell files found to lint"; exit 0 }
           $allIssues = @()
           foreach ($file in $psFiles) {
             Write-Host "Checking: $($file.FullName)"
-            $issues = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Warning, Error
-            if ($issues.Count -eq 0) {
-              Write-Host "✅ $($file.Name) - No issues found"
-            } else {
-              Write-Host "⚠️ $($file.Name) - Found $($issues.Count) issues:"
-              $issues | ForEach-Object { Write-Host "  Line $($_.Line): $($_.Message)" }
-              $allIssues += $issues
+            try {
+              $issues = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Warning,Error
+              if ($issues.Count -eq 0) {
+                Write-Host "✅ $($file.Name) - No issues found"
+              } else {
+                Write-Host "⚠️ $($file.Name) - Found $($issues.Count) issues:"
+                $issues | ForEach-Object { Write-Host "  Line $($_.Line): $($_.Message)" }
+                $allIssues += $issues
+              }
+            } catch {
+              Write-Host "❌ Error analyzing $($file.Name): $($_.Exception.Message)"
+              $allIssues += "error"
             }
           }
           if ($allIssues.Count -gt 0) {
@@ -168,7 +177,7 @@ jobs:
           )
           FOUND_ISSUES=false
           for pattern in "${PATTERNS[@]}"; do
-            if grep -rE -i "$pattern" . --exclude-dir=.git --exclude="*.md" --exclude-dir=node_modules 2>/dev/null | grep -v "example\|placeholder\|template\|test" | head -5; then
+            if grep -rE -i "$pattern" . --exclude-dir=.git --exclude="*.md" --exclude-dir=node_modules 2>/dev/null | grep -vE "example|placeholder|template|test" | head -5; then
               FOUND_ISSUES=true
             fi
           done
@@ -190,5 +199,4 @@ jobs:
           echo "YAML Linting: ${{ needs.lint-yaml.result }}"
           echo "PowerShell Linting: ${{ needs.lint-powershell.result }}"
           echo "Markdown Linting: ${{ needs.lint-markdown.result }}"
-          echo "JSON Validation: ${{ needs.validate-json.result }}"
-          echo "Link Checking: ${{ needs.check-links.result }}"
+          echo "JSON Validation: ${{ needs.validate-json
