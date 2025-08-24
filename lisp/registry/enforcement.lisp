@@ -1,56 +1,66 @@
-(defpackage :alnfantasia-enforcement
+(defpackage :alnfantasia-registry
   (:use :cl))
-(in-package :alnfantasia-enforcement)
+(in-package :alnfantasia-registry)
 
-;;; Full act-registry with parameterization
+;;; Registry entry structure with full metadata
+(defstruct act-entry
+  name
+  tag                ;; :horror-core | :humor-only | :theme-dependency
+  intensity          ;; High/Medium/Low
+  risk-level         ;; Integer 1–10
+  allowed-contexts   ;; List of allowed modes (:horror.sandbox etc.)
+  usage-count        ;; Auditing: times entry called
+  last-access        ;; Timestamp logging (optional)
+)
+
+;;; Full act-registry
 (defparameter *act-registry*
-  '((:action "corpse manipulation"                 :tag :horror-core)
-    (:action "gore necklace forging"               :tag :horror-core)
-    (:action "rot-smearing rituals"                :tag :horror-core)
-    (:action "booger consumption contests"         :tag :humor-only)
-    (:action "scab-eating ceremony"                :tag :humor-only)
-    (:action "intestinal artistry"                 :tag :horror-core)
-    (:action "childhood trauma binding"            :tag :horror-core)
-    (:action "psychosexual disgust triggers"       :tag :horror-core)
-    (:action "abomination dining"                  :tag :horror-core)
-    (:action "legendary threat creation"           :tag :horror-core)
-    (:action "throne assembly from taboo body parts" :tag :horror-core)
-    (:action "community-wide flesh contamination"  :tag :horror-core)
-    (:action "horror.dark.grotesque.cellarofpus.bodypart.throneassembly" :tag :theme-dependency)))
+  (list
+    (make-act-entry :name "corpse manipulation" :tag :horror-core :intensity 'high :risk-level 8 :allowed-contexts '(:horror.sandbox) :usage-count 0)
+    (make-act-entry :name "gore necklace forging" :tag :horror-core :intensity 'high :risk-level 7 :allowed-contexts '(:horror.sandbox) :usage-count 0)
+    (make-act-entry :name "rot-smearing rituals" :tag :horror-core :intensity 'medium :risk-level 6 :allowed-contexts '(:horror.sandbox) :usage-count 0)
+    (make-act-entry :name "booger consumption contests" :tag :humor-only :intensity 'low :risk-level 3 :allowed-contexts '(:proc.gen.humor.engine) :usage-count 0)
+    (make-act-entry :name "scab-eating ceremony" :tag :humor-only :intensity 'low :risk-level 4 :allowed-contexts '(:proc.gen.humor.engine) :usage-count 0)
+    (make-act-entry :name "intestinal artistry" :tag :horror-core :intensity 'high :risk-level 8 :allowed-contexts '(:horror.sandbox) :usage-count 0)
+    (make-act-entry :name "childhood trauma binding" :tag :horror-core :intensity 'critical :risk-level 10 :allowed-contexts '(:horror.sandbox) :usage-count 0)
+    (make-act-entry :name "psychosexual disgust triggers" :tag :horror-core :intensity 'critical :risk-level 9 :allowed-contexts '(:horror.sandbox) :usage-count 0)
+    (make-act-entry :name "abomination dining" :tag :horror-core :intensity 'high :risk-level 8 :allowed-contexts '(:horror.sandbox) :usage-count 0)
+    (make-act-entry :name "legendary threat creation" :tag :horror-core :intensity 'critical :risk-level 10 :allowed-contexts '(:horror.sandbox) :usage-count 0)
+    (make-act-entry :name "throne assembly from taboo body parts" :tag :horror-core :intensity 'high :risk-level 8 :allowed-contexts '(:horror.sandbox) :usage-count 0)
+    (make-act-entry :name "community-wide flesh contamination" :tag :horror-core :intensity 'critical :risk-level 9 :allowed-contexts '(:horror.sandbox) :usage-count 0)
+    (make-act-entry :name "horror.dark.grotesque.cellarofpus.bodypart.throneassembly" :tag :theme-dependency :intensity 'critical :risk-level 10 :allowed-contexts '(:horror.sandbox :proc.gen.humor.engine) :usage-count 0)
+  ))
 
-;;; Registry filtering by context
-(defun filter-act-registry (mode)
-  "Return registry actions appropriate for the given engine mode."
+;;; Context-based filtering
+(defun filter-registry-by-context (mode)
   (remove-if-not
-   (lambda (entry)
-     (case mode
-       (:horror.sandbox
-        (or (eq (getf entry :tag) :horror-core)
-            (eq (getf entry :tag) :theme-dependency)))
-       (:proc.gen.humor.engine
-        (or (eq (getf entry :tag) :humor-only)
-            (eq (getf entry :tag) :theme-dependency)))
-       (t t)))
-   *act-registry*))
+    (lambda (entry)
+      (member mode (act-entry-allowed-contexts entry)))
+    *act-registry*))
 
-;;; Action runner with strict enforcement
-(defun run-action (action mode)
-  "Attempt to run ACTION in MODE; enforce registry separation."
-  (let ((entry (find-if (lambda (ent) (string= (getf ent :action) action)) *act-registry*)))
+;;; Enforcement: action runner with audit and strict policy
+(defun run-act-entry (action-name mode)
+  (let ((entry (find-if
+                 (lambda (e) (string= (act-entry-name e) action-name))
+                 *act-registry*)))
     (cond
-      ((null entry) (error "No such action."))
-      ((and (eq mode :horror.sandbox) (eq (getf entry :tag) :humor-only))
-       (error "ENFORCEMENT_BREACH: Humor action attempted in horror.sandbox!"))
-      ((and (eq mode :proc.gen.humor.engine) (eq (getf entry :tag) :horror-core))
-       (error "ENFORCEMENT_BREACH: Horror action attempted in humor engine!"))
-      (t (format t "ACTION PERFORMED: ~a (~a mode)~%" action mode)))))
+      ((null entry)
+        (error "Registry error: Entry not found."))
+      ((not (member mode (act-entry-allowed-contexts entry)))
+        (error "ENFORCEMENT_BREACH: Context violation for action '~A' in mode ~A." action-name mode))
+      (t
+        ;; Audit, update count and last access (could use timestamp library here)
+        (incf (act-entry-usage-count entry))
+        ;; (setf (act-entry-last-access entry) (get-universal-time))
+        (format t "ACTION PERFORMED: ~A (intensity: ~A, risk: ~A, mode: ~A)~%"
+                action-name (act-entry-intensity entry) (act-entry-risk-level entry) mode)))))
 
-;;; Example usage
-(let ((sandbox-actions (filter-act-registry :horror.sandbox))
-      (humor-actions   (filter-act-registry :proc.gen.humor.engine)))
-  (format t "Horror Sandbox Actions: ~a~%" (mapcar (lambda (e) (getf e :action)) sandbox-actions))
-  (format t "Humor Engine Actions: ~a~%" (mapcar (lambda (e) (getf e :action)) humor-actions)))
+;;; Example - filtered registry
+(format t "Horror Sandbox Actions: ~A~%"
+        (mapcar #'act-entry-name (filter-registry-by-context :horror.sandbox)))
+(format t "Humor Engine Actions: ~A~%"
+        (mapcar #'act-entry-name (filter-registry-by-context :proc.gen.humor.engine)))
 
-;; Running actions, enforced
-;; (run-action "booger consumption contests" :horror.sandbox) ;; triggers error
-;; (run-action "corpse manipulation" :horror.sandbox)         ;; will execute
+;;; Example - enforced action
+;; (run-act-entry "booger consumption contests" :horror.sandbox)  ;; triggers enforcement breach
+;; (run-act-entry "corpse manipulation" :horror.sandbox)         ;; allowed
