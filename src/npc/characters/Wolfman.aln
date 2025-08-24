@@ -1,25 +1,25 @@
 ;; Wolfman Character Profile for ALN Game Engine
 ;; Personality matrix, behavior schema, and visual behavior patterns
 
-(defparameter *wolfman-personality* 
+(defparameter *wolfman-personality*
   '((name . "Wolfman")
     (traits ((:cunning . 0.8) (:hostility . 0.3) (:amusement . 0.4))
      (conversation-awareness ((:trade-betrayal . 1.0) (:intervention-memory . 1.0))
       (trust-player . 0.4))
-    (behavior-patterns 
-     ((:suspicious . 0.85) 
+    (behavior-patterns
+     ((:suspicious . 0.85)
       (:lingering-near-merchandise . 0.92)
       (:sudden-shoulder-tilt . 0.78)
       (:pocket-pressing . 0.95)))
-    (visual-behavior-patterns 
-     ((:pocket-pressing 
+    (visual-behavior-patterns
+     ((:pocket-pressing
        :description "Sudden downward hand motion near waist pocket"
        :model :visual-engine/pose-estimator
        :confidence-map ((:hand-angle . (0.85 . 0.95))
                         (:body-lean . (0.70 . 0.85))
                         (:time-delta . (0.65 . 0.80)))
        :threshold 0.85)
-      (:sudden-shoulder-tilt 
+      (:sudden-shoulder-tilt
        :description "Abrupt 15° shoulder rotation toward merchandise"
        :model :visual-engine/pose-estimator
        :confidence-map ((:shoulder-rotation . (0.80 . 0.90))
@@ -28,14 +28,15 @@
        :threshold 0.75)))
   )
 
-(defparameter *wolfman-dialogue* 
-  '((:greet 
+(defparameter *wolfman-dialogue*
+  '((:greet
      :response "Heh... Fancy meeting the village's pet phantom out so far from your stones, Morrin."
      :emotion :cunning)
-    (:trade-offer 
+    (:trade-offer
      :response "Let's not get sentimental. I'll make it simple—give me the talisman, you get my knowledge on the paths out of here."
      :emotion :cunning)
-    (:betrayal 
+    (:betrayal
      :response "You've got guts, Meat—but not much brains. Lucky for you, your borrowed shadow here has a silver tongue."
      :emotion :hostility))
   )
+
