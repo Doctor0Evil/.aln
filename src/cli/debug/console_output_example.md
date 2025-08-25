@@ -18,7 +18,7 @@
 
 ***
 
-**All logic and file placement referenced per:**  
+**All logic and file placement referenced per:**
 **https://github.com/Doctor0Evil/ALN_Programming_Language.git**
 
 ***
@@ -34,8 +34,8 @@
 
 [CONSOLE_INPUT >>>]
 Options:
-(/xp-per-event player rat) 
-(/xp-per-event player tammytwicetooth) 
-(/mutate-xp-formula) 
-(/knowledgebase.log show) 
+(/xp-per-event player rat)
+(/xp-per-event player tammytwicetooth)
+(/mutate-xp-formula)
+(/knowledgebase.log show)
 (/advance_turn)
