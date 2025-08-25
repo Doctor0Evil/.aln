@@ -1,4 +1,4 @@
-name: Run PowerShell cross-platform
+name: Run PowerShell scripts cross‑platform
 
 on:
   workflow_dispatch:
@@ -9,26 +9,51 @@ on:
 
 jobs:
   run-powershell:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install PowerShell
+      - name: Install PowerShell (non‑Windows only)
+        if: runner.os != 'Windows'
         uses: PSModule/install-powershell@v1
         with:
           Version: 'latest'
 
-      - name: Run cross-platform PowerShell script
+      - name: Show PowerShell version
         shell: pwsh
         run: |
           Write-Host "PowerShell version in this runner:"
           $PSVersionTable
-          # Example: run repo-linked script (edit as needed)
-          ./scripts/your-script.ps1
 
-# Notes:
-# - This workflow runs on pushes and PRs to main/develop, and is manually triggerable.
-# - PowerShell is installed on Ubuntu runners via PSModule/install-powershell@v1.
-# - shell: pwsh will work on all OSes after the install step; change run value to target your script.
+      - name: List scripts directory
+        run: |
+          echo "Current dir: $(pwd)"
+          echo "Contents of scripts/:"
+          ls -la scripts || echo "No scripts/ directory found"
+
+      - name: Run all PowerShell scripts in scripts/
+        shell: pwsh
+        run: |
+          $scriptDir = Join-Path $PWD 'scripts'
+          if (-not (Test-Path $scriptDir)) {
+            throw "Directory not found: $scriptDir"
+          }
+
+          $scripts = Get-ChildItem -Path $scriptDir -Filter '*.ps1' -File
+          if (-not $scripts) {
+            Write-Warning "No PowerShell scripts found in $scriptDir"
+            exit 0
+          }
+
+          foreach ($script in $scripts) {
+            Write-Host "=== Running $($script.Name) ==="
+            & $script.FullName
+            if ($LASTEXITCODE -ne 0) {
+              throw "Script failed: $($script.Name) with exit code $LASTEXITCODE"
+            }
+          }
