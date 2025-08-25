@@ -10,7 +10,7 @@ ALNFantasia/
 │   │   ├── CommunityGovernance.aln
 │   │   ├── CommunityMemoryBridge.aln
 │   │   ├── CollectorCards.aln
-│   │   ├── AI_Combat_Logic.aln        
+│   │   ├── AI_Combat_Logic.aln
 │   │   ├── NPC_Dialogue_Procedural.aln
 │   │   └── ALNFantasiaDemo.aln
 │   │
@@ -47,8 +47,8 @@ ALNFantasia/
 
 ***
 
-# 🌌 ALN Fantasia — Universal Platform & Runtime  
-*Seamless Continuation Codex*  
+# 🌌 ALN Fantasia — Universal Platform & Runtime
+*Seamless Continuation Codex*
 *Updated: 2025-08-21*
 
 <div align="center">
@@ -61,13 +61,13 @@ ALNFantasia/
 ***
 
 ## 🚀 Project Vision
-**ALN (Alien Language Notion / Notation)** is a universal, AI-native language runtime powering:  
+**ALN (Alien Language Notion / Notation)** is a universal, AI-native language runtime powering:
 
-✅ **ALN Fantasia ("IOM Community-Memory-Bridge")** — a collaborative lore/game world spanning Discord, Web, and CLI  
-✅ **ALN_Net** — a secure .NET edition REPL sandbox runtime  
-✅ **ALN Core** — enterprise AI integration platform (quantum-ready, compliance-grade)  
+✅ **ALN Fantasia ("IOM Community-Memory-Bridge")** — a collaborative lore/game world spanning Discord, Web, and CLI
+✅ **ALN_Net** — a secure .NET edition REPL sandbox runtime
+✅ **ALN Core** — enterprise AI integration platform (quantum-ready, compliance-grade)
 
-The **Prime UX Rule** across **all editions and deployments**:  
+The **Prime UX Rule** across **all editions and deployments**:
 > Every interaction MUST render/log via the **CircleK Receipt Format** (receipt-like menus, logs, and archivable outputs).
 
 ***
@@ -88,12 +88,12 @@ The **Prime UX Rule** across **all editions and deployments**:
 
 ## ✨ Highlights (Current Build)
 
-- **Receipt-First UI/UX** → permanent, human-readable logs across terminals, Discord, and web apps  
-- **Native AI Connectors** → OpenAI, Anthropic, Qwen, Mistral, DeepSeek  
-- **Quantum-Readiness** → post-quantum crypto + QPU integration (12.0.0 baseline)  
-- **Enterprise Compliance** → PCI-DSS, GDPR, HIPAA, ISO-27001, SOC2  
-- **Games & Lore Modules** → ALN_Quest engine, Trivia, TicTacToe, Hangman, dice rolls  
-- **DOTNET Runtime Sandbox (ALN_Net)** → hardened REPL loop, strict execution sandbox  
+- **Receipt-First UI/UX** → permanent, human-readable logs across terminals, Discord, and web apps
+- **Native AI Connectors** → OpenAI, Anthropic, Qwen, Mistral, DeepSeek
+- **Quantum-Readiness** → post-quantum crypto + QPU integration (12.0.0 baseline)
+- **Enterprise Compliance** → PCI-DSS, GDPR, HIPAA, ISO-27001, SOC2
+- **Games & Lore Modules** → ALN_Quest engine, Trivia, TicTacToe, Hangman, dice rolls
+- **DOTNET Runtime Sandbox (ALN_Net)** → hardened REPL loop, strict execution sandbox
 
 ***
 
@@ -144,15 +144,15 @@ dotnet run --project ALN_Net_REPL.csproj
 
 ## 🎮 Entertainment & Community Games
 
-Available mini-games via ALN syntax:  
+Available mini-games via ALN syntax:
 
-- 🎲 Dice → `aln.game.dice { sides: 20 }`  
-- ❌⭕ TicTacToe → `aln.game.tictactoe { move: "B2" }`  
-- 🪢 Hangman → `aln.game.hangman { letter: "A" }`  
-- 🧭 Quest Engine → `aln.game.quest { action: "explore", location: "cave" }`  
-- 🧠 Trivia → `aln.game.trivia { answer: "42" }`  
+- 🎲 Dice → `aln.game.dice { sides: 20 }`
+- ❌⭕ TicTacToe → `aln.game.tictactoe { move: "B2" }`
+- 🪢 Hangman → `aln.game.hangman { letter: "A" }`
+- 🧭 Quest Engine → `aln.game.quest { action: "explore", location: "cave" }`
+- 🧠 Trivia → `aln.game.trivia { answer: "42" }`
 
-Future roadmap: polls, emoji stories, multiplayer modules.  
+Future roadmap: polls, emoji stories, multiplayer modules.
 
 ***
 
@@ -181,10 +181,10 @@ Future roadmap: polls, emoji stories, multiplayer modules.
 
 ## 🧩 Contribution Codex
 
-- 📚 Add helpers → `/src/lib/`  
-- 🏛 Add lore/game packages → `/src/packages/`  
-- 📜 Add demos → `/examples/`  
-- 🚫 Rule: Do NOT break **NAV_MENU receipt standard**.  
+- 📚 Add helpers → `/src/lib/`
+- 🏛 Add lore/game packages → `/src/packages/`
+- 📜 Add demos → `/examples/`
+- 🚫 Rule: Do NOT break **NAV_MENU receipt standard**.
 
 Workflow: fork → feature branch → commit → PR → review merge.
 
@@ -192,9 +192,9 @@ Workflow: fork → feature branch → commit → PR → review merge.
 
 ## 👥 Team
 
-- **Creator & Lead Architect:** Jacob Scott Corey Farmer  
-- **Architecture Mage:** Hunter  
-- **Compliance Guardians:** ALN Compliance Team  
+- **Creator & Lead Architect:** Jacob Scott Corey Farmer
+- **Architecture Mage:** Hunter
+- **Compliance Guardians:** ALN Compliance Team
 
 ***
 
@@ -214,7 +214,7 @@ ALN Fantasia Handoff-Package, as of 2025-08-21
 ***
 
 <div align="center">
-  🪄 Made with ❤️ in Phoenix, Arizona | ALN Team  
+  🪄 Made with ❤️ in Phoenix, Arizona | ALN Team
 </div>
 
 
@@ -223,23 +223,23 @@ ALN Fantasia Handoff-Package, as of 2025-08-21
 # 💬 Discord Pinned Scroll (Synced to README.md)
 
 ```
-📜 **ALN Fantasia — Handoff Codex**  
+📜 **ALN Fantasia — Handoff Codex**
 *(Continuum as of 2025‑08‑21)*
 
-🚀 **Project Vision**  
-ALN = Alien Language Notion / Notation  
-→ Universal platform across **Discord, Web, CLI**  
-→ Includes ALN Fantasia (lore world), ALN_Net (.NET REPL sandbox), ALN Core (enterprise runtime)  
+🚀 **Project Vision**
+ALN = Alien Language Notion / Notation
+→ Universal platform across **Discord, Web, CLI**
+→ Includes ALN Fantasia (lore world), ALN_Net (.NET REPL sandbox), ALN Core (enterprise runtime)
 → Prime Rule: **ALL outputs = CircleK Receipt Format**
 
-🏛 **Repo Map (simplified)**  
-- 📂 `src/lib/std.aln` → universal helpers  
-- 📂 `src/lib/NAV_MENU.aln` → receipt-menu formatter  
-- 📦 `src/packages/` → lore, gameplay, governance  
-- 🎭 `examples/aln_fantasia/` → narrative demos  
-- 🪄 `artifacts/ARC-9241.aln` → Wand of Recursive Truths  
+🏛 **Repo Map (simplified)**
+- 📂 `src/lib/std.aln` → universal helpers
+- 📂 `src/lib/NAV_MENU.aln` → receipt-menu formatter
+- 📦 `src/packages/` → lore, gameplay, governance
+- 🎭 `examples/aln_fantasia/` → narrative demos
+- 🪄 `artifacts/ARC-9241.aln` → Wand of Recursive Truths
 
-⚡ **Quick Spell**  
+⚡ **Quick Spell**
 ```
 IMPORT std
 menu = menu { header: "Quest Menu", user: CURRENT_USER, timestamp: now(),
@@ -247,20 +247,20 @@ menu = menu { header: "Quest Menu", user: CURRENT_USER, timestamp: now(),
 LOG menu.text
 ```
 
-🎮 **Community Playables**  
-- 🎲 `aln.game.dice { sides: 20 }`  
-- ❌⭕ `aln.game.tictactoe { move: "B2" }`  
-- 🪢 `aln.game.hangman { letter: "A" }`  
-- 🧠 `aln.game.trivia { answer: "42" }`  
+🎮 **Community Playables**
+- 🎲 `aln.game.dice { sides: 20 }`
+- ❌⭕ `aln.game.tictactoe { move: "B2" }`
+- 🪢 `aln.game.hangman { letter: "A" }`
+- 🧠 `aln.game.trivia { answer: "42" }`
 - 🧭 `aln.game.quest { action: "explore", location: "cave" }`
 
-🛡 **Compliance**  
-PCI‑DSS ✅ | GDPR ✅ | HIPAA ✅ | ISO‑27001 ✅ | SOC2 ✅  
+🛡 **Compliance**
+PCI‑DSS ✅ | GDPR ✅ | HIPAA ✅ | ISO‑27001 ✅ | SOC2 ✅
 
-📌 **Pinned Law**  
-> Always `IMPORT std`  
-> Always wrap in `NAV_MENU`  
-> Never break receipt‑format parity (Discord/Web/CLI)  
+📌 **Pinned Law**
+> Always `IMPORT std`
+> Always wrap in `NAV_MENU`
+> Never break receipt‑format parity (Discord/Web/CLI)
 
 ```markdown
 ## 📚 Documentation
@@ -290,6 +290,6 @@ aln run examples/aln_fantasia/queststart.aln
 ```
 
 ---
-Maintainers: Jacob Scott Corey Farmer + ALN Team 🪄  
+Maintainers: Jacob Scott Corey Farmer + ALN Team 🪄
 Phoenix, Arizona • MIT License
 ```

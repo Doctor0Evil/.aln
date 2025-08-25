@@ -18,7 +18,7 @@ namespace ALN_Net
                 switch (command.Name)
                 {
                     case "aln.terminal.run":
-                        if (command.Parameters.TryGetValue("command", out var value) 
+                        if (command.Parameters.TryGetValue("command", out var value)
                             && value.ToString().StartsWith("echo"))
                         {
                             // Only allow 'echo' for sandboxed terminal

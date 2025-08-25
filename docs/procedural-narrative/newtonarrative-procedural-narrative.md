@@ -34,11 +34,11 @@ The *Thematically Accurate Procedural Interaction Registry*, or *TAPIR* for shor
 Lastly, this technique, if you can even call it that, might seem like a bit of a cop-out. Instead of trying to fix inconsistencies, you can simply try to justify them. Embrace the randomness of *procedural narrative* by setting it in a multiverse, for example.
 
 ## TLDR
-**What is procedural narrative?** 
+**What is procedural narrative?**
 Procedural Narrative is a story that is driven by dynamic "procedures", as opposed to a pre-defined path.
 
-**What's the difference between linear, branching and procedural narrative?** 
+**What's the difference between linear, branching and procedural narrative?**
 A linear story unfolds plot beat to plot beat: the player starts at the beginning and finishes at the end. A branching story is much the same, but the direction changes based on the player's choices. A procedural story is usually jumbled up, so plot beats can be experienced independently from each other.
 
-**What makes procedural narrative incoherent?** 
+**What makes procedural narrative incoherent?**
 Your lack of control over when plot beats will happen makes you run into inconsistencies in continuity, tone and pacing.

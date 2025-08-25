@@ -15,16 +15,16 @@ public class ALN_Net_REPL_Tests
     public async Task Dispatcher_Throws_OnUnknownCommand()
     {
         var unknownCommand = new ALNCommand { Name = "aln.unknown", Parameters = new() };
-        await Assert.ThrowsAsync<DispatchException>(async () => 
+        await Assert.ThrowsAsync<DispatchException>(async () =>
             await ALNCommandDispatcher.DispatchAsync(unknownCommand));
     }
 
     [Fact]
     public async Task Dispatcher_Handles_Echo()
     {
-        var cmd = new ALNCommand 
-        { 
-            Name = "aln.terminal.run", 
+        var cmd = new ALNCommand
+        {
+            Name = "aln.terminal.run",
             Parameters = new() { { "command", "echo Hello" } }
         };
         var result = await ALNCommandDispatcher.DispatchAsync(cmd);

@@ -25,7 +25,7 @@ IOM MEMORY BRIDGE [v0.92b]
 [REQUEST ID]  #iom-042392
 [USER]        @dreamer42
 [DETAIL]      "Music video: grainy camcorder, kids dancing, 2003?"
-[ACTIONS]     
+[ACTIONS]
     (1) Suggest match
     (2) Add fragment
     (3) Vote lead

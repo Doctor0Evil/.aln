@@ -2,14 +2,14 @@
 # Grimoire Rulebook
 
 ## 🪄 Grimoire Points (GP)
-- **Earn GP**: Contributing content, winning dice challenges, proposing features.  
-- **Spend GP**: Voting on proposals, unlocking rare assets, forging new rules.  
+- **Earn GP**: Contributing content, winning dice challenges, proposing features.
+- **Spend GP**: Voting on proposals, unlocking rare assets, forging new rules.
 
 ## ⚖️ Governance Rules
-- **Voting Period**: 7 days (configurable).  
-- **Quorum**: 10% of active GP to qualify.  
-- **Passing Threshold**: ≥ 60% Yes votes.  
-- **Disqualify/Reject**: Insufficient quorum OR ≥ 40% reject.  
+- **Voting Period**: 7 days (configurable).
+- **Quorum**: 10% of active GP to qualify.
+- **Passing Threshold**: ≥ 60% Yes votes.
+- **Disqualify/Reject**: Insufficient quorum OR ≥ 40% reject.
 
 ## 📌 Voting Example (ALN Syntax)
 ```aln

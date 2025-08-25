@@ -329,13 +329,13 @@ exit 0
     execution: "
         // Verify compliance
         @LET compliance_result = @ALN_COMPLIANCE.verify_compliance(operation, standards)
-        
+
         // Log verification
         @LOG '🔍 Compliance verification: $operation (Score: $compliance_result.score)'
-        
+
         // Generate report
         @LET report = @ALN_COMPLIANCE.generate_compliance_report(operation, standards)
-        
+
         @RETURN {
             compliant: compliance_result.compliant,
             score: compliance_result.score,
@@ -352,13 +352,13 @@ exit 0
     execution: "
         // Verify compliance
         @LET verification = @COMPLIANCE_VERIFICATION_PIPE.verify_operation(operation, standards)
-        
+
         // If not compliant, trigger alert
         @IF !verification.compliant {
             @TRIGGER alert TO loki {tags: ['aln_alert', 'compliance_violation'], severity: 'CRITICAL', message: 'Operation $operation violates compliance standards'}
             @RETURN {success: false, message: 'Operation violates compliance standards', audit_id: verification.audit_id}
         }
-        
+
         // If compliant, allow operation
         @RETURN {success: true, message: 'Operation compliant with standards', audit_id: verification.audit_id}
     "

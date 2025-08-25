@@ -14,7 +14,7 @@
         (provoke.target   "slimy wart-encrusted sack of rancid giggles")
         (stimulus.type    'mockery)
         (stimulus.flags   '(taunt insult trivialize_work compare-specimens))
-        
+
         ;; -- CHARACTER EMOTIONAL DIALS -----
         (emotion.primary 'wrath)
         (emotion.secondary 'mockery_backlash)
@@ -26,7 +26,7 @@
         (logic.mode       'overindulgent_tirade)
         (harm_factor      'social_psychophysical)
         (punchline.inject  t)
-        
+
         ;; -- OUTPUT ------------------------
         (response.text
 """

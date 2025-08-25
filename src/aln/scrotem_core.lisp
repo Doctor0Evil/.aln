@@ -1,7 +1,7 @@
 ;;; ====================================================
 ;;; Sro’tem Sticky Enforcement Procedure
 ;;; Purpose:
-;;;   - Ensures horror/roleplay/adult files are only loaded 
+;;;   - Ensures horror/roleplay/adult files are only loaded
 ;;;     in approved directories.
 ;;;   - Verifies mandatory metadata headers exist and contain
 ;;;     correct values.
@@ -10,19 +10,19 @@
 ;;; ========================================================
 ;;; --- 0. Constants & Policy Configuration ---
 approved_dirs := [
-    "src/aln", 
-    "modules", 
-    "lisp/registry", 
-    "npc", 
-    "narrative", 
-    "game", 
+    "src/aln",
+    "modules",
+    "lisp/registry",
+    "npc",
+    "narrative",
+    "game",
     "debugging"
 ]
 required_headers := [
-    "aln_logic_parent", 
-    "sticky_horror", 
-    "content_rating", 
-    "horror_compliance", 
+    "aln_logic_parent",
+    "sticky_horror",
+    "content_rating",
+    "horror_compliance",
     "last_audit"
 ]
 mandatory_values := {

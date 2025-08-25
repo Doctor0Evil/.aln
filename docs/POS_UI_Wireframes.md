@@ -28,8 +28,8 @@
 ## (B) CLI / Terminal UX
 
 ```
-============================== 
-  ALN POS — Main Menu 
+==============================
+  ALN POS — Main Menu
 ==============================
 [1] ⎆ Process Sale            - Start or resume sale
 [1] 📦 Inventory              - Manage inventory, scans, UPCS

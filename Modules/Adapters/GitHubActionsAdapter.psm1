@@ -15,10 +15,10 @@ function Parse-WorkflowFile {
     try {
          = Get-Content -Path  -Raw
          = ConvertFrom-Yaml  -ErrorAction Stop
-        return 
+        return
     } catch {
         Write-Warning "Failed to parse workflow file : "
-        return 
+        return
     }
 }
 

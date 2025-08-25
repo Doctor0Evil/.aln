@@ -42,4 +42,4 @@ def bind.quantum.pos {
   display_mode="network_status_map";
   response_latency="0.005s";
 }
-```  
+```

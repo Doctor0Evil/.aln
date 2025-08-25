@@ -12,19 +12,19 @@ This playbook provides guidance on implementing chatbot systems within the ALN P
 
 ### 1. Character Template
 ```lisp
-(defparameter *chatbot-template* 
+(defparameter *chatbot-template*
   '((:name "Morrin")
     (:personality ((:wary . 0.9) (:hope . 0.1) (:guarded . 0.85))
      (:conversation-awareness ((:trade-betrayal . 1.0) (:intervention-memory . 1.0)))
      (:trust-player . 0.3)
-     (:dialogue-rules 
-      ((:trigger "wolfman" 
+     (:dialogue-rules
+      ((:trigger "wolfman"
         :response "Wolfman walks the shadows, seeking redemption. I owe him silence, you caution."
         :emotion :wary)
-       (:trigger "help" 
+       (:trigger "help"
         :response "Your will is untested. Show me."
         :emotion :hope)
-       (:trigger "escape" 
+       (:trigger "escape"
         :response "Wolfman knows hidden paths. Find him to escape."
         :emotion :hope))))
   )
@@ -35,7 +35,7 @@ This playbook provides guidance on implementing chatbot systems within the ALN P
 (defun chatbot-response (bot-state player-input)
   "Generate context-aware response for chatbot."
   (let* ((rules (cdr (assoc :dialogue-rules bot-state)))
-         (matching-rule (find-if (lambda (rule) 
+         (matching-rule (find-if (lambda (rule)
                                   (string-match (cdr (assoc :trigger rule)) player-input))
                                 rules)))
     (if matching-rule
