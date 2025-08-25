@@ -11,10 +11,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Run auto-correction on all files
+
+      - name: Run auto-correction on all files (excluding workflows)
         run: |
-          find . -type f ! -path "./.git/*" -exec dos2unix {} \;
-          find . -type f ! -path "./.git/*" -exec sed -i "s/[ \t]*$//" {} \;
+          # Convert line endings to LF, strip trailing spaces — but skip .git and .github/workflows
+          find . -type f \
+            ! -path "./.git/*" \
+            ! -path "./.github/workflows/*" \
+            -exec dos2unix {} \;
+
+          find . -type f \
+            ! -path "./.git/*" \
+            ! -path "./.github/workflows/*" \
+            -exec sed -i "s/[ \t]*$//" {} \;
+
       - name: Auto-commit & Push changes
         run: |
           git config user.name "ALN-AutoFix"
