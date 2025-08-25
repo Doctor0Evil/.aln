@@ -31,10 +31,15 @@ jobs:
           $PSVersionTable
 
       - name: List scripts directory
+        shell: pwsh
         run: |
-          echo "Current dir: $(pwd)"
-          echo "Contents of scripts/:"
-          ls -la scripts || echo "No scripts/ directory found"
+          Write-Host "Current dir: $PWD"
+          Write-Host "Contents of scripts/:"
+          if (Test-Path scripts) {
+            Get-ChildItem -Force scripts
+          } else {
+            Write-Warning "No scripts/ directory found"
+          }
 
       - name: Run all PowerShell scripts in scripts/
         shell: pwsh
