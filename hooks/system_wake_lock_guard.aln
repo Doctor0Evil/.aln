@@ -1,0 +1,32 @@
+;;; ================================================================
+;;; system_wake_lock_guard.aln --- Pre-Commit Hook Integration Layer
+;;; ================================================================
+;;; This module wraps ALN-Sentinel into a git pre-commit hook environment.
+;;; It ensures every developer action is guarded by:
+;;;   - Secret scanning across repo
+;;;   - Branch policy enforcement
+;;;   - Fail-fast error handling
+;;;
+;;; To install:
+;;;   1. Place this file in `/hooks/system_wake_lock_guard.aln`
+;;;   2. Create symbolic link from `.git/hooks/pre-commit` to this script.
+;;;   3. Make it executable (`chmod +x system_wake_lock_guard.aln`).
+;;; ================================================================
+
+(defpackage :system-wake-lock-guard
+  (:use :cl :aln-sentinel :sb-posix))
+(in-package :system-wake-lock-guard)
+
+(defun run-precommit-guard ()
+  "Executes ALN-Sentinel in pre-commit hook mode with explicit wake-lock style guard."
+  (format t "~%[system_wake_lock_guard] Engaging Pre-Commit Guard...~%")
+  (handler-case
+      (progn
+        (main) ;; Call into ALN-Sentinel main
+        (format t "[system_wake_lock_guard] ✅ Security Check Passed - Commit granted.~%")
+        (uiop:quit 0))
+    (error (e)
+      (format t "[system_wake_lock_guard] ❌ Commit BLOCKED: ~A~%" e)
+      (uiop:quit 1))))
+
+(run-precommit-guard)
