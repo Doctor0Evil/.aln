@@ -44,6 +44,7 @@ jobs:
       - name: Run all PowerShell scripts in scripts/
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           $scriptDir = Join-Path $PWD 'scripts'
           if (-not (Test-Path $scriptDir)) {
             throw "Directory not found: $scriptDir"
@@ -55,10 +56,18 @@ jobs:
             exit 0
           }
 
+          $failures = @()
+
           foreach ($script in $scripts) {
             Write-Host "=== Running $($script.Name) ==="
             & $script.FullName
-            if ($LASTEXITCODE -ne 0) {
-              throw "Script failed: $($script.Name) with exit code $LASTEXITCODE"
+            $exitCode = $LASTEXITCODE
+            if ($exitCode -ne 0) {
+              Write-Warning "Script failed: $($script.Name) with exit code $exitCode"
+              $failures += "$($script.Name): exit code $exitCode"
             }
+          }
+
+          if ($failures.Count -gt 0) {
+            throw "One or more scripts failed:`n$($failures -join "`n")"
           }
