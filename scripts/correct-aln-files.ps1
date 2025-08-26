@@ -1,48 +1,56 @@
-#!/usr/bin/env pwsh
-<#
-.SYNOPSIS
-  Corrects ALN files in a null‑safe, CI‑friendly way.
+# correct-aln-files.ps1
 
-.DESCRIPTION
-  Recursively scans the repository for `.aln` files,
-  applies corrections, and writes results back in place.
-  Will fail the run if no `.aln` files are found.
-#>
-
-# Stop on first error
 $ErrorActionPreference = 'Stop'
+Write-Host "=== [correct-aln-files.ps1] Starting ==="
 
-# Get the repo root (script's parent directory 2 levels up)
-$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..') | Select-Object -ExpandProperty Path
+try {
+    # Detect platform
+    $isWindows = $IsWindows
+    $isLinux = $IsLinux
+    $isMacOS = $IsMacOS
 
-Write-Host "🔍 Searching for .aln files under: $RepoRoot"
+    Write-Host "Platform detected: " + (
+        if ($isWindows) { "Windows" }
+        elseif ($isLinux) { "Linux" }
+        elseif ($isMacOS) { "macOS" }
+        else { "Unknown" }
+    )
 
-# Find all .aln files
-$alnFiles = Get-ChildItem -Path $RepoRoot -Recurse -Filter '*.aln' -File -ErrorAction SilentlyContinue
-
-if (-not $alnFiles -or $alnFiles.Count -eq 0) {
-    Write-Error "❌ No .aln files found. Check your repo structure or runner checkout path."
-    exit 1
-}
-
-foreach ($file in $alnFiles) {
-    try {
-        Write-Host "✏️ Processing: $($file.FullName)"
-
-        # Read the entire file content
-        $content = Get-Content -LiteralPath $file.FullName -Raw
-
-        # 🛠️ Perform your correction logic here
-        # Example: Trim trailing whitespace from each line
-        $corrected = $content -split "`r?`n" | ForEach-Object { $_.TrimEnd() } | Out-String
-
-        # Write corrected content back to the file
-        Set-Content -LiteralPath $file.FullName -Value $corrected -NoNewline
-    }
-    catch {
-        Write-Error "⚠️ Failed processing $($file.FullName): $_"
+    # Example logic: validate ALN files
+    $targetDir = Join-Path $PWD 'aln'
+    if (-not (Test-Path $targetDir)) {
+        Write-Warning "Target directory not found: $targetDir"
         exit 1
     }
-}
 
-Write-Host "✅ Completed correction on $($alnFiles.Count) file(s)."
+    $files = Get-ChildItem -Path $targetDir -Filter '*.aln' -File
+    if (-not $files) {
+        Write-Warning "No .aln files found in $targetDir"
+        exit 2
+    }
+
+    foreach ($file in $files) {
+        Write-Host "Validating: $($file.Name)"
+        $content = Get-Content $file.FullName -Raw
+
+        # Example validation: must contain 'spec:'
+        if ($content -notmatch 'spec:') {
+            Write-Warning "$($file.Name) missing 'spec:' header"
+            exit 3
+        }
+
+        # Optional: normalize line endings
+        if (-not $isWindows) {
+            $normalized = $content -replace "`r`n", "`n"
+            Set-Content -Path $file.FullName -Value $normalized
+            Write-Host "$($file.Name) normalized for Unix line endings"
+        }
+    }
+
+    Write-Host "=== [correct-aln-files.ps1] Completed successfully ==="
+    exit 0
+}
+catch {
+    Write-Error "Unhandled error: $_"
+    exit 99
+}
