@@ -2,7 +2,7 @@
 ;; COMPOUNDED INTERNAL AI LOGIC SCRIPT
 ;; ============================================================
 ;; This script defines the logic, behaviors, and systemic logging
-;; for player interaction with a dog NPC ("dog" entity) using the 
+;; for player interaction with a dog NPC ("dog" entity) using the
 ;; ALN_Command_Terminal combat/dialogue simulation engine.
 ;; ============================================================
 
@@ -42,7 +42,7 @@
 (defun process-player-dialogue (player target line)
   (log (format nil "Player speaks: '~a'" line))
   (case target
-    (:dog 
+    (:dog
      (if (string-contains line "good dog")
          (calm-dog player dog-npc)
          (log "Dog tilts head, confused...")))
