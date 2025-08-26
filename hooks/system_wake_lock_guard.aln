@@ -30,3 +30,4 @@
       (uiop:quit 1))))
 
 (run-precommit-guard)
+
