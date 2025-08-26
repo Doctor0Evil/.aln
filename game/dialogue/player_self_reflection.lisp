@@ -35,10 +35,10 @@
 
 (defun adjust-morale (player delta)
   (incf (player :morale) delta)
-  (log (format nil "Morale adjusted by ~a → ~a" 
+  (log (format nil "Morale adjusted by ~a → ~a"
                delta (player :morale)))))
 
 (defun main-sequence ()
   (log "=== PLAYER SELF-DIALOGUE EVENT ===")
-  (process-player-thought *player* 
+  (process-player-thought *player*
     "*i wish i could \"lick my balls\" like my \"Great-Dane\" friend does, being a \"human\", society frowns upon these acts!*"))
