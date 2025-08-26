@@ -1,4 +1,4 @@
-# correct-aln-files.ps1
+# scripts/correct-aln-files.ps1
 
 $ErrorActionPreference = 'Stop'
 Write-Host "=== [correct-aln-files.ps1] Starting ==="
@@ -9,14 +9,14 @@ try {
     $isLinux = $IsLinux
     $isMacOS = $IsMacOS
 
-    Write-Host "Platform detected: " + (
-        if ($isWindows) { "Windows" }
-        elseif ($isLinux) { "Linux" }
-        elseif ($isMacOS) { "macOS" }
-        else { "Unknown" }
-    )
+    $platform = if ($isWindows) { "Windows" }
+                elseif ($isLinux) { "Linux" }
+                elseif ($isMacOS) { "macOS" }
+                else { "Unknown" }
 
-    # Example logic: validate ALN files
+    Write-Host "Platform detected: $platform"
+
+    # Target directory
     $targetDir = Join-Path $PWD 'aln'
     if (-not (Test-Path $targetDir)) {
         Write-Warning "Target directory not found: $targetDir"
@@ -33,13 +33,11 @@ try {
         Write-Host "Validating: $($file.Name)"
         $content = Get-Content $file.FullName -Raw
 
-        # Example validation: must contain 'spec:'
         if ($content -notmatch 'spec:') {
             Write-Warning "$($file.Name) missing 'spec:' header"
             exit 3
         }
 
-        # Optional: normalize line endings
         if (-not $isWindows) {
             $normalized = $content -replace "`r`n", "`n"
             Set-Content -Path $file.FullName -Value $normalized
