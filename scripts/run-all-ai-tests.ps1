@@ -13,7 +13,7 @@
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$scriptRoot   = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$scriptRoot   = $PSScriptRoot
 $manifestPath = Join-Path $scriptRoot 'ai-manifest.json'
 $sessionLog   = Join-Path $scriptRoot 'audit-session.log'
 
@@ -42,7 +42,7 @@ foreach ($item in $manifest.scripts) {
     $scriptFile = Join-Path $scriptRoot $item.name
     if (-not (Test-Path $scriptFile)) {
         Write-Log "Missing script: $($item.name)" "ERROR"
-        $failures += "$($item.name): missing"
+        $failures += "${item.name}: missing"
         continue
     }
 
@@ -52,13 +52,13 @@ foreach ($item in $manifest.scripts) {
         & $scriptFile *>&1 | Tee-Object -FilePath $logFile
         if ($LASTEXITCODE -ne 0) {
             Write-Log "$($item.name) failed with exit code $LASTEXITCODE" "ERROR"
-            $failures += "$($item.name): exit code $LASTEXITCODE"
+            $failures += "${item.name}: exit code $LASTEXITCODE"
         } else {
             Write-Log "$($item.name) completed successfully."
         }
     } catch {
         Write-Log "Exception in $($item.name): $($_.Exception.Message)" "ERROR"
-        $failures += "$($item.name): exception"
+        $failures += "${item.name}: exception"
     }
     Write-Log "<<< Finished $($item.name)"
 }
