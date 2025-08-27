@@ -1,14 +1,12 @@
-$ErrorActionPreference = 'Stop'
-Set-StrictMode -Version Latest
+Write-Host "=== [test_ai.ps1] Starting ==="
 
-$runningOnWindows = $IsWindows
-$runningOnLinux   = $IsLinux
-$runningOnMacOS   = $IsMacOS
+$global:LASTEXITCODE = 0
 
-Write-Host "=== [lint.ps1] Starting ==="
+# Run the AI tests
+& ./scripts/run-ai-tests.ps1
 
-# Example style check
-Get-ChildItem -Recurse -Include *.aln | ForEach-Object {
-    # Insert lint logic here
-    Write-Host "Linted $($_.FullName)"
+if ($LASTEXITCODE -ne 0) {
+    throw "AI tests failed with exit code $LASTEXITCODE"
 }
+
+Write-Host "AI module tests passed."
