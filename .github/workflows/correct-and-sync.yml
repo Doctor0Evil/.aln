@@ -3,33 +3,47 @@ name: ALN File Correction & Live Repo Sync
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   correct-and-sync:
     runs-on: ubuntu-latest
 
     steps:
+      # --- Full-depth checkout with PAT for push/rebase ---
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.ALN_PUSH_TOKEN }}  # PAT with workflow scope
+          repository: Doctor0Evil/ALN_Programming_Language
+          token: ${{ secrets.ALN_PUSH_TOKEN }}   # Must be a PAT with 'repo' + 'workflow' scopes
+          persist-credentials: true
+          clean: true
+          sparse-checkout-cone-mode: true
+          fetch-tags: false
+          show-progress: true
+          lfs: false
+          submodules: false
+          set-safe-directory: true
 
+      # --- Normalize line endings to LF ---
       - name: Normalize Line Endings
         run: |
           find . -type f ! -path "./.git/*" -exec dos2unix {} \;
 
+      # --- Strip trailing whitespace ---
       - name: Remove Trailing Whitespace
         run: |
           find . -type f ! -path "./.git/*" -exec sed -i "s/[ \t]*$//" {} \;
 
+      # --- Extra ALN-specific CR removal ---
       - name: Format ALN files (if '.aln' extension)
         run: |
           for file in $(find . -type f -name "*.aln"); do
             sed -i "s/\r//g" "$file"
           done
 
+      # --- Commit and safe push with retry logic ---
       - name: Auto-commit & Safe Push with Retry
         shell: bash
         run: |
@@ -47,6 +61,7 @@ jobs:
 
           git commit -m "ALN: Automatic repository-wide file correction"
 
+          # Use the same PAT for pushing
           git remote set-url origin https://x-access-token:${{ secrets.ALN_PUSH_TOKEN }}@github.com/Doctor0Evil/ALN_Programming_Language.git
 
           attempt_push() {
