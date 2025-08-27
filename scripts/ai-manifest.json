@@ -1,0 +1,7 @@
+{
+  "scripts": [
+    { "name": "lint.ps1" },
+    { "name": "test_ai.ps1" },
+    { "name": "combat-sim.ps1" }
+  ]
+}
