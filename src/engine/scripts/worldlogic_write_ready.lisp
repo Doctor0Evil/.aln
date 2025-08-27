@@ -27,7 +27,7 @@
 
 (defun init-write-ready-state ()
   "Creates a detached instance of the game.world for safe edits."
-  (setf *write-ready-state* 
+  (setf *write-ready-state*
         '(:scope realism :impact none :writes allowed_if_realism t :mirror_of game.world))
   (log-debug "[WORLD] write.ready.state initialized. Non-impactful to canonical world.")
   *write-ready-state*)
@@ -35,8 +35,8 @@
 (defun write-logic-state (mutation)
   "Applies changes to write.ready.state only IF realism.logic.state == true."
   (if (realism-logic-check)
-      (progn 
-        (setf *write-ready-state* 
+      (progn
+        (setf *write-ready-state*
               (append *write-ready-state* (list :mutation mutation)))
         (log-success (format nil "[WRITE] Logic mutation '~a' applied under realism.logic.state." mutation))
         'write.successful)
