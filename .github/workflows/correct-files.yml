@@ -1,5 +1,8 @@
 name: correct-files
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -48,29 +51,12 @@ jobs:
           echo
 
           echo "=== Inspecting GITHUB_TOKEN permissions ==="
-          if command -v jq &>/dev/null; then
-            curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-                 -H "Accept: application/vnd.github+json" \
-                 https://api.github.com/repos/${GITHUB_REPOSITORY} | \
-            jq '.permissions'
-          else
-            echo "(jq not installed — showing raw JSON)"
-            curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-                 -H "Accept: application/vnd.github+json" \
-                 https://api.github.com/repos/${GITHUB_REPOSITORY}
-          fi
-
-          echo
-          echo "=== Enforcing write permission check ==="
-          perms=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-                        -H "Accept: application/vnd.github+json" \
-                        https://api.github.com/repos/${GITHUB_REPOSITORY} \
-                  | grep -o '"push":[^,]*' | head -n1)
-          if [[ "$perms" != *true* ]]; then
-            echo "✖ GITHUB_TOKEN does not have push access — aborting."
-            exit 1
-          fi
-          echo "✔ Token has push access."
+          perms_json=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                               -H "Accept: application/vnd.github+json" \
+                               https://api.github.com/repos/${GITHUB_REPOSITORY})
+          echo "$perms_json" | grep -q '"push": true' \
+            && echo "✔ Token has push access." \
+            || { echo "✖ GITHUB_TOKEN does not have push access — aborting."; exit 1; }
 
       # --- Install PowerShell on non-Windows runners ---
       - name: Install PowerShell (non-Windows)
