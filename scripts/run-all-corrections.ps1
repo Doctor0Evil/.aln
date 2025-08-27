@@ -37,7 +37,7 @@ function Write-Log {
 # --- Begin Run ---
 Write-Log "=== Correction run started ==="
 
-# --- OS Detection (parser‑safe form) ---
+# --- OS Detection ---
 $osName = if ($IsWindows) { "Windows" }
 elseif ($IsLinux)        { "Linux"   }
 elseif ($IsMacOS)        { "macOS"   }
@@ -70,7 +70,7 @@ foreach ($scriptEntry in $manifest.scripts) {
 
     if (-not (Test-Path $scriptFile)) {
         Write-Log "Script not found: $scriptName" "ERROR"
-        $failures += "$scriptName: missing"
+        $failures += "${scriptName}: missing"
         continue
     }
 
@@ -82,7 +82,7 @@ foreach ($scriptEntry in $manifest.scripts) {
         $exitCode = $LASTEXITCODE
         if ($exitCode -ne 0) {
             Write-Log "Script failed with exit code $exitCode" "ERROR"
-            $failures += "$scriptName: exit code $exitCode"
+            $failures += "${scriptName}: exit code $exitCode"
         }
         else {
             Write-Log "Script completed successfully."
@@ -90,7 +90,7 @@ foreach ($scriptEntry in $manifest.scripts) {
     }
     catch {
         Write-Log "Unhandled exception in $scriptName: $($_.Exception.Message)" "ERROR"
-        $failures += "$scriptName: exception"
+        $failures += "${scriptName}: exception"
     }
     Write-Log "<<< Finished $scriptName"
 }
