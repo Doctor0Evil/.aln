@@ -10,21 +10,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # --- Full-depth checkout with PAT for push/rebase ---
+      # --- Full-depth checkout using built-in Actions token ---
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          repository: Doctor0Evil/ALN_Programming_Language
-          token: ${{ secrets.ALN_PUSH_TOKEN }}   # PAT with 'repo' + 'workflow' scopes
-          persist-credentials: true
-          clean: true
-          sparse-checkout-cone-mode: true
-          fetch-tags: false
-          show-progress: true
-          lfs: false
-          submodules: false
-          set-safe-directory: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- Verify Git auth, remote, and token permissions ---
+      - name: Verify Git credentials & token scopes
+        shell: bash
+        run: |
+          echo "=== Remote URL ==="
+          git remote -v || { echo "No remote found"; exit 1; }
+          echo
+          
+          echo "=== Credential helpers ==="
+          git config --show-origin --get-all credential.helper || echo "No credential.helper configured"
+          echo
+
+          echo "=== Testing connectivity to origin ==="
+          if git ls-remote --exit-code origin &>/dev/null; then
+            echo "✔ Can reach remote 'origin'."
+          else
+            echo "✖ Cannot reach remote 'origin'."
+            exit 1
+          fi
+          echo
+
+          echo "=== Inspecting GITHUB_TOKEN permissions ==="
+          if command -v jq &>/dev/null; then
+            curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github+json" \
+                 https://api.github.com/repos/${GITHUB_REPOSITORY} | \
+            jq '.permissions'
+          else
+            echo "(jq not installed — showing raw JSON)"
+            curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github+json" \
+                 https://api.github.com/repos/${GITHUB_REPOSITORY}
+          fi
 
       # --- Ensure PowerShell 7 is available ---
       - name: Install PowerShell 7
@@ -34,17 +59,8 @@ jobs:
 
       # --- Run all corrections via manifest-driven runner ---
       - name: Run manifest-driven ALN corrections
-        shell: pwsh -NoProfile -ExecutionPolicy Bypass
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $scriptsDir = Join-Path $PWD 'scripts'
-          $runnerScript = Join-Path $scriptsDir 'run-all-corrections.ps1'
-
-          if (-not (Test-Path $runnerScript)) {
-            throw "Correction runner not found at $runnerScript"
-          }
-
-          & $runnerScript
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-all-corrections.ps1
 
       # --- Commit and safe push with retry ---
       - name: Auto-commit & Safe Push with Retry
@@ -63,9 +79,6 @@ jobs:
           fi
 
           git commit -m "ALN: Automated repository-wide correction via manifest runner"
-
-          # Authenticated push with PAT
-          git remote set-url origin https://x-access-token:${{ secrets.ALN_PUSH_TOKEN }}@github.com/Doctor0Evil/ALN_Programming_Language.git
 
           attempt_push() {
             git pull --rebase origin main || return 1
