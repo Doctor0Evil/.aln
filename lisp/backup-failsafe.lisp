@@ -30,7 +30,7 @@
         t))))
 
 (defun run-with-backup-failsafe (main-fn)
-  "Wrap your main event or logic function in this: 
+  "Wrap your main event or logic function in this:
    - If an error or critical flag is raised, state/log is restored.
    - Logs the failure event with full trace."
   (handler-case
