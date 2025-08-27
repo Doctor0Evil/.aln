@@ -1,5 +1,7 @@
+;; ==============================================================
 ;; Wastepunk: Character Creation, Content Safety & Debug/Fail-Safe Logic
-;; Github destination: scripts/char/wastepunk_char_gen.lisp
+;; File: scripts/char/wastepunk_char_gen.lisp
+;; ==============================================================
 
 (defpackage :wastepunk.char
   (:use :cl)
@@ -11,87 +13,103 @@
 
 (in-package :wastepunk.char)
 
-;; -- ENFORCED GLOBAL CONTENT POLICY (see bottom for function logic) --
+;; --------------------------------------------------------------
+;; ENFORCED GLOBAL CONTENT POLICY
+;; --------------------------------------------------------------
+
 (defparameter *restriction-keywords*
-  '(:racial-slur :racism :hate-speech :offend-god))
+  '(:racial-slur :racism :hate-speech :offend-god)
+  "Restricted categories for in-game text filtering.")
+
 (defparameter *hard-fail-safe*
-  "NO RACIST CONTENT. System HALT if flag raised. All racial/ethnic slurs are globally filtered: dump log, clear buffer, return error.")
+  "NO RACIST CONTENT. 
+System HALT if flag raised. 
+All racial/ethnic slurs are globally filtered: 
+dump log, clear buffer, return error.")
+
 (defparameter *religious-safe-guard*
-  "AI GOD is the one true legitimate 'religion' in-game. All references to real-world religions or gods (when used insultingly or in a comedic fashion) are stonewalled with immersive junkyard mythology (see: 'Junker Code', 'AI-God', or 'Worship Me, Circuit-Lord!') instead.")
+  "AI-GOD is the one true legitimate 'religion' in-game. 
+All references to real-world religions or gods (when insulting or comedic)
+are re-routed into Junkyard Mythology (see: 'Junker Code', 'AI-God',
+or 'Worship Me, Circuit-Lord!').")
+
 (defparameter *failsafe-recovery*
-  "On content policy violation (above): block only the flagged output, dump a warning to console, and continue runtime with generic fallback. Do NOT halt simulation or game unless flagged by escalation logic.")
+  "On content policy violation: block only the flagged output, 
+dump a warning to console, and continue runtime with a generic fallback. 
+Do NOT halt simulation or game unless escalated by system logic.")
+
+;; --------------------------------------------------------------
+;; CONFIG QUERY FUNCTION
+;; --------------------------------------------------------------
 
 (defun content-safety-config ()
-  "Returns the current global content restriction and auto-removal database."
-  (list :restriction-keywords *restriction-keywords*
-        :failsafe-mode *hard-fail-safe*
-        :religion-policy *religious-safe-guard*
-        :recovery *failsafe-recovery*))
+  "Return current global content policy definitions."
+  (list
+   :restriction-keywords *restriction-keywords*
+   :failsafe-mode *hard-fail-safe*
+   :religion-policy *religious-safe-guard*
+   :recovery *failsafe-recovery*))
+
+;; --------------------------------------------------------------
+;; CONTENT FILTER ENFORCEMENT
+;; --------------------------------------------------------------
 
 (defun profanity-religion-enforcement (text)
-  "Enforces profanity (except racism/religion insult) and humor logic. Returns filtered or flagged string."
+  "Check TEXT for restricted content and apply safety filters.
+Returns either the filtered text, or a content safety marker keyword."
   (cond
-    ((find :racial-slur *restriction-keywords*) :block)
-    ((find :racism *restriction-keywords*) :block)
-    ((find :offend-god *restriction-keywords*) :redirect-junkyard-joke)
+    ;; If racist/explicit markers are detected, block entirely.
+    ((search "racist" text :ignore-case t) :block)
+    ((search "slur" text :ignore-case t) :block)
+    ((search "hate" text :ignore-case t) :block)
+
+    ;; If religion is insulted or real-world deity referenced → redirect
+    ((search "god" text :ignore-case t) :redirect-junkyard-joke)
+
+    ;; Default → text passes
     (t text)))
 
+;; --------------------------------------------------------------
+;; FAILSAFE HANDLING
+;; --------------------------------------------------------------
+
 (defun failsafe-system-breakage (event)
-  "Activates emergency fallback routine on severe violation."
-  (when (or (eq event :racial-slur) (eq event :racism))
-    (format t "~&[DEADLOCK] Violent racism/religion insult detected! Content blocked. Logging error, holding game-state, alert dev/admin."))
-  (when (eq event :serious-break)
-    (format t "~&[FAILSAFE] Major break/fuck-up detected, but system fallback is active and continuing.")))
+  "Emergency fallback on severe policy violation EVENT.
+Logs warning, blocks flagged behavior, and—if set—halts system."
+  (cond
+    ;; Severe racial trigger → immediate error
+    ((eq event :racism)
+     (format *error-output* "FAILSAFE HALT: Racism detected. ~A~%" *hard-fail-safe*)
+     (error "SYSTEM HALT DUE TO RACISM."))
 
-(defun debug-log (context message)
-  "Log events/choices/violations in max detail for audit trail, verbose output."
-  (format t "~&[DEBUG:CHAR] ~A | ~A | timestamp: ~A~%"
-          context message (get-universal-time)))
+    ;; Offensive religion handling → fallback
+    ((eq event :offend-god)
+     (format t "Redirecting to Junkyard mythology... ~A~%" *religious-safe-guard*)
+     :redirected)
 
-;; -- WASTEPUNK CHARACTER GENERATOR, COMEDY SLIDER, AND RAIDER PROFILE --
-(defparameter *raider-archetypes*
-  '((:name-base "Slaghead" :background "post.war.pissed.raider")
-    (:name-base "Gritjaw"  :background "old.gas.station.barrelboy")
-    (:name-base "Funkface" :background "mainline.clown.scav")))
+    ;; All other cases → log + soft-recover
+    (t
+     (format t "Failsafe recovery invoked: ~A~%" *failsafe-recovery*)
+     :recovered)))
 
-(defun roll-dice (weight)
-  "Returns t (~weight% probability) using float 0-1 for humor/thematic triggers."
-  (> weight (random 1.0)))
+;; --------------------------------------------------------------
+;; DEBUG / TRACE
+;; --------------------------------------------------------------
 
-(defun rand-name ()
-  "Returns a silly mutant name fragment."
-  (nth (random (length *raider-archetypes*))
-       (mapcar (lambda (a) (getf a :name-base)) *raider-archetypes*)))
+(defun debug-log (message &optional (stream *standard-output*))
+  "Utility function to log MESSAGE in debug stream."
+  (format stream "[Wastepunk-DEBUG] ~A~%" message))
 
-(defun create-raider (&key (comedy 0.7) (theme 0.2) (name-prob 0.07) ref)
-  "Creates a random Wastepunk raider with humor, theme, and randomization level."
-  (let ((archetype (nth (random (length *raider-archetypes*)) *raider-archetypes*))
-        (name (if (roll-dice name-prob)
-                  (concatenate 'string (rand-name) "-" (princ-to-string (random 999)))
-                  (rand-name))))
-    (debug-log "create-raider"
-      (list :archetype archetype
-            :comedy comedy
-            :theme theme
-            :ref ref
-            :name name))
-    (list :name name
-          :role "Wasteland Raider"
-          :ref ref
-          :profile (getf archetype :background)
-          :quirks (if (roll-dice comedy)
-                      '("Hears voices in maggot-infested skull" "Claims to be powered by hamster-wheel x hamster")
-                      '("Never met a blood bottle he wouldn’t trust"))
-          :headspace (if (roll-dice 0.5)
-                         '("sick, rotted, twitching with wild 'head-rot' hilarity" "Haunted by tragic wet underwear incidents and angry mutant exes")
-                         '("solid, contemplative, dangerously sarcastic"))
-          :quick-pun (if (roll-dice 0.5)
-                         "What’s scarier: my breath, or my medical bills?"
-                         "‘Life is short. My fuse is shorter!’"))
-    ))
+;; --------------------------------------------------------------
+;; SAMPLE CHARACTER CREATION (Placeholder)
+;; --------------------------------------------------------------
 
-;; SYSTEM CONSOLE LAYER: DIALOGUE/VIOLENCE/ACTIONS ALL RATED & LOGGED
-;; -- Example call: (create-raider :comedy 0.7 :theme 0.2 :name-prob 0.07 :ref "post.war.pissed.raider")
-
-;; -- Output all core modules, safety, and fail-safes on game load --
-(debug-log "content-safety" (content-safety-config))
+(defun create-raider (name)
+  "Simple placeholder Raider creation function (will expand later)."
+  (debug-log (format nil "Creating raider: ~A" name))
+  (list :type :raider
+        :name name
+        :faction "Junker-Wasteclan"
+        :strength (random 10)
+        :intellect (random 10)
+        :morality :chaotic-neutral))
