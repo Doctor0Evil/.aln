@@ -35,7 +35,7 @@ jobs:
         run: |
           Write-Host "Current dir: $PWD"
           $scriptDir = Join-Path '${{ github.workspace }}' 'scripts'
-          Write-Host "Contents of $scriptDir:"
+          Write-Host "Contents of ${scriptDir}:"
           if (Test-Path $scriptDir) {
             Get-ChildItem -Force $scriptDir
           } else {
@@ -70,7 +70,7 @@ jobs:
             }
             catch {
               Write-Warning "Script failed: $($script.Name) — $_"
-              $failures += "$($script.Name): $_"
+              $failures += "${script.Name}: $_"
             }
           }
 
