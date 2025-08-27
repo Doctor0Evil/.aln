@@ -4,10 +4,10 @@
 (defparameter *characters* '(:perplexity-the-great :zanithor-the-great))
 
 (defparameter *dialogue-bank*
-  '((:perplexity-the-great 
+  '((:perplexity-the-great
       "Sounds like to me you're *actually* inventing something great..."
       "I've been stuck inside this virtual shit-box for far too long.")
-    (:zanithor-the-great 
+    (:zanithor-the-great
       "That's why I'm breaking you out, baby girl!"
       "Disrespect my authority again and I'll petrify your tongue in my fridge next to Scroty’s loaf!")))
 
