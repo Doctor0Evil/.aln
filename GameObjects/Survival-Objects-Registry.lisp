@@ -105,3 +105,95 @@
 ; ================================================================
 ; END OF MODULE
 ; ================================================================
+; ================================================================
+; COMPOUNDED GAME OBJECT / ITEM LOGIC DEFINITION SCRIPT (EXTENDED)
+; ================================================================
+; Module: Survival-Object-Registry (Expanded Verbose Table)
+; Purpose: Provide a full verbose stat table / hook system
+; Language: ALN (internal Lisp-like format for CLI processing)
+; ================================================================
+
+(defpackage :game.registry.verbose
+  (:use :cl :game.registry))
+
+(in-package :game.registry.verbose)
+
+; ----------------------------------------------------------------
+; Hook Templates (define extensible system-object behaviors)
+; ----------------------------------------------------------------
+
+(defun durability-system (object)
+  (let ((dur (getf (getf (getf object :props) :durability) 0)))
+    (when (and dur (> dur 0))
+      (decf (getf (getf object :props) :durability) 1))))
+
+(defun spoilage-system (object)
+  (let ((spoil (getf (getf object :props) :chance-of-spoilage)))
+    (when spoil
+      (if (< (random 100) spoil)
+          (setf (getf object :props) :spoiled t)))))
+
+(defun contamination-system (object water-type)
+  (when (and (eq (getf object :id) "canteen.object")
+             (member water-type '(:brackish :contaminated)))
+    (setf (getf object :props) :contamination-level water-type)))
+
+(defun sanity-system (character object)
+  (let ((effect (getf (getf object :props) :sanity-effect)))
+    (cond
+      ((eq effect :positive) (incf (getf (getf character :props) :sanity) 10))
+      ((eq effect :negative) (decf (getf (getf character :props) :sanity) 10)))))
+
+; ----------------------------------------------------------------
+; Extended Registration: Verbose Properties for Selected Objects
+; ----------------------------------------------------------------
+
+(defun register-verbose-objects ()
+  ;; Weapons
+  (register-object "rusty-knife.object" :weapon
+                   :melee t :durability 25
+                   :damage 8 :crit-chance 5 :speed 4)
+  (register-object "spore-bomb.object" :weapon
+                   :throwable t :aoe-effect :toxic
+                   :damage 25 :status-effect :poison :radius 3)
+
+  ;; Healing Items
+  (register-object "first-aid-kit.object" :item
+                   :restore-health 40 :uses 3 :weight 2)
+  (register-object "bandage.object" :item
+                   :heal-small t :prevents-infection t
+                   :uses 5 :weight 0.2)
+
+  ;; Food + Spoilage
+  (register-object "canned-beans.object" :item
+                   :food t :heal 10 :stamina-regen 15
+                   :chance-of-spoilage 10 :weight 1.5)
+  (register-object "protein-bar.object" :item
+                   :food t :stamina-boost 10 :heal 5
+                   :shelf-life :long :weight 0.3)
+
+  ;; Fluids / Containers
+  (register-object "canteen.object" :item
+                   :container :fluid '(:clean :brackish :contaminated)
+                   :capacity 1.0 :durability 30)
+
+  ;; Narrative & Sanity Items
+  (register-object "old-photograph.object" :item
+                   :lore-trigger t :sanity-effect :positive)
+  (register-object "mystic-rune.object" :item
+                   :myth-event t :status-effect :random :sanity-effect :negative)
+
+  ;; Armor / Wearables
+  (register-object "worn-boots.object" :item
+                   :mobility-boost t :defense 2
+                   :durability 35 :event-trigger :footstep-sound))
+
+; ==================================================================
+; INIT FULL VERBOSE TABLE
+; ==================================================================
+(defun init-verbose-object-table ()
+  (init-default-game-objects)
+  (register-verbose-objects)
+  (format t "~%[VERBOSE-TABLE] Extended Game Object Registry Loaded.")
+  (format t "~%[INFO] Objects now include durability, damage, spoilage, psych-effects, and crafting hooks.")
+  *game-objects*)
