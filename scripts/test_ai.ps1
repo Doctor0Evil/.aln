@@ -1,12 +1,12 @@
-$ErrorActionPreference = 'Stop'
-Set-StrictMode -Version Latest
+Write-Host "=== [combat-sim.ps1] Starting ==="
 
-$runningOnWindows = $IsWindows
-$runningOnLinux   = $IsLinux
-$runningOnMacOS   = $IsMacOS
+$global:LASTEXITCODE = 0
 
-Write-Host "=== [test_ai.ps1] Starting ==="
+# Run the combat simulation
+& ./scripts/run-combat-sim.ps1
 
-# Example tests
-# ...
-Write-Host "AI module tests passed."
+if ($LASTEXITCODE -ne 0) {
+    throw "Combat simulation failed with exit code $LASTEXITCODE"
+}
+
+Write-Host "Combat sim complete."
