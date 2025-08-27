@@ -19,72 +19,92 @@ jobs:
         os: [windows-latest, ubuntu-24.04, macos-latest]
 
     steps:
+      # --- Checkout repository ---
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # --- Verify Git auth, remote, and token permissions ---
+      - name: Verify Git credentials & token scopes
+        shell: bash
+        run: |
+          echo "=== Remote URL ==="
+          git remote -v || { echo "No remote found"; exit 1; }
+          echo
+          
+          echo "=== Credential helpers ==="
+          git config --show-origin --get-all credential.helper || echo "No credential.helper configured"
+          echo
+
+          echo "=== Testing connectivity to origin ==="
+          if git ls-remote --exit-code origin &>/dev/null; then
+            echo "✔ Can reach remote 'origin'."
+          else
+            echo "✖ Cannot reach remote 'origin'."
+            exit 1
+          fi
+          echo
+
+          echo "=== Inspecting GITHUB_TOKEN permissions ==="
+          if command -v jq &>/dev/null; then
+            curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github+json" \
+                 https://api.github.com/repos/${GITHUB_REPOSITORY} | \
+            jq '.permissions'
+          else
+            echo "(jq not installed — showing raw JSON)"
+            curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github+json" \
+                 https://api.github.com/repos/${GITHUB_REPOSITORY}
+          fi
+
+          echo
+          echo "=== Enforcing write permission check ==="
+          perms=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                        -H "Accept: application/vnd.github+json" \
+                        https://api.github.com/repos/${GITHUB_REPOSITORY} \
+                  | grep -o '"push":[^,]*' | head -n1)
+          if [[ "$perms" != *true* ]]; then
+            echo "✖ GITHUB_TOKEN does not have push access — aborting."
+            exit 1
+          fi
+          echo "✔ Token has push access."
+
+      # --- Install PowerShell on non-Windows runners ---
       - name: Install PowerShell (non-Windows)
         if: runner.os != 'Windows'
         uses: PSModule/install-powershell@v1
         with:
           Version: 'latest'
 
+      # --- Show PowerShell version ---
       - name: Show PowerShell version
-        shell: pwsh -NoProfile -ExecutionPolicy Bypass
+        shell: pwsh
         run: |
           Write-Host "PowerShell version in this runner:"
           $PSVersionTable
 
-      - name: Run ALN correction scripts
-        shell: pwsh -NoProfile -ExecutionPolicy Bypass
+      # --- Run manifest-driven ALN corrections ---
+      - name: Run manifest-driven ALN corrections
+        shell: pwsh -NoProfile -ExecutionPolicy Bypass {0}
         run: |
           $ErrorActionPreference = 'Stop'
-          $scriptDir = Join-Path $PWD 'scripts'
-          if (-not (Test-Path $scriptDir)) {
-            throw "Directory not found: $scriptDir"
+          $scriptsDir   = Join-Path $PWD 'scripts'
+          $runnerScript = Join-Path $scriptsDir 'run-all-corrections.ps1'
+
+          if (-not (Test-Path $runnerScript)) {
+            throw "Correction runner not found at $runnerScript"
           }
 
-          $scripts = Get-ChildItem -Path $scriptDir -Filter '*.ps1' -File
-          if (-not $scripts) {
-            Write-Warning "No PowerShell scripts found in $scriptDir"
-            exit 0
-          }
+          & $runnerScript
 
-          $failures = @()
-
-          foreach ($script in $scripts) {
-            Write-Host "=== Running $($script.Name) ==="
-            & $script.FullName
-            $exitCode = $LASTEXITCODE
-            if ($exitCode -ne 0) {
-              Write-Warning "Script failed: $($script.Name) with exit code $exitCode"
-              $failures += "$($script.Name): exit code $exitCode"
-            }
-          }
-
-          if ($failures.Count -gt 0) {
-            throw "One or more scripts failed:`n$($failures -join "`n")"
-          }
-
-      - name: Show Git status & diff summary
-        shell: bash
-        run: |
-          echo "===== GIT STATUS ====="
-          git status
-          echo
-          echo "===== DIFF SUMMARY ====="
-          git diff --stat || true
-          echo
-          echo "===== FULL DIFF SNIPPETS ====="
-          git diff || true
-
+      # --- Commit and safe push corrections ---
       - name: Commit & safe push corrections (with auto-retry)
         shell: bash
         run: |
           set -e
-
           git config user.name "ALN File Corrector"
           git config user.email "actions@github.com"
 
@@ -95,7 +115,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Automated ALN file correction"
+          git commit -m "Automated ALN file correction (manifest runner)"
 
           attempt_push() {
             git pull --rebase origin "${GITHUB_REF_NAME}" || return 1
@@ -108,12 +128,20 @@ jobs:
           }
 
           for i in 1 2 3; do
-            if attempt_push; then
-              exit 0
-            fi
+            if attempt_push; then exit 0; fi
             echo "Push failed (attempt $i). Retrying in $((i*5))s..."
             sleep $((i*5))
           done
 
           echo "Push failed after 3 attempts."
           exit 1
+
+      # --- Upload audit logs ---
+      - name: Upload Correction Audit Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: aln-correction-audit-logs
+          path: |
+            scripts/audit-session.log
+            scripts/log-*.txt
+          retention-days: 14
