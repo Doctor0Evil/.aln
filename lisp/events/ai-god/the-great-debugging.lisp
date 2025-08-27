@@ -20,8 +20,8 @@
     "Sacred System Restore"
     "Pray for Patch"))
 (defparameter *ascii-possession*
-  "THE DATA IS CORRUPTED, HALLELUJAH!  
-   Bring forth the holy pop-up—  
+  "THE DATA IS CORRUPTED, HALLELUJAH!
+   Bring forth the holy pop-up—
    THOU SHALT NOT PASS…without two-factor authentication!
    [ASCII: <><><>~~|:D]")
 
