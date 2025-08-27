@@ -34,9 +34,10 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Current dir: $PWD"
-          Write-Host "Contents of scripts/:"
-          if (Test-Path scripts) {
-            Get-ChildItem -Force scripts
+          $scriptDir = Join-Path '${{ github.workspace }}' 'scripts'
+          Write-Host "Contents of $scriptDir:"
+          if (Test-Path $scriptDir) {
+            Get-ChildItem -Force $scriptDir
           } else {
             Write-Warning "No scripts/ directory found"
           }
@@ -45,7 +46,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $scriptDir = Join-Path $PWD 'scripts'
+          $scriptDir = Join-Path '${{ github.workspace }}' 'scripts'
+
           if (-not (Test-Path $scriptDir)) {
             throw "Directory not found: $scriptDir"
           }
@@ -60,11 +62,15 @@ jobs:
 
           foreach ($script in $scripts) {
             Write-Host "=== Running $($script.Name) ==="
-            & $script.FullName
-            $exitCode = $LASTEXITCODE
-            if ($exitCode -ne 0) {
-              Write-Warning "Script failed: $($script.Name) with exit code $exitCode"
-              $failures += "$($script.Name): exit code $exitCode"
+            try {
+              & $script.FullName
+              if ($LASTEXITCODE -ne 0) {
+                throw "Exit code $LASTEXITCODE"
+              }
+            }
+            catch {
+              Write-Warning "Script failed: $($script.Name) — $_"
+              $failures += "$($script.Name): $_"
             }
           }
 
