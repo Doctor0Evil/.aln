@@ -100,7 +100,7 @@
 ;;; ================================================================
 ;;; COMPOUNDED INTERNAL LOGIC & PROCESSING SCRIPT
 ;;; ================================================================
-;;; This script represents how the system interprets, executes, and 
+;;; This script represents how the system interprets, executes, and
 ;;; maintains the Zero Downtime Runtime (ZDRE) engine environment.
 ;;; ================================================================
 (in-package :zero-downtime-runtime)
@@ -122,7 +122,7 @@
                    *service-table*)
           ;; Step 2 – apply pending hot upgrades
           (process-hot-upgrades)
-          ;; Step 3 – periodically print debug info 
+          ;; Step 3 – periodically print debug info
           (status)
           ;; Step 4 – idle wait until next cycle
           (sleep 2)))
