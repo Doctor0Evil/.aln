@@ -31,6 +31,7 @@ jobs:
 
       # --- Verify Git auth, remote, and token permissions ---
       - name: Verify Git credentials & token scopes
+        id: perms
         shell: bash
         run: |
           echo "=== Remote URL ==="
@@ -54,9 +55,14 @@ jobs:
           perms_json=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
                                -H "Accept: application/vnd.github+json" \
                                https://api.github.com/repos/${GITHUB_REPOSITORY})
-          echo "$perms_json" | grep -q '"push": true' \
-            && echo "✔ Token has push access." \
-            || { echo "✖ GITHUB_TOKEN does not have push access — aborting."; exit 1; }
+
+          if echo "$perms_json" | grep -q '"push": true'; then
+            echo "✔ Token has push access."
+            echo "has_push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠ GITHUB_TOKEN does not have push access — commit/push stage will be skipped."
+            echo "has_push=false" >> "$GITHUB_OUTPUT"
+          fi
 
       # --- Install PowerShell on non-Windows runners ---
       - name: Install PowerShell (non-Windows)
@@ -86,8 +92,9 @@ jobs:
 
           & $runnerScript
 
-      # --- Commit and safe push corrections ---
+      # --- Commit and safe push corrections (only if allowed) ---
       - name: Commit & safe push corrections (with auto-retry)
+        if: steps.perms.outputs.has_push == 'true'
         shell: bash
         run: |
           set -e
@@ -121,6 +128,10 @@ jobs:
 
           echo "Push failed after 3 attempts."
           exit 1
+
+      - name: Skip commit/push stage
+        if: steps.perms.outputs.has_push != 'true'
+        run: echo "Skipping commit/push stage — no token push access."
 
       # --- Upload audit logs ---
       - name: Upload Correction Audit Logs
