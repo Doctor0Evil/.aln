@@ -97,3 +97,53 @@
   (lambda () (print "API stopped v2"))
   (lambda () t))
 |#
+;;; ================================================================
+;;; COMPOUNDED INTERNAL LOGIC & PROCESSING SCRIPT
+;;; ================================================================
+;;; This script represents how the system interprets, executes, and 
+;;; maintains the Zero Downtime Runtime (ZDRE) engine environment.
+;;; ================================================================
+(in-package :zero-downtime-runtime)
+(defun zdre-internal-cycle ()
+  "Compound loop bridging CLI actions, hot-upgrades, service restarts, and fault recovery."
+  (loop while *engine-running*
+        do
+          ;; Step 1 – perform healthchecks
+          (maphash (lambda (k svc)
+                     (let ((healthy (ignore-errors (funcall (getf svc :healthcheck)))))
+                       (if healthy
+                           (setf (gethash k *health-status-table*) :ok)
+                           (progn
+                             (format t "~%[ZDRE][HEAL] Service ~A failed healthcheck... restarting!" k)
+                             (ignore-errors (funcall (getf svc :stop)))
+                             (sleep 1)
+                             (ignore-errors (funcall (getf svc :start)))
+                             (setf (gethash k *health-status-table*) :restarted))))))
+                   *service-table*)
+          ;; Step 2 – apply pending hot upgrades
+          (process-hot-upgrades)
+          ;; Step 3 – periodically print debug info 
+          (status)
+          ;; Step 4 – idle wait until next cycle
+          (sleep 2)))
+(defun zdre-cli-handler (command &rest args)
+  "Route CLI commands into system behaviors."
+  (case command
+    (:start
+     (if *engine-running*
+         (format t "~%[ZDRE][ERR] Engine already running!")
+         (start-runtime)))
+    (:stop
+     (stop-runtime))
+    (:deploy
+     (destructuring-bind (name start stop healthcheck) args
+       (deploy-module name start stop healthcheck)))
+    (:ping
+     (format t "~%[ZDRE][PING] ~A => ~A" (first args) (ping (first args))))
+    (:upgrade
+     (destructuring-bind (name new-start new-stop new-healthcheck) args
+       (upgrade-live name new-start new-stop new-healthcheck)))
+    (:status
+     (status))
+    (otherwise
+     (format t "~%[ZDRE][ERR] Unknown command: ~A" command))))
