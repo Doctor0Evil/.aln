@@ -4,7 +4,7 @@
 ;;; PURPOSE:
 ;;; - Models grotesque, black-comedy style characters’ internal states
 ;;; - Provides "rot-core manifest" (mad inner monologue descriptors)
-;;; - Infuses survival chance metrics with twisted descriptors 
+;;; - Infuses survival chance metrics with twisted descriptors
 ;;; - Mindspace represented as narrative metaphors (skulls, maggots, etc.)
 ;;; ================================================================
 (defpackage :wastepunk-headrot
