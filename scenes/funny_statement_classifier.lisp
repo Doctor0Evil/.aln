@@ -1,4 +1,4 @@
-;; "https://github.com/Doctor0Evil/ALN_Programming_Language.git" 
+;; "https://github.com/Doctor0Evil/ALN_Programming_Language.git"
 ;; scenes/funny_statement_classifier.lisp
 
 (defpackage :funny-classifier
