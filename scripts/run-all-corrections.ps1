@@ -37,7 +37,7 @@ function Write-Log {
 # --- Begin Run ---
 Write-Log "=== Correction run started ==="
 
-# --- OS Detection ---
+# --- OS Detection (parser‑safe) ---
 $osName = if ($IsWindows) { "Windows" }
 elseif ($IsLinux)        { "Linux"   }
 elseif ($IsMacOS)        { "macOS"   }
@@ -69,12 +69,12 @@ foreach ($scriptEntry in $manifest.scripts) {
     $scriptLog  = Join-Path $scriptRoot ("log-" + [IO.Path]::GetFileNameWithoutExtension($scriptName) + ".txt")
 
     if (-not (Test-Path $scriptFile)) {
-        Write-Log "Script not found: $scriptName" "ERROR"
+        Write-Log "Script not found: ${scriptName}" "ERROR"
         $failures += "${scriptName}: missing"
         continue
     }
 
-    Write-Log ">>> Starting $scriptName"
+    Write-Log ">>> Starting ${scriptName}"
     try {
         # Run the script and tee stdout/stderr into a per‑script log
         & $scriptFile *>&1 | Tee-Object -FilePath $scriptLog
@@ -89,10 +89,10 @@ foreach ($scriptEntry in $manifest.scripts) {
         }
     }
     catch {
-        Write-Log "Unhandled exception in $scriptName: $($_.Exception.Message)" "ERROR"
+        Write-Log "Unhandled exception in ${scriptName}: $($_.Exception.Message)" "ERROR"
         $failures += "${scriptName}: exception"
     }
-    Write-Log "<<< Finished $scriptName"
+    Write-Log "<<< Finished ${scriptName}"
 }
 
 # --- Summary ---
