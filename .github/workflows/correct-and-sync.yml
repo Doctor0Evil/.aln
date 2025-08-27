@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: Doctor0Evil/ALN_Programming_Language
-          token: ${{ secrets.ALN_PUSH_TOKEN }}   # Must be a PAT with 'repo' + 'workflow' scopes
+          token: ${{ secrets.ALN_PUSH_TOKEN }}   # PAT with 'repo' + 'workflow' scopes
           persist-credentials: true
           clean: true
           sparse-checkout-cone-mode: true
@@ -26,24 +26,27 @@ jobs:
           submodules: false
           set-safe-directory: true
 
-      # --- Normalize line endings to LF ---
-      - name: Normalize Line Endings
-        run: |
-          find . -type f ! -path "./.git/*" -exec dos2unix {} \;
+      # --- Ensure PowerShell 7 is available ---
+      - name: Install PowerShell 7
+        uses: PSModule/install-powershell@v1
+        with:
+          Version: 'latest'
 
-      # --- Strip trailing whitespace ---
-      - name: Remove Trailing Whitespace
+      # --- Run all corrections via manifest-driven runner ---
+      - name: Run manifest-driven ALN corrections
+        shell: pwsh -NoProfile -ExecutionPolicy Bypass
         run: |
-          find . -type f ! -path "./.git/*" -exec sed -i "s/[ \t]*$//" {} \;
+          $ErrorActionPreference = 'Stop'
+          $scriptsDir = Join-Path $PWD 'scripts'
+          $runnerScript = Join-Path $scriptsDir 'run-all-corrections.ps1'
 
-      # --- Extra ALN-specific CR removal ---
-      - name: Format ALN files (if '.aln' extension)
-        run: |
-          for file in $(find . -type f -name "*.aln"); do
-            sed -i "s/\r//g" "$file"
-          done
+          if (-not (Test-Path $runnerScript)) {
+            throw "Correction runner not found at $runnerScript"
+          }
 
-      # --- Commit and safe push with retry logic ---
+          & $runnerScript
+
+      # --- Commit and safe push with retry ---
       - name: Auto-commit & Safe Push with Retry
         shell: bash
         run: |
@@ -59,9 +62,9 @@ jobs:
             exit 0
           fi
 
-          git commit -m "ALN: Automatic repository-wide file correction"
+          git commit -m "ALN: Automated repository-wide correction via manifest runner"
 
-          # Use the same PAT for pushing
+          # Authenticated push with PAT
           git remote set-url origin https://x-access-token:${{ secrets.ALN_PUSH_TOKEN }}@github.com/Doctor0Evil/ALN_Programming_Language.git
 
           attempt_push() {
@@ -80,3 +83,13 @@ jobs:
 
           echo "Push failed after 3 attempts."
           exit 1
+
+      # --- Upload audit logs as workflow artifact ---
+      - name: Upload Correction Audit Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: aln-correction-audit-logs
+          path: |
+            scripts/audit-session.log
+            scripts/log-*.txt
+          retention-days: 14
