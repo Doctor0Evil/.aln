@@ -4,21 +4,25 @@
 
 .DESCRIPTION
   Reads a manifest file (`correction-manifest.json`) to determine which scripts to run and in what order.
-  Runs each safely in its own scope, logs start/stop and any failures, and preserves per‑script logs for audit.
+  Runs each script in its own scope, logs start/stop and failures, and preserves per‑script logs for audit.
+  Works across Windows, Linux, and macOS (PowerShell 7+).
 
 .NOTES
   Author: XboxTeeJay & Copilot
+  Maintained by: Jacob Farmer
   Requires: PowerShell 7+
 #>
 
+# --- Safe Defaults ---
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$scriptRoot    = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$manifestPath  = Join-Path $scriptRoot 'correction-manifest.json'
-$sessionLog    = Join-Path $scriptRoot 'audit-session.log'
+# --- Path Setup ---
+$scriptRoot   = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$manifestPath = Join-Path $scriptRoot 'correction-manifest.json'
+$sessionLog   = Join-Path $scriptRoot 'audit-session.log'
 
-# Logging helper
+# --- Logging Helper ---
 function Write-Log {
     param(
         [string]$Message,
@@ -30,6 +34,7 @@ function Write-Log {
     Add-Content -Path $sessionLog -Value $line
 }
 
+# --- Begin Run ---
 Write-Log "=== Correction run started ==="
 
 # --- OS Detection ---
@@ -37,12 +42,13 @@ $isWindowsOS = $IsWindows
 $isLinuxOS   = $IsLinux
 $isMacOS     = $IsMacOS
 
-if ($isWindowsOS) { Write-Log "Detected OS: Windows" }
-elseif ($isLinuxOS) { Write-Log "Detected OS: Linux" }
-elseif ($isMacOS) { Write-Log "Detected OS: macOS" }
-else { Write-Log "Unknown OS" "WARN" }
+Write-Log ("Detected OS: " + 
+    (if ($isWindowsOS) { "Windows" }
+     elseif ($isLinuxOS) { "Linux" }
+     elseif ($isMacOS) { "macOS" }
+     else { "Unknown" }))
 
-# --- Load manifest ---
+# --- Load Manifest ---
 if (-not (Test-Path $manifestPath)) {
     throw "Manifest file not found at: $manifestPath"
 }
@@ -58,42 +64,46 @@ if (-not $manifest.scripts -or $manifest.scripts.Count -eq 0) {
     exit 0
 }
 
+# --- Execute Each Script ---
 $failures = @()
-
-# --- Execute each script ---
 foreach ($scriptEntry in $manifest.scripts) {
-    $scriptFile = Join-Path $scriptRoot $scriptEntry.name
+    $scriptName = $scriptEntry.name
+    $scriptFile = Join-Path $scriptRoot $scriptName
+    $scriptLog  = Join-Path $scriptRoot ("log-" + [IO.Path]::GetFileNameWithoutExtension($scriptName) + ".txt")
+
     if (-not (Test-Path $scriptFile)) {
-        Write-Log "Script not found: $($scriptEntry.name)" "ERROR"
-        $failures += "$($scriptEntry.name): missing"
+        Write-Log "Script not found: $scriptName" "ERROR"
+        $failures += "$scriptName: missing"
         continue
     }
 
-    $scriptLog = Join-Path $scriptRoot ("log-" + [IO.Path]::GetFileNameWithoutExtension($scriptEntry.name) + ".txt")
-    Write-Log ">>> Starting $($scriptEntry.name)"
-
+    Write-Log ">>> Starting $scriptName"
     try {
+        # Run the script and tee stdout/stderr into a per-script log
         & $scriptFile *>&1 | Tee-Object -FilePath $scriptLog
+
         $exitCode = $LASTEXITCODE
         if ($exitCode -ne 0) {
             Write-Log "Script failed with exit code $exitCode" "ERROR"
-            $failures += "$($scriptEntry.name): exit code $exitCode"
-        } else {
+            $failures += "$scriptName: exit code $exitCode"
+        }
+        else {
             Write-Log "Script completed successfully."
         }
-    } catch {
-        Write-Log "Unhandled exception in $($scriptEntry.name): $($_.Exception.Message)" "ERROR"
-        $failures += "$($scriptEntry.name): exception"
     }
-
-    Write-Log "<<< Finished $($scriptEntry.name)"
+    catch {
+        Write-Log "Unhandled exception in $scriptName: $($_.Exception.Message)" "ERROR"
+        $failures += "$scriptName: exception"
+    }
+    Write-Log "<<< Finished $scriptName"
 }
 
 # --- Summary ---
 if ($failures.Count -gt 0) {
     Write-Log "One or more scripts failed:`n$($failures -join "`n")" "ERROR"
     throw "Corrections completed with errors."
-} else {
+}
+else {
     Write-Log "All scripts completed successfully."
 }
 
