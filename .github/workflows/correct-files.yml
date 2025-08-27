@@ -9,7 +9,7 @@ on:
 
 concurrency:
   group: correct-files-${{ github.ref_name }}
-  cancel-in-progress: false  # Let current job finish; queue new ones per branch
+  cancel-in-progress: false
 
 jobs:
   correct-files:
@@ -19,30 +19,26 @@ jobs:
         os: [windows-latest, ubuntu-24.04, macos-latest]
 
     steps:
-      # --- Checkout with full history for clean rebase ---
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # --- Install PowerShell on non-Windows runners ---
       - name: Install PowerShell (non-Windows)
         if: runner.os != 'Windows'
         uses: PSModule/install-powershell@v1
         with:
           Version: 'latest'
 
-      # --- Show PowerShell version for audit ---
       - name: Show PowerShell version
-        shell: pwsh
+        shell: pwsh -NoProfile -ExecutionPolicy Bypass
         run: |
           Write-Host "PowerShell version in this runner:"
           $PSVersionTable
 
-      # --- Run all correction scripts in scripts/ ---
       - name: Run ALN correction scripts
-        shell: pwsh
+        shell: pwsh -NoProfile -ExecutionPolicy Bypass
         run: |
           $ErrorActionPreference = 'Stop'
           $scriptDir = Join-Path $PWD 'scripts'
@@ -72,7 +68,6 @@ jobs:
             throw "One or more scripts failed:`n$($failures -join "`n")"
           }
 
-      # --- Show summary of changes for auditing ---
       - name: Show Git status & diff summary
         shell: bash
         run: |
@@ -85,7 +80,6 @@ jobs:
           echo "===== FULL DIFF SNIPPETS ====="
           git diff || true
 
-      # --- Commit, rebase, safe push with retry ---
       - name: Commit & safe push corrections (with auto-retry)
         shell: bash
         run: |
