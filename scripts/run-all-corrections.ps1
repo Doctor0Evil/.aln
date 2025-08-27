@@ -42,7 +42,7 @@ $isWindowsOS = $IsWindows
 $isLinuxOS   = $IsLinux
 $isMacOS     = $IsMacOS
 
-Write-Log ("Detected OS: " + 
+Write-Log ("Detected OS: " +
     (if ($isWindowsOS) { "Windows" }
      elseif ($isLinuxOS) { "Linux" }
      elseif ($isMacOS) { "macOS" }
