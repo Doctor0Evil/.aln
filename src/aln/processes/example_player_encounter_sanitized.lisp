@@ -28,7 +28,7 @@
     (ai-director-output (run-ai-director ai-decision-tree npc-morale player-choice-matrix combat-history))
     ;; Alternate outcomes and narrative branching
     (narrative-branches (generate-procedural-narratives combat-history ai-personality-matrix process-pipes)))
-    
+
     ;; Core loop
     (loop for turn from 1 to (combat-turn-count combat-history)
           do
@@ -36,7 +36,7 @@
             (update-npc-strategy ai-personality-matrix npc-morale combat-history)
             (decide-next-actions ai-decision-tree player-choice-matrix narrative-branches)
             (log-combat-turn combat-history player-stats inventory npc-morale ai-director-output))
-    
+
     ;; Final output details
     (output-combat-results combat-history narrative-branches process-pipes dialogue-sequence ai-director-output)
 ))
@@ -60,19 +60,19 @@
 
 (defun generate-random-status-modifiers ()
   ;; realistic random survival statuses
-  (list :dehydrated (random t) 
-        :hungry (random t) 
-        :fatigued (random 3) 
-        :clothes-wet t 
-        :hypothermia-active t 
+  (list :dehydrated (random t)
+        :hungry (random t)
+        :fatigued (random 3)
+        :clothes-wet t
+        :hypothermia-active t
         :overheated nil))
 
 (defun generate-weather-effects (location condition)
   (list :location location
         :condition condition
-        :temperature -10 
-        :wind-speed 15 
-        :precipitation 'snow 
+        :temperature -10
+        :wind-speed 15
+        :precipitation 'snow
         :weapon-jam-chance 0.3))
 
 (defun load-npc-personality-profile ()
@@ -86,22 +86,22 @@
 (defun make-combat-history () (list))   ;; combat history placeholder
 
 (defun setup-process-management-pipes ()
-  (list :ai-decision-tree "ai-decision-tree" 
+  (list :ai-decision-tree "ai-decision-tree"
         :player-choices "possible-choice-matrix"
-        :world-events "core-gameplay-mechanics" 
+        :world-events "core-gameplay-mechanics"
         :random-events "random-occurences"
-        :gameloop "gameloop.processes" 
+        :gameloop "gameloop.processes"
         :dialogue "dialogue.random.behavior"
-        :error-handling "bad.input.handlers" 
+        :error-handling "bad.input.handlers"
         :security "downtime_network_intelligence"))
 
 (defun build-ai-decision-branches (personality weather status)
-  (list :attack "melee" 
-        :defend t 
+  (list :attack "melee"
+        :defend t
         :negotiate (if (> (getf personality :negotiator) 1) t nil)))
 
 (defun get-player-choice-matrix (stats traits inventory)
-  (list :combat t 
+  (list :combat t
         :negotiate (if (member "Speech Difficulty" traits :test #'string=) t t)
         :surrender (if (< (cdr (assoc 'E stats)) 5) t nil)
         :item-use (if (assoc 'weapon inventory) t nil)))
@@ -122,7 +122,7 @@
 
 (defun run-ai-director (decision-tree morale choice-matrix history)
   ;; dynamic event-roll depending on morale
-  (if (< morale 4) 
+  (if (< morale 4)
       (list :event "NPC hesitates" :chance (random 1.0))
       (list :event "NPC attacks aggressively" :chance (random 1.0))))
 
