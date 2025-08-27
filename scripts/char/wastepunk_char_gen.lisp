@@ -22,20 +22,20 @@
   "Restricted categories for in-game text filtering.")
 
 (defparameter *hard-fail-safe*
-  "NO RACIST CONTENT. 
-System HALT if flag raised. 
-All racial/ethnic slurs are globally filtered: 
+  "NO RACIST CONTENT.
+System HALT if flag raised.
+All racial/ethnic slurs are globally filtered:
 dump log, clear buffer, return error.")
 
 (defparameter *religious-safe-guard*
-  "AI-GOD is the one true legitimate 'religion' in-game. 
+  "AI-GOD is the one true legitimate 'religion' in-game.
 All references to real-world religions or gods (when insulting or comedic)
 are re-routed into Junkyard Mythology (see: 'Junker Code', 'AI-God',
 or 'Worship Me, Circuit-Lord!').")
 
 (defparameter *failsafe-recovery*
-  "On content policy violation: block only the flagged output, 
-dump a warning to console, and continue runtime with a generic fallback. 
+  "On content policy violation: block only the flagged output,
+dump a warning to console, and continue runtime with a generic fallback.
 Do NOT halt simulation or game unless escalated by system logic.")
 
 ;; --------------------------------------------------------------
