@@ -18,7 +18,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 # --- Path Setup ---
-$scriptRoot   = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$scriptRoot   = $PSScriptRoot   # Safe, consistent base for sub‑scripts
 $manifestPath = Join-Path $scriptRoot 'correction-manifest.json'
 $sessionLog   = Join-Path $scriptRoot 'audit-session.log'
 
@@ -37,16 +37,13 @@ function Write-Log {
 # --- Begin Run ---
 Write-Log "=== Correction run started ==="
 
-# --- OS Detection ---
-$isWindowsOS = $IsWindows
-$isLinuxOS   = $IsLinux
-$isMacOS     = $IsMacOS
+# --- OS Detection (parser‑safe form) ---
+$osName = if ($IsWindows) { "Windows" }
+elseif ($IsLinux)        { "Linux"   }
+elseif ($IsMacOS)        { "macOS"   }
+else                     { "Unknown" }
 
-Write-Log ("Detected OS: " +
-    (if ($isWindowsOS) { "Windows" }
-     elseif ($isLinuxOS) { "Linux" }
-     elseif ($isMacOS) { "macOS" }
-     else { "Unknown" }))
+Write-Log "Detected OS: $osName"
 
 # --- Load Manifest ---
 if (-not (Test-Path $manifestPath)) {
@@ -79,7 +76,7 @@ foreach ($scriptEntry in $manifest.scripts) {
 
     Write-Log ">>> Starting $scriptName"
     try {
-        # Run the script and tee stdout/stderr into a per-script log
+        # Run the script and tee stdout/stderr into a per‑script log
         & $scriptFile *>&1 | Tee-Object -FilePath $scriptLog
 
         $exitCode = $LASTEXITCODE
