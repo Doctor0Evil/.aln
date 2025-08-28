@@ -5,7 +5,7 @@ Run # Install-PowerShell
   # Install-PowerShell
   set -e
   echo "Requested version: [$REQUESTED_VERSION]"
-  
+
   # Only resolve to latest version if explicitly set to 'latest' (case-insensitive)
   case "${REQUESTED_VERSION:-}" in
       [Ll][Aa][Tt][Ee][Ss][Tt])
@@ -24,22 +24,22 @@ Run # Install-PowerShell
           exit 1
           ;;
   esac
-  
+
   DETECTED_VERSION=$(pwsh -NoLogo -NoProfile -Command '$PSVersionTable.PSVersion.ToString()' 2>/dev/null || true)
   if [[ -n "$DETECTED_VERSION" ]]; then
     echo "Currently installed PowerShell version: $DETECTED_VERSION"
   else
     echo "PowerShell is not currently installed"
   fi
-  
+
   if [[ "$DETECTED_VERSION" == "$REQUESTED_VERSION" ]]; then
     echo "PowerShell $DETECTED_VERSION already installed. Skipping."
     exit 0
   fi
-  
+
   # Determine Linux distribution type
   ARCH=$(dpkg --print-architecture 2>/dev/null || rpm --eval '%{_arch}' 2>/dev/null || echo "x86_64")
-  
+
   if command -v apt-get >/dev/null || command -v dpkg >/dev/null; then
     # Debian/Ubuntu based
     echo "Detected Debian/Ubuntu based system..."
@@ -97,9 +97,9 @@ Usage: pwsh[.exe] [-Login] [[-File] <filePath> [args]]
                   [-CustomPipeName <string>] [-EncodedCommand <Base64EncodedCommand>]
                   [-ExecutionPolicy <ExecutionPolicy>] [-InputFormat {Text | XML}]
                   [-Interactive] [-MTA] [-NoExit] [-NoLogo] [-NonInteractive] [-NoProfile]
-                  [-NoProfileLoadTime] [-OutputFormat {Text | XML}] 
-                  [-SettingsFile <filePath>] [-SSHServerMode] [-STA] 
-                  [-Version] [-WindowStyle <style>] 
+                  [-NoProfileLoadTime] [-OutputFormat {Text | XML}]
+                  [-SettingsFile <filePath>] [-SSHServerMode] [-STA]
+                  [-Version] [-WindowStyle <style>]
                   [-WorkingDirectory <directoryPath>]
 
        pwsh[.exe] -h | -Help | -? | /?
