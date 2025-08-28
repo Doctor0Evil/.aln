@@ -1,15 +1,12 @@
 name: correct-files
-
 permissions:
   contents: write
-
 on:
   workflow_dispatch:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-
 concurrency:
   group: correct-files-${{ github.ref_name }}
   cancel-in-progress: false
@@ -20,7 +17,6 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-24.04, macos-latest]
-
     steps:
       # --- Checkout repository ---
       - name: Checkout repository
@@ -34,13 +30,12 @@ jobs:
         id: perms
         shell: bash
         run: |
+          set -e
           echo "=== Remote URL ==="
           git remote -v || { echo "No remote found"; exit 1; }
-          echo
-          
+
           echo "=== Credential helpers ==="
           git config --show-origin --get-all credential.helper || echo "No credential.helper configured"
-          echo
 
           echo "=== Testing connectivity to origin ==="
           if git ls-remote --exit-code origin &>/dev/null; then
@@ -49,13 +44,11 @@ jobs:
             echo "✖ Cannot reach remote 'origin'."
             exit 1
           fi
-          echo
 
           echo "=== Inspecting GITHUB_TOKEN permissions ==="
           perms_json=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
                                -H "Accept: application/vnd.github+json" \
                                https://api.github.com/repos/${GITHUB_REPOSITORY})
-
           if echo "$perms_json" | grep -q '"push": true'; then
             echo "✔ Token has push access."
             echo "has_push=true" >> "$GITHUB_OUTPUT"
@@ -85,31 +78,27 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $scriptsDir   = Join-Path $PWD 'scripts'
           $runnerScript = Join-Path $scriptsDir 'run-all-corrections.ps1'
-
           if (-not (Test-Path $runnerScript)) {
             throw "Correction runner not found at $runnerScript"
           }
-
           & $runnerScript
+          # Defensive $LASTEXITCODE check only for native commands; PowerShell functions rely on $ErrorActionPreference
 
-      # --- Commit and safe push corrections (only if allowed) ---
-      - name: Commit & safe push corrections (with auto-retry)
+      # --- Commit and safe push corrections (auto-rebase/retry) ---
+      - name: Commit & safe push corrections (auto-rebase and retry)
         if: steps.perms.outputs.has_push == 'true'
         shell: bash
         run: |
           set -e
           git config user.name "ALN File Corrector"
           git config user.email "actions@github.com"
-
           git add .
-
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
-
           git commit -m "Automated ALN file correction (manifest runner)"
-
+          # Rebase workflow, retry on remote change race conditions
           attempt_push() {
             git pull --rebase origin "${GITHUB_REF_NAME}" || return 1
             if [ "$(git rev-list HEAD ^origin/${GITHUB_REF_NAME} --count)" -gt 0 ]; then
@@ -119,13 +108,11 @@ jobs:
               echo "No new commits to push after rebase."
             fi
           }
-
           for i in 1 2 3; do
             if attempt_push; then exit 0; fi
             echo "Push failed (attempt $i). Retrying in $((i*5))s..."
             sleep $((i*5))
           done
-
           echo "Push failed after 3 attempts."
           exit 1
 
