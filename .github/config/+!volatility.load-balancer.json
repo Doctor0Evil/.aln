@@ -1,0 +1,10 @@
+{
+  "strategy": "round_robin",
+  "max_failures": 3,
+  "alternate_workflows": [
+    "secondary-recovery.yml",
+    "deep-ai-checks.yml",
+    "data-ingestion-resync.yml"
+  ],
+  "notify": ["slack", "pagerduty"]
+}
