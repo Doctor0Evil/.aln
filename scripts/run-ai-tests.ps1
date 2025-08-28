@@ -69,3 +69,5 @@ if ($failures.Count -gt 0) {
 }
 
 Write-Log "=== AI/NPC test run finished ==="
+Write-Host "Stub: run-ai-tests.ps1"
+exit 0
