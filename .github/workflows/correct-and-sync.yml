@@ -1,0 +1,108 @@
+name: ALN File Correction & Live Repo Sync
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+
+jobs:
+  correct-and-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      # --- Full-depth checkout using built-in Actions token ---
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- Verify Git auth, remote, and token permissions ---
+      - name: Verify Git credentials & token scopes
+        shell: bash
+        run: |
+          echo "=== Remote URL ==="
+          git remote -v || { echo "No remote found"; exit 1; }
+          echo
+          
+          echo "=== Credential helpers ==="
+          git config --show-origin --get-all credential.helper || echo "No credential.helper configured"
+          echo
+
+          echo "=== Testing connectivity to origin ==="
+          if git ls-remote --exit-code origin &>/dev/null; then
+            echo "✔ Can reach remote 'origin'."
+          else
+            echo "✖ Cannot reach remote 'origin'."
+            exit 1
+          fi
+          echo
+
+          echo "=== Inspecting GITHUB_TOKEN permissions ==="
+          if command -v jq &>/dev/null; then
+            curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github+json" \
+                 https://api.github.com/repos/${GITHUB_REPOSITORY} | \
+            jq '.permissions'
+          else
+            echo "(jq not installed — showing raw JSON)"
+            curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github+json" \
+                 https://api.github.com/repos/${GITHUB_REPOSITORY}
+          fi
+
+      # --- Ensure PowerShell 7 is available ---
+      - name: Install PowerShell 7
+        uses: PSModule/install-powershell@v1
+        with:
+          Version: 'latest'
+
+      # --- Run all corrections via manifest-driven runner ---
+      - name: Run manifest-driven ALN corrections
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-all-corrections.ps1
+
+      # --- Commit and safe push with retry ---
+      - name: Auto-commit & Safe Push with Retry
+        shell: bash
+        run: |
+          set -e
+
+          git config user.name "ALN-AutoFixer"
+          git config user.email "autofix@aln.dev"
+
+          git add .
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "ALN: Automated repository-wide correction via manifest runner"
+
+          attempt_push() {
+            git pull --rebase origin main || return 1
+            git push origin main || return 1
+          }
+
+          for i in 1 2 3; do
+            if attempt_push; then
+              echo "Push successful."
+              exit 0
+            fi
+            echo "Push failed (attempt $i). Retrying in $((i*5))s..."
+            sleep $((i*5))
+          done
+
+          echo "Push failed after 3 attempts."
+          exit 1
+
+      # --- Upload audit logs as workflow artifact ---
+      - name: Upload Correction Audit Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: aln-correction-audit-logs
+          path: |
+            scripts/audit-session.log
+            scripts/log-*.txt
+          retention-days: 14

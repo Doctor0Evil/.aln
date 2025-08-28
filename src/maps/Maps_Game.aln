@@ -1,0 +1,95 @@
+;; Game Map Definitions for ALN Programming Language
+
+(defparameter *game-maps*
+  '((:hollow-edge
+     :description "The edge of Silent Forest, dusk melting into the haunted Hollow."
+     :location (0 . 0)
+     :size (100 . 100)
+     :entities (:wolfman :morrin :player)
+     :environment "Woods with ruins, moonlight, smoke"
+     :state :neutral)
+    (:ruined-hideout
+     :description "Dark ruined hideout with broken timber and shadowy forest"
+     :location (10 . 15)
+     :size (80 . 80)
+     :entities (:wolfman :player)
+     :environment "Dark, broken timber, smoke"
+     :state :tense)
+    (:forest-path
+     :description "Shadowy forest path with moonlight filtering through trees"
+     :location (5 . 5)
+     :size (120 . 120)
+     :entities (:player)
+     :environment "Moonlight, shadows, forest"
+     :state :neutral)
+    (:village-edge
+     :description "Edge of the village with crumbling stone walls"
+     :location (20 . 30)
+     :size (90 . 90)
+     :entities (:player)
+     :environment "Stone walls, distant fires"
+     :state :neutral))
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

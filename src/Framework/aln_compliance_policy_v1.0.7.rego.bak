@@ -20,4 +20,4 @@ data.security.quantum {
   input.latency_target <= "0.00001ms"
   input.encryption_algorithm == "quantum_resistant"
 }
-```  
+```

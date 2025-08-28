@@ -1,7 +1,71 @@
-gitignore
-# Ignore dynamic outputs
+# =========================
+# Build & Runtime Artifacts
+# =========================
 dashboards/*.aln
 logs/*.log
 scripts/events/*.aln
-   # Ignore local PowerShell cache
-   __pycache__/
+
+# =========================
+# Cache & Temp Directories
+# =========================
+__pycache__/
+*.tmp
+*.temp
+*.cache
+
+# =========================
+# OS-Specific Junk
+# =========================
+# macOS
+.DS_Store
+.AppleDouble
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =========================
+# Local Dev / IDE Config
+# =========================
+.vscode/
+.idea/
+*.swp
+
+# =========================
+# Credential & Secret Files
+# =========================
+UsersHunterAppDataLocalTemp.git-credentials
+*.env
+*.env.*
+*.pem
+*.pfx
+*.key
+*.crt
+*.cer
+*.der
+*.p12
+*.keystore
+*.jks
+*id_rsa
+*id_dsa
+*id_ecdsa
+*id_ed25519
+.secret
+.secrets
+secrets.yml
+secrets.yaml
+
+# =========================
+# Node & Package Artifacts
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Python Virtual Envs
+# =========================
+venv/
+.env/
+.venv/

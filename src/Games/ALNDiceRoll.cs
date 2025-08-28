@@ -8,8 +8,8 @@ namespace ALN_Net.Games
     {
         public static string Process(Dictionary<string, object> parameters)
         {
-            int sides = parameters.ContainsKey("sides") 
-                ? Convert.ToInt32(parameters["sides"]) 
+            int sides = parameters.ContainsKey("sides")
+                ? Convert.ToInt32(parameters["sides"])
                 : 6;
             var rng = new Random();
             var roll = rng.Next(1, sides + 1);

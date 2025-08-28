@@ -1,6 +1,6 @@
 ---
 
-### **5. GitHub Repo Structure (``)**  
+### **5. GitHub Repo Structure (``)**
 ```aln
 // Directory Structure (Updated):
 └── ALN_Framework_v1.0.7
@@ -44,4 +44,4 @@
 
 // Commit Message:
 "Deployed ALN v1.0.7: Added QuantumNetv8.00 driver, real_time_pos_sync, and quantum networking [ALN-1007]"
-```  
+```

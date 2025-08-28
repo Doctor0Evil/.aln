@@ -14,10 +14,10 @@ class ALNHandler(http.server.BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         # Suppress default logging
         pass
-    
+
     def do_GET(self):
         parsed = urlparse(self.path)
-        
+
         if parsed.path == '/health':
             self.send_response(200)
             self.send_header('Content-type', 'application/json')

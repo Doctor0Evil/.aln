@@ -1,4 +1,4 @@
-name: Run PowerShell cross-platform
+name: Run PowerShell scripts cross‑platform
 
 on:
   workflow_dispatch:
@@ -9,26 +9,71 @@ on:
 
 jobs:
   run-powershell:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install PowerShell
+      - name: Install PowerShell (non‑Windows only)
+        if: runner.os != 'Windows'
         uses: PSModule/install-powershell@v1
         with:
           Version: 'latest'
 
-      - name: Run cross-platform PowerShell script
+      - name: Show PowerShell version
         shell: pwsh
         run: |
           Write-Host "PowerShell version in this runner:"
           $PSVersionTable
-          # Example: run repo-linked script (edit as needed)
-          ./scripts/your-script.ps1
 
-# Notes:
-# - This workflow runs on pushes and PRs to main/develop, and is manually triggerable.
-# - PowerShell is installed on Ubuntu runners via PSModule/install-powershell@v1.
-# - shell: pwsh will work on all OSes after the install step; change run value to target your script.
+      - name: List scripts directory
+        shell: pwsh
+        run: |
+          Write-Host "Current dir: $PWD"
+          $scriptDir = Join-Path '${{ github.workspace }}' 'scripts'
+          Write-Host "Contents of ${scriptDir}:"
+          if (Test-Path $scriptDir) {
+            Get-ChildItem -Force $scriptDir
+          } else {
+            Write-Warning "No scripts/ directory found"
+          }
+
+      - name: Run all PowerShell scripts in scripts/
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $scriptDir = Join-Path '${{ github.workspace }}' 'scripts'
+
+          if (-not (Test-Path $scriptDir)) {
+            throw "Directory not found: $scriptDir"
+          }
+
+          $scripts = Get-ChildItem -Path $scriptDir -Filter '*.ps1' -File
+          if (-not $scripts) {
+            Write-Warning "No PowerShell scripts found in $scriptDir"
+            exit 0
+          }
+
+          $failures = @()
+
+          foreach ($script in $scripts) {
+            Write-Host "=== Running $($script.Name) ==="
+            try {
+              & $script.FullName
+              if ($LASTEXITCODE -ne 0) {
+                throw "Exit code $LASTEXITCODE"
+              }
+            }
+            catch {
+              Write-Warning "Script failed: $($script.Name) — $_"
+              $failures += "${script.Name}: $_"
+            }
+          }
+
+          if ($failures.Count -gt 0) {
+            throw "One or more scripts failed:`n$($failures -join "`n")"
+          }

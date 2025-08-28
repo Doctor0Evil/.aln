@@ -1,0 +1,31 @@
+name: ALN AI/NPC CI Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-ai:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PowerShell 7
+        uses: PSModule/install-powershell@v1
+        with:
+          Version: 'latest'
+
+      - name: Run AI/NPC Manifest Pipeline
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-all-ai-tests.ps1
+
+      - name: Upload AI/NPC Audit Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-npc-audit-logs
+          path: |
+            scripts/audit-session.log
+            scripts/log-*.txt
+          retention-days: 14

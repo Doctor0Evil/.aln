@@ -24,7 +24,7 @@ function Write-Log {
     param([string]$Message, [string]$Level = "INFO")
     $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $LogEntry = "[$Timestamp] [$Level] $Message"
-    
+
     # Write to console
     switch ($Level) {
         "ERROR" { Write-Host $LogEntry -ForegroundColor Red }
@@ -33,7 +33,7 @@ function Write-Log {
         "INFO" { Write-Host $LogEntry -ForegroundColor Cyan }
         default { Write-Host $LogEntry }
     }
-    
+
     # Write to log file
     try {
         $LogEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8
@@ -55,7 +55,7 @@ try {
     $Dockerfile = Join-Path $DockerDir "Dockerfile"
     if (-not (Test-Path $Dockerfile)) {
         Write-Log "Dockerfile not found at $Dockerfile. Creating default Dockerfile." -Level "WARN"
-        
+
         # Create a basic Dockerfile
         $defaultDockerfileContent = @'
 # ALN Programming Language Docker Image
@@ -106,7 +106,7 @@ EXPOSE 8080
 # Entry point
 CMD ["./start.sh"]
 '@
-        
+
         $defaultDockerfileContent | Out-File -FilePath $Dockerfile -Encoding UTF8
         Write-Log "Default Dockerfile created at $Dockerfile" -Level "SUCCESS"
     }

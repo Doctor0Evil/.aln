@@ -20,7 +20,7 @@ data.security.quantum {
   input.latency_target <= "0.00001ms"
   input.encryption_algorithm == "quantum_resistant"
 }
-```  
+```
 
 // Added NIST_SP-80053 Compliance
 compliance_standards += ["NIST_SP-80053"]

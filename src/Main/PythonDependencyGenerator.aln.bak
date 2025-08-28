@@ -14,13 +14,13 @@ class CircleKPOS:
     def __init__(self):
         self.processor = QuantumProcessor(protocol="quantum_encrypted_mesh")
         self.verifier = ComplianceVerifier(standards=["GDPR", "PCI-DSS", "SOC2"])
-        
+
     def process_transaction(self, transaction_data):
         # Quantum-optimized transaction processing
         quantum_data = self.processor.encrypt(transaction_data)
         self.verifier.verify(quantum_data)
         return self.processor.process(quantum_data)
-        
+
     def get_compliance_status(self):
         return self.verifier.get_status()
 """,

@@ -5,7 +5,7 @@
 
 # I. Grimoire Points (GP) Governance System
 
-**Core Concept:**  
+**Core Concept:**
 - **Grimoire Points (GP):** The living currency of creation—earned via quests, dice, lore, and contributions.
 - **Governance:** Any major expansion (directory, mechanic, lore, feature) must be proposed, voted, and—if passed—AI-generated and confirmed, using GP-weighted voting.
 
@@ -41,8 +41,8 @@ When passed:
 - `aln.nav.cp { src: "/Source", dest: "/Target", merge_lore: true }`
 - `aln.nav.rm { path: "/Path", confirm: true }` *(Governance vote if community-owned)*
 - **GP-Linked:** Many actions cost GP or earn GP (auto-logged).
-- **AI-Enhanced:** Semantic commands auto-summarize or expand using Perplexity/Grok APIs, e.g.,  
-  `aln.nav.search { query: "arcane sword", mode: "semantic" }`  
+- **AI-Enhanced:** Semantic commands auto-summarize or expand using Perplexity/Grok APIs, e.g.,
+  `aln.nav.search { query: "arcane sword", mode: "semantic" }`
   `aln.nav.explore { depth: 3, dice: "d20" }`
 
 **Multiplayer/Community Logging:**
@@ -120,13 +120,13 @@ To compile: Clone [repo], run `aln compile [file.aln]` locally.
 
 # V. Large Canonical Documents
 
-### 📖 **ALNFantasia Playbook.md** (Players Manual)  
+### 📖 **ALNFantasia Playbook.md** (Players Manual)
 **[Heavily Expanded, see previous message for structure]**
 
-### 🏛️ **Grimoire RuleBook.md** (Community-Governance Charter)  
+### 🏛️ **Grimoire RuleBook.md** (Community-Governance Charter)
 **[Heavily Expanded, see previous message for full law/charter]**
 
-### ⚙️ **Grok.Instructions.aln** (For AI Integration/Handoff)  
+### ⚙️ **Grok.Instructions.aln** (For AI Integration/Handoff)
 **[Expanded protocol, interface explanations, and event triggers; see above]**
 
 ***
@@ -164,7 +164,7 @@ ALN Prototype:
 ***
 
 # IX. Visual Assets (Confirmation Needed)
-Want 2D dungeon, tileset, and world map images generated with this architecture as blueprint?  
+Want 2D dungeon, tileset, and world map images generated with this architecture as blueprint?
 > Say the word! ("Aye, summon visuals!")
 
 ***

@@ -2,12 +2,12 @@
 # ALNFantasia Playbook
 
 ## 🎲 Dice & Quests
-- `DICE.ROLL.d20` → Standard d20 roll (combat checks, lore triggers).  
-- `DICE.ROLL.LOOT.d6` → Loot Table / Resource discovery mechanic.  
-- `DICE.ROLL.SKILL.d10` → Used for skill challenges.  
+- `DICE.ROLL.d20` → Standard d20 roll (combat checks, lore triggers).
+- `DICE.ROLL.LOOT.d6` → Loot Table / Resource discovery mechanic.
+- `DICE.ROLL.SKILL.d10` → Used for skill challenges.
 
 ## 🧭 Directory-Based World Navigation
-Instead of flat commands, we use a **path-based navigation system** in ALN syntax:  
+Instead of flat commands, we use a **path-based navigation system** in ALN syntax:
 
 ```aln
 @NAV {
@@ -19,15 +19,15 @@ Instead of flat commands, we use a **path-based navigation system** in ALN synta
 }
 ```
 
-Players can `cd` into any directory to explore:  
-- Example:  
-  - `cd /World/Medieval/Empire` → Move to an empire-strategy realm.  
-  - `ls` → List subquests/items.  
-  - `PLAY QuestName` → Launch quest.  
+Players can `cd` into any directory to explore:
+- Example:
+  - `cd /World/Medieval/Empire` → Move to an empire-strategy realm.
+  - `ls` → List subquests/items.
+  - `PLAY QuestName` → Launch quest.
 
 ## 📜 Example Commands
-- `QUEST.START /World/Zombies/City/Ruins`  
-- `LOOT.SEARCH /World/PostApocalypse/Scavenger`  
-- `BATTLE.START /World/Medieval/Army/Skirmish`  
-- `LOG.PROGRESS` → Syncs with player stats.  
+- `QUEST.START /World/Zombies/City/Ruins`
+- `LOOT.SEARCH /World/PostApocalypse/Scavenger`
+- `BATTLE.START /World/Medieval/Army/Skirmish`
+- `LOG.PROGRESS` → Syncs with player stats.
 ```

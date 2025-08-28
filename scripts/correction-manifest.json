@@ -1,0 +1,7 @@
+{
+  "scripts": [
+    { "name": "correct-aln-files.ps1" },
+    { "name": "normalize-filenames.ps1" },
+    { "name": "validate-manifests.ps1" }
+  ]
+}

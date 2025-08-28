@@ -1,4 +1,4 @@
-🎨 UI Specs 
+🎨 UI Specs
 Component	Description	States	Data Binding	Interaction
 Status Effects Panel	Displays active buffs/debuffs	Idle, Hover, Expired	player.status_effects[]	Hover → tooltip with effect details
 Combat Log Viewer	Scrollable log of combat events	Filtered, Unfiltered	combat_log[]	Filter buttons toggle event categories

@@ -80,7 +80,7 @@ function Apply-NetworkConfig {
 try {
     Write-Log -Message "Starting LIVE mt6883 chipset network reconfiguration..." -LogLevel "INFO"
     Write-Log -Message "Original Config: IP=192.168.1.101, Subnet=255.255.255.0, DHCP=192.168.1.01, SSH=443, DNS=Auto" -LogLevel "INFO"
-    
+
     $newConfig = Apply-NetworkConfig
 
     Write-Host "`n===== LIVE NETWORK CONFIGURATION =====" -ForegroundColor Yellow

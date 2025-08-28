@@ -6,7 +6,7 @@ This is the Governance Charter: the laws by which worlds expand and persist.
 
 ## ⚖️ Governance System
 
-- Decisions are made via **Grimoire Points (GP)**.  
+- Decisions are made via **Grimoire Points (GP)**.
 - GP may be earned through:
   - Quests completed
   - Community contributions (lore, code, art)
@@ -16,10 +16,10 @@ This is the Governance Charter: the laws by which worlds expand and persist.
 
 ## 📜 Voting Rules
 
-- **Voting Period**: 7 days  
-- **Quorum Requirement**: ≥ 10% of total active GP  
-- **Pass Threshold**: ≥ 60% Yes votes  
-- **Fail/Disqualify**: Quorum not met, or ≥ 40% Reject  
+- **Voting Period**: 7 days
+- **Quorum Requirement**: ≥ 10% of total active GP
+- **Pass Threshold**: ≥ 60% Yes votes
+- **Fail/Disqualify**: Quorum not met, or ≥ 40% Reject
 
 ---
 
@@ -36,14 +36,14 @@ This is the Governance Charter: the laws by which worlds expand and persist.
 }
 ```
 
-When status = `PASSED` → **AI Autonomous Development Trigger**:  
-ALN interprets `@CREATE` blocks and **auto-generates** content (quests, APIs, 2D tilesets, maps).  
+When status = `PASSED` → **AI Autonomous Development Trigger**:
+ALN interprets `@CREATE` blocks and **auto-generates** content (quests, APIs, 2D tilesets, maps).
 
 ---
 
 ## 💠 GP Ledger
 
-- Each GP is tracked at `/Governance/GP/UserID.json`.  
+- Each GP is tracked at `/Governance/GP/UserID.json`.
 - Example:
 ```
 {
@@ -67,6 +67,6 @@ Types of Proposals:
 
 ## 📚 Codex Permanence
 
-- Passed proposals are committed to **Grimoire Canon**.  
-- **Sanctum Canon Rule**: Unanimous acceptance prevents future alteration.  
+- Passed proposals are committed to **Grimoire Canon**.
+- **Sanctum Canon Rule**: Unanimous acceptance prevents future alteration.
 ```
