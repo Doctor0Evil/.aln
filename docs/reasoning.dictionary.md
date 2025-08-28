@@ -70,18 +70,18 @@ This dictionary provides a repo-wide indexed reasoning map for humor AI developm
 
 # 🔹 Reasoning Flow
 
-1. **logic-exe.lisp** runs base joke interpreter.  
-2. **humor-classifier.lisp** adds humor type classification.  
-3. **humor_injection_ai_override.lisp** wraps interpreter, applies override mode.  
-   - Consults **manifest** for seed/mode/audit.  
-4. **audit hooks** persist humor decisions if module exists.  
-5. **test_humor_override.lisp** ensures override works → enforced in CI.  
-6. **scripts** enforce repo hygiene → validated in workflow.  
+1. **logic-exe.lisp** runs base joke interpreter.
+2. **humor-classifier.lisp** adds humor type classification.
+3. **humor_injection_ai_override.lisp** wraps interpreter, applies override mode.
+   - Consults **manifest** for seed/mode/audit.
+4. **audit hooks** persist humor decisions if module exists.
+5. **test_humor_override.lisp** ensures override works → enforced in CI.
+6. **scripts** enforce repo hygiene → validated in workflow.
 7. **Makefile** gives dev-friendly local commands.
 
 ---
 
 # 🔹 Math-Safe Wizardry
-- Humor evaluation uses `(interpret-joke input) ⇒ (values status type)`  
-- Status outcomes: `:funny | :not-funny`  
+- Humor evaluation uses `(interpret-joke input) ⇒ (values status type)`
+- Status outcomes: `:funny | :not-funny`
 - Safe override logic:
