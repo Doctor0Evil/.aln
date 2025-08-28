@@ -5,16 +5,23 @@ on:
   push:
 
 jobs:
-  run-lua-bot:
-    runs-on: ubuntu-latest
+  matrix-lua-bot:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        lua: [5.3, 5.4, 'luajit']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Lua and LuaRocks
+      - name: Set up Lua
+        uses: leafo/gh-actions-lua@v9
+        with:
+          lua-version: ${{ matrix.lua }}
+
+      - name: Install LuaRocks dependencies (luasocket, dkjson)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y lua5.3 luarocks
           luarocks install luasocket
           luarocks install dkjson
 
