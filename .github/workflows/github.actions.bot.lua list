@@ -1,0 +1,27 @@
+name: GitHub Actions Lua Bot
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  run-lua-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Lua and LuaRocks
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.3 luarocks
+          luarocks install luasocket
+          luarocks install dkjson
+
+      - name: Run GitHub Actions Lua Bot
+        env:
+          GITHUBPAT: ${{ secrets.GITHUBPAT }}
+          GITHUBREPO: ${{ github.repository }}
+          GITHUBBRANCH: ${{ github.ref_name }}
+        run: |
+          lua .github/actions/github-actions-bot/github.actions.bot.lua list
