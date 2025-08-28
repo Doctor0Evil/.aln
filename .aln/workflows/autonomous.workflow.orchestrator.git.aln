@@ -162,10 +162,10 @@ exit /b 0
 param(
     [Parameter(Mandatory=$true)]
     [string]$repo,
-    
+
     [Parameter(Mandatory=$false)]
     [string]$type = "universal",
-    
+
     [Parameter(Mandatory=$false)]
     [string]$platform = "github"
 )
@@ -181,9 +181,9 @@ function Invoke-GitCommand {
         [string]$Command,
         [string]$Description
     )
-    
+
     Write-Host "[ALN] $Description..." -ForegroundColor Yellow
-    
+
     try {
         $result = Invoke-Expression "git $Command" 2>&1
         if ($LASTEXITCODE -eq 0) {
@@ -205,7 +205,7 @@ function Parse-WorkflowPayload {
     param(
         [string]$PayloadPath
     )
-    
+
     if (Test-Path $PayloadPath) {
         try {
             $payload = Get-Content $PayloadPath -Raw | ConvertFrom-Json
@@ -356,7 +356,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
         }
       """
     },
-    
+
     @PARSE_YAML payload {
       description: "Parse YAML workflow payload with validation",
       input: {
@@ -382,7 +382,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
         }
       """
     },
-    
+
     @PARSE_ALN payload {
       description: "Parse ALN native workflow payload",
       input: {
@@ -415,7 +415,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
         }
       """
     },
-    
+
     @DETECT_FORMAT auto_detection {
       description: "Automatically detect payload format",
       input: {
@@ -423,7 +423,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
       },
       execution: """
         payload_trimmed = @TRIM(payload_data)
-        
+
         @IF @STARTS_WITH(payload_trimmed, "{") OR @STARTS_WITH(payload_trimmed, "[") {
           @RETURN "json"
         } @ELIF @STARTS_WITH(payload_trimmed, "---") OR @CONTAINS(payload_trimmed, ":\\n") {
@@ -443,7 +443,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
         }
       """
     },
-    
+
     @VALIDATE_COMPLIANCE compliance {
       description: "Validate payload against compliance requirements",
       input: {
@@ -453,7 +453,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
       execution: """
         compliance_score = 0
         total_checks = compliance_rules.length
-        
+
         @FOR rule IN compliance_rules {
           @SWITCH rule {
             @CASE "GDPR" {
@@ -493,9 +493,9 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
             }
           }
         }
-        
+
         compliance_percentage = (compliance_score / total_checks) * 100
-        
+
         @RETURN {
           compliant: compliance_percentage >= 80,
           score: compliance_percentage,
@@ -509,11 +509,11 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
   @EXEC {
     @PROCESS payload_parsing {
       @INPUT payload_file FROM environment
-      
+
       @IF @EXISTS(payload_file) {
         payload_content = @READ_file(payload_file)
         detected_format = @DETECT_FORMAT(payload_content)
-        
+
         @SWITCH detected_format {
           @CASE "json" {
             result = @PARSE_JSON(payload_content, default_schema)
@@ -529,11 +529,11 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
             result = {success: false, error: "Unsupported format"}
           }
         }
-        
+
         @IF result.success {
           compliance_result = @VALIDATE_COMPLIANCE(result.data, @CONFIG.compliance)
           @LOG "Payload parsed successfully. Compliance score: {compliance_result.score}%"
-          
+
           @IF compliance_result.compliant {
             @LOG "Compliance validation passed"
           } @ELSE {
@@ -595,7 +595,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
       gpg_key: "brainpoolP256r1/B088B85F5F631492"
     },
     supported_git_platforms: [
-      "github", "gitlab", "bitbucket", "azure_devops", 
+      "github", "gitlab", "bitbucket", "azure_devops",
       "codecommit", "gitea", "sourcehut", "codeberg"
     ],
     workflow_patterns: {
@@ -621,7 +621,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
       implementation: {
         api_handlers: {
           github: "github_api_v4",
-          gitlab: "gitlab_api_v4", 
+          gitlab: "gitlab_api_v4",
           bitbucket: "bitbucket_api_v2",
           azure_devops: "azure_devops_api_v6"
         },
@@ -640,10 +640,10 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
       },
       execution: """
         @LOG "Analyzing repository: {repository_url}"
-        
+
         # Clone repository for analysis
         @EXEC git clone {repository_url} /tmp/analysis_repo
-        
+
         # Analyze repository characteristics
         repo_stats = {
           total_files: @COUNT_FILES("/tmp/analysis_repo"),
@@ -653,12 +653,12 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
           commit_patterns: @ANALYZE_COMMIT_HISTORY("/tmp/analysis_repo"),
           branch_strategy: @ANALYZE_BRANCH_STRATEGY("/tmp/analysis_repo")
         }
-        
+
         @LOG "Repository analysis completed"
         @RETURN repo_stats
       """
     },
-    
+
     @ADAPT_WORKFLOW_STRATEGY adaptation {
       description: "Adapt workflow strategy based on repository analysis",
       input: {
@@ -667,24 +667,24 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
       },
       execution: """
         @LOG "Adapting workflow strategy..."
-        
+
         # Learn from previous outcomes
         @IF previous_outcomes.length > 0 {
           success_rate = @CALCULATE_SUCCESS_RATE(previous_outcomes)
           @UPDATE_LEARNING_MODEL(repo_analysis, previous_outcomes, success_rate)
         }
-        
+
         # Select optimal workflow pattern
         optimal_pattern = @SELECT_OPTIMAL_PATTERN(repo_analysis)
-        
+
         # Customize workflow steps
         customized_workflow = @CUSTOMIZE_WORKFLOW_STEPS(optimal_pattern, repo_analysis)
-        
+
         @LOG "Workflow strategy adapted: {optimal_pattern}"
         @RETURN customized_workflow
       """
     },
-    
+
     @EXECUTE_GIT_OPERATIONS git_ops {
       description: "Execute Git operations with error handling and retry logic",
       input: {
@@ -694,17 +694,17 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
       },
       execution: """
         results = []
-        
+
         @FOR operation IN operations {
           @LOG "Executing Git operation: {operation.command}"
-          
+
           retry_count = 0
           max_retries = retry_config.max_retries || 3
-          
+
           @WHILE retry_count < max_retries {
             @TRY {
               result = @EXEC_GIT_COMMAND(operation.command, repository_path)
-              
+
               @IF result.success {
                 results.push({
                   operation: operation.command,
@@ -718,7 +718,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
               }
             } @CATCH error {
               retry_count += 1
-              
+
               @IF retry_count >= max_retries {
                 results.push({
                   operation: operation.command,
@@ -733,11 +733,11 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
             }
           }
         }
-        
+
         @RETURN results
       """
     },
-    
+
     @MONITOR_EXECUTION_HEALTH monitoring {
       description: "Monitor workflow execution health and performance",
       input: {
@@ -746,27 +746,27 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
       },
       execution: """
         @LOG "Monitoring execution health..."
-        
+
         health_metrics = {
           success_rate: @CALCULATE_SUCCESS_RATE(execution_results),
           avg_execution_time: @CALCULATE_AVG_EXECUTION_TIME(execution_results),
           error_rate: @CALCULATE_ERROR_RATE(execution_results),
           performance_score: 0
         }
-        
+
         # Calculate performance score
         @IF health_metrics.success_rate >= performance_thresholds.min_success_rate {
           health_metrics.performance_score += 40
         }
-        
+
         @IF health_metrics.avg_execution_time <= performance_thresholds.max_execution_time {
           health_metrics.performance_score += 30
         }
-        
+
         @IF health_metrics.error_rate <= performance_thresholds.max_error_rate {
           health_metrics.performance_score += 30
         }
-        
+
         # Determine health status
         @IF health_metrics.performance_score >= 80 {
           health_status = "healthy"
@@ -775,9 +775,9 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
         } @ELSE {
           health_status = "critical"
         }
-        
+
         @LOG "Execution health status: {health_status} (Score: {health_metrics.performance_score})"
-        
+
         @RETURN {
           status: health_status,
           metrics: health_metrics,
@@ -785,7 +785,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
         }
       """
     },
-    
+
     @UPDATE_LEARNING_MODEL learning {
       description: "Update machine learning model with new outcomes",
       input: {
@@ -795,22 +795,22 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
       },
       execution: """
         @LOG "Updating learning model..."
-        
+
         # Extract features for learning
         feature_vector = @EXTRACT_FEATURES(repository_features)
-        
+
         # Calculate reward based on performance
         reward = @CALCULATE_REWARD(performance_metrics)
-        
+
         # Update Q-learning model
         @UPDATE_Q_TABLE(feature_vector, execution_outcomes, reward)
-        
+
         # Update action preferences
         @UPDATE_ACTION_PREFERENCES(repository_features, execution_outcomes, reward)
-        
+
         # Save updated model
         @SAVE_LEARNING_MODEL("/tmp/learning_model.json")
-        
+
         @LOG "Learning model updated with reward: {reward}"
       """
     }
@@ -838,7 +838,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
         deployment_success: true
       }
     },
-    
+
     feature_development_template: {
       name: "Feature Development Workflow",
       steps: [
@@ -860,7 +860,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
         pr_created: true
       }
     },
-    
+
     hotfix_template: {
       name: "Hotfix Workflow",
       steps: [
@@ -885,7 +885,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
         issue_resolved: true
       }
     },
-    
+
     release_template: {
       name: "Release Workflow",
       steps: [
@@ -920,7 +920,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
       %workflow.mode.units="autonomous" adaptation.scale: "universal"%,
       %term.aln.cmd.workflow.^type: "orchestration" OS: "Universal" Dest:$HOMEDIR$:V://System/Workflows%
     }
-    
+
     @PROCESS autonomous_workflow_orchestration {
       @ANALYZE repository {
         function: @ANALYZE_REPOSITORY,
@@ -930,7 +930,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
           timestamp: @NOW()
         }
       }
-      
+
       @ADAPT workflow_strategy {
         function: @ADAPT_WORKFLOW_STRATEGY,
         input: {
@@ -939,7 +939,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
           timestamp: @NOW()
         }
       }
-      
+
       @EXECUTE git_operations {
         function: @EXECUTE_GIT_OPERATIONS,
         input: {
@@ -953,7 +953,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
           timestamp: @NOW()
         }
       }
-      
+
       @MONITOR execution_health {
         function: @MONITOR_EXECUTION_HEALTH,
         input: {
@@ -966,7 +966,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
           timestamp: @NOW()
         }
       }
-      
+
       @UPDATE learning_model {
         function: @UPDATE_LEARNING_MODEL,
         input: {
@@ -976,13 +976,13 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
           timestamp: @NOW()
         }
       }
-      
+
       @LOG orchestration_completion TO audit_trail {
         tags: ["aln_workflow", "autonomous_orchestration", "git_integration"],
         details: "Completed autonomous workflow orchestration for repository with performance score: {execution_health.result.metrics.performance_score} - Audit ID: audit_workflow_{timestamp}"
       }
     }
-    
+
     @SYNC workflow_state {
       @TO nodes {
         target: ["all_workflow_nodes"],
@@ -998,7 +998,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
         encryption: "AES-256-GCM",
         retry_policy: max_tries="25" (reconnect) interval="10ms"
       },
-      
+
       @TO databases {
         target: ["workflow_db", "learning_model_db", "audit_db"],
         workflow_db_table: "aln_workflow_executions",
@@ -1025,7 +1025,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
       analysis_window: "30_days",
       pattern_detection: "machine_learning_based"
     },
-    
+
     @IF new_patterns_detected {
       @INJECT patterns TO orchestrator {
         format: "ALN_WORKFLOW_V7",
@@ -1033,25 +1033,25 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
         validation: "strict_workflow_validation_v3",
         regex_validator: "/^[a-zA-Z0-9_.-]+$/"
       },
-      
+
       @UPDATE orchestrator_version {
         increment: "minor",
         new_version: "aln_7.5.1"
       },
-      
+
       @COMMIT orchestrator_evolution TO repository {
         message: "Evolved workflow orchestrator with new patterns: {detected_patterns} - Audit ID: audit_orchestrator_evolve_{timestamp}",
         author: "ALN_ORCHESTRATOR_EVOLVER",
         timestamp: @NOW()
       }
     },
-    
+
     @VALIDATE orchestrator_compatibility {
       @CHECK compatibility WITH git_platforms {
         target: @CONFIG.supported_git_platforms,
         compliance: @CONFIG.compliance
       },
-      
+
       @IF validation_failed {
         @TRIGGER alert TO monitoring_system {
           tags: ["aln_alert", "orchestrator_validation", "git_compatibility"],
@@ -1093,7 +1093,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
         @THROW "Unauthorized workflow operation blocked - Audit ID: audit_workflow_security_{timestamp}"
       }
     },
-    
+
     attribution_protection: {
       mode: "immutable_enforcement",
       scope: "all_generated_files",
@@ -1120,14 +1120,14 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
     version: @CONFIG.version,
     components: [
       "workflow_injector",
-      "autonomous_orchestrator", 
+      "autonomous_orchestrator",
       "payload_parser",
       "git_integration",
       "learning_system"
     ],
     generated_files: [
       "aln_workflow.bat",
-      "push.ps1", 
+      "push.ps1",
       "parser.payload.aln",
       "autonomous.workflow.orchestrator.git.aln"
     ],
@@ -1142,7 +1142,7 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
     supported_platforms: @CONFIG.platforms,
     workflow_templates: [
       "ci_cd_template",
-      "feature_development_template", 
+      "feature_development_template",
       "hotfix_template",
       "release_template"
     ],
