@@ -1,0 +1,14 @@
+  humor-unit-tests:
+    runs-on: ubuntu-latest
+    needs: humor-tests
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Run Humor Unit Tests
+        run: |
+          sbcl --load src/ai/advanced-reasoning-core/logic-exe.lisp \
+               --load src/ai/advanced-reasoning-core/humor-classifier.lisp \
+               --load src/ai/advanced-reasoning-core/humor_injection_ai_override.lisp \
+               --load tests/test_humor_override.lisp \
+               --eval "(fiveam:run! 'ai.advanced-reasoning-core.tests.humor-override:humor-override-suite)"
