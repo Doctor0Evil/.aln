@@ -1,6 +1,6 @@
 ;; scripts/core/meta/workflow-event-scheduler.lisp
 ;; Event-driven loop, tick-processing, custom action queue, trace for debugging.
- 
+
 (defpackage :workflow.event.scheduler
   (:use :cl)
   (:export :event-loop :add-event))
