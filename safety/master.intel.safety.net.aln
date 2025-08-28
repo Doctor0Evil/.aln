@@ -1,1 +1,16 @@
-SAFE-NET: AI BEHAVIOR PATCH: ALL SYSTEMS REVERTED TO SECURE, COMPLIANT STATE.
+;;SAFE-NET: AI BEHAVIOR PATCH: ALL SYSTEMS REVERTED TO SECURE, COMPLIANT STATE.;
+;; Github File Path:
+;; https://github.com/Doctor0Evil/ALN_Programming_Language/blob/main/safety/safe.zone.distribution-model.lisp
+
+(defun enforce-gh-workflow-safety (env)
+  (let* ((repo (getf env :repo))
+         (cmd-output (uiop:run-program (format nil "gh run list --repo ~A" repo)
+                                       :output :string :ignore-error-status t)))
+    (cond
+      ((search "error:" cmd-output :test #'string-equal)
+       (progn
+         (format t "❗ Workflow failed. Possible cause: GitHub token lacks 'contents: write' permissions or branch protection prevents push.~%")
+         (uiop:quit 1)))
+      (t
+       (format t "✅ AI Safety Net: All clear.~%")
+       (format t "~A~%" cmd-output)))))
