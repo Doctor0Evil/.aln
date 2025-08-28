@@ -1,0 +1,79 @@
+name: ALN GitHub Full Safety & Namespace Orchestration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  statuses: write
+
+jobs:
+  aln_full_ci:
+    runs-on: ubuntu-latest
+    env:
+      REPO: Doctor0Evil/ALN_Programming_Language
+      SAFETY_SCRIPT: safety/safe.zone.distribution-model.lisp
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up SBCL (Steel Bank Common Lisp)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sbcl
+
+      - name: Namespace Fixer (setup-pwsh auto-correct)
+        shell: pwsh
+        run: |
+          $workflows = Get-ChildItem ".github/workflows" -Filter "*.yml" -Recurse
+          foreach ($wf in $workflows) {
+              $content = Get-Content $wf.FullName -Raw
+              $fixedContent = $content -replace '(?m)^\s*uses:\s*powershell/setup-pwsh@v\d+', '    uses: actions/setup-pwsh@v2'
+              if ($content -ne $fixedContent) {
+                  Write-Host "🔧 Fixing namespace in $($wf.Name)..."
+                  $fixedContent | Set-Content $wf.FullName -Encoding UTF8
+                  git add $wf.FullName
+              }
+          }
+          if (-not (git diff --cached --quiet)) {
+              git config --global user.name "github-actions[bot]"
+              git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git commit -m "CI/CD: Auto-correct setup-pwsh namespace (in-runner)"
+              git fetch origin main
+              git pull --rebase origin main
+              git push origin main
+          } else {
+              Write-Host "✅ No namespace issues found."
+          }
+
+      - name: Run AI Safe Zone Safety Model
+        run: |
+          sbcl --script $SAFETY_SCRIPT
+        continue-on-error: true
+
+      - name: Emit GitHub Action Status based on safety results
+        id: safetynet_status
+        run: |
+          if grep -q "\[SAFE-ISSUE\]" safety/master.intel.safety.net.aln; then
+            echo "❌ SAFETY ISSUE DETECTED - See safety/master.intel.safety.net.aln"
+            gh run fail
+            exit 1
+          else
+            echo "✅ AI Safety Net: All clear."
+            gh run status
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Diagnostic on Failure (Permission/Push Issues)
+        if: failure()
+        run: |
+          echo "❗ Workflow failed. Possible cause: GitHub token lacks 'contents: write' permissions or branch protection prevents push."
+          exit 1
