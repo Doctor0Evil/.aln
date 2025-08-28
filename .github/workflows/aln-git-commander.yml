@@ -1,0 +1,75 @@
+name: ALN Git Commander Self-Build Orchestration
+
+on:
+  push:
+    branches: [main]
+    paths: ['**.lisp', '**.yml', '**.aln']
+  pull_request:
+    branches: [main]
+    paths: ['**.lisp', '**.yml', '**.aln']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  statuses: write
+
+jobs:
+  aln_git_commander:
+    runs-on: ubuntu-latest
+    env:
+      ALN_PAT: ${{ secrets.ALN_PAT || secrets.GITHUB_TOKEN }}
+      ALN_COMMANDER: "github.reason.self-build.correct.workflow.git.commander"
+      REPO_PATH: Doctor0Evil/ALN_Programming_Language
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ env.ALN_PAT }}
+          fetch-depth: 0
+
+      - name: Set up SBCL (Steel Bank Common Lisp)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sbcl
+
+      - name: Validate ALN Syntax & Format
+        run: |
+          find . -type f \( -iname "*.aln" -o -iname "*.lisp" \) -exec sbcl --script lint-aln.lisp {} \;
+        continue-on-error: true
+
+      - name: Run AI Safe Zone Oracle (ALN Integrated)
+        run: |
+          sbcl --script safety/safe.zone.distribution-model.lisp
+        continue-on-error: true
+
+      - name: Run ALN Git Reason Commander Self-Build (autonomous healing)
+        env:
+          ALN_GIT_COMMANDER_FLAGS: "--deep-heal --auto-lint --fix-namespaces --repair-orphans"
+        run: |
+          sbcl --script scripts/${ALN_COMMANDER}.lisp $ALN_GIT_COMMANDER_FLAGS || true
+
+      - name: Status/Push (if remediated)
+        run: |
+          git config --global user.name "aln-git-commander[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "ALN: Self-build auto-correct & remediation by Git Commander"
+            git pull --rebase origin main
+            git push origin main
+          fi
+
+      - name: ALN System Health & Diff Poster
+        run: |
+          sbcl --script scripts/aln.status.lisp
+          git diff --stat || true
+
+      - name: Status Notification - Success
+        if: ${{ success() }}
+        run: echo "✅ ALN Git Commander Self-Build Complete."
+
+      - name: Status Notification - Failure
+        if: ${{ failure() }}
+        run: |
+          echo "❌ ALN Git Commander workflow encountered errors."
+          exit 1
