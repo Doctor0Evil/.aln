@@ -1,0 +1,15 @@
+;; repo: https://github.com/Doctor0Evil/ALN_Programming_Language/.github/scripts/auto-path-fix.lisp
+(defun auto-path-fix-ci ()
+  (let* ((workflow-dir ".github")
+         (workflows-dir (concat workflow-dir "/workflows"))
+         (yaml-files (find-yaml-files-with-backslash workflow-dir))
+         (debug-log '()))
+    (loop for file in yaml-files do
+      (let* ((new-path (replace-backslash-with-slash (file-path file)))
+             (new-dir (get-parent-dir new-path)))
+        (unless (dir-exists? new-dir)
+          (make-dir new-dir)
+          (push (format nil "[DEBUG] Created directory: ~A" new-dir) debug-log))
+        (move-file (file-path file) new-path)
+        (push (format nil "[AUTO-FIX] Moved ~A -> ~A" (file-path file) new-path) debug-log)))
+    (return debug-log)))
