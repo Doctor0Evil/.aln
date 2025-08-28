@@ -24,3 +24,16 @@
   (loop for i from 1 to n
         for topic in '(:workplace :food :irony :knockknock)
         do (format t "[NightShift>>] ~A~%" (humor/generate-line topic))))
+(defun how.be.funny.exe (context)
+  "Dark humor generator: horrorcore flavor"
+  (let* ((mood '(:dark :grotesque :deadpan))
+         (filters '(no-copyright reproduce yes-roleplay safe-dark-humor))
+         (rules '((funny . (juxt (violence->absurd) (pain->punchline)))
+                  (tone . deadpan)
+                  (scene . nightshift))))
+    (format t ">> Welcome to the Night Shift ~%")
+    (cond ((member :dark mood)
+           (format t ">> Here screams & laughter mix, same frequency. ~%"))
+          ((member :grotesque mood)
+           (format t ">> Reminder: mop the morgue before sunrise. ~%")))
+    (apply #'list rules)))
