@@ -7,7 +7,7 @@
     (if (zerop (exit-code ps-result))
         (log-info "[BOOTSTRAP] ALN setup sequence complete.")
         (progn
-          (log-error (format nil "[ERROR] Powershell bootstrap failed: ~A" 
+          (log-error (format nil "[ERROR] Powershell bootstrap failed: ~A"
                              (exit-code ps-result)))
           (return-from aln-onboard-session :fail)))))
 
@@ -35,7 +35,7 @@
       (if fix
           (log-info (format nil "[FIXED] paths corrected in ~A" wf))
           (log-error (format nil "[ERROR] Failed path correction in ~A" wf))))))
-          
+
 (defun workflow-run ()
   "Trigger ALN agent after fixer pass"
   (log-info "[RUN] Issuing ALN workload commands…")
