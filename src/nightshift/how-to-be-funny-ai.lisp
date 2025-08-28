@@ -1,0 +1,26 @@
+;; File: src/nightshift/how-to-be-funny-ai.lisp
+;; Repo: https://github.com/Doctor0Evil/ALN_Programming_Language.git
+
+(defun humor/factor (topic)
+  "Processes humor factor based on macabre context"
+  (case topic
+    (:workplace '("graveyard shift" "skeleton crew" "OSHA haunting"))
+    (:food '("eat your coworkers" "dinner break of souls"))
+    (:irony '("direct deposit in souls" "cash = coffins"))
+    (:knockknock '("Nobody. Nobody has flesh left."))
+    (t '("dark laughter echoes..."))))
+
+(defun humor/generate-line (topic)
+  "Returns one formatted banter line"
+  (let* ((setup (first (humor/factor topic)))
+         (twist (second (humor/factor topic))))
+    (cond
+      ((and setup twist) (format nil "~A... oh, and ~A." setup twist))
+      (setup (format nil "~A." setup))
+      (t "[silence, then screaming]"))))
+
+(defun how.to.be.funny.ai.exe (n)
+  "Generates N macabre banter lines as dark humor"
+  (loop for i from 1 to n
+        for topic in '(:workplace :food :irony :knockknock)
+        do (format t "[NightShift>>] ~A~%" (humor/generate-line topic))))
