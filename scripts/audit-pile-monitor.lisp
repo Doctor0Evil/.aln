@@ -1,7 +1,7 @@
 ;;; ===================================================================
 ;;; Audit Pile Monitor & Adult Content Git Compliance
 ;;; ===================================================================
-;;; PURPOSE: 
+;;; PURPOSE:
 ;;; - A monitor script periodically checks *audit-pile* size.
 ;;; - Automatically triggers archive/rotation once pile nears `soft` or `hard` overflow.
 ;;; - If flagged/adult content is present, it is preserved in-toto for logs/Git.
