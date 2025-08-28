@@ -1,4 +1,4 @@
-As requested, here is a full **master orchestrator workflow for ALN GitHub corrections**, with both PowerShell and Lisp integration.  
+As requested, here is a full **master orchestrator workflow for ALN GitHub corrections**, with both PowerShell and Lisp integration.
 The YAML/PS1 orchestrates all corrections; the Lisp modules run syntax/fix logic per ALN conventions, with debug paths detailed.
 
 ***
@@ -196,7 +196,7 @@ exit 0
 - **Every step, fork, and file is logged** for full traceability, in debug files!
 
 ***
-**Repo path referenced:**  
+**Repo path referenced:**
 `https://github.com/Doctor0Evil/ALN_Programming_Language.git`
 
 ***
