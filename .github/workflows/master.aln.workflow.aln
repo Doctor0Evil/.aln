@@ -1,0 +1,19 @@
+; ALN Master Workflow (meta-ALN format)
+ALN_WORKFLOW {
+  name: master.aln.workflow
+  triggers: [ push.main, schedule.daily, manual ]
+  compliance: full
+  jobs: [
+    {
+      name: "meta-controller"
+      type: "aln-ai"
+      actions: [
+        { name: "Self-Validate", action: "aln.validate.all()" }
+        { name: "Orchestrate Volatility", action: "call: volatility-engine.yml" }
+        { name: "Orchestrate Backup", action: "call: backup-workflow-orchestrator.json" }
+      ]
+      fallback: "strict"
+    }
+  ]
+  meta: { version: "1.0", compliance: "master.aln.comply" }
+}
