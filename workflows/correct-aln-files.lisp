@@ -17,7 +17,7 @@
       (format t "~&[WORKFLOW] Step: ~a~%" action))
     t))
 ```
-**GitHub destination:** `workflows/correct-aln-files.lisp`  
+**GitHub destination:** `workflows/correct-aln-files.lisp`
 **Purpose:** Batches all orchestration logic as a debug-friendly, auditable sequence for ALN corrections.
 
 ***
@@ -98,7 +98,7 @@ jobs:
             scripts/aln-debug-*.txt
           retention-days: 14
 ```
-**GitHub destination:** `workflows/correct-aln-files.yml`  
+**GitHub destination:** `workflows/correct-aln-files.yml`
 **Purpose:** Enacts all correction, orchestration, logging, and artifact upload logic for all ALN system source files.
 
 ***
