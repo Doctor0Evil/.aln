@@ -1,0 +1,22 @@
+# File: .github/workflows/secondary-recovery.yml
+
+name: Secondary Recovery Pipeline
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Resilient Smart Work AI Pipeline", "Dynamic Resilient AI Pipeline"]
+    types:
+      - completed
+
+jobs:
+  secondary-recovery:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Secondary Recovery Task
+        run: |
+          echo "Running secondary recovery logic..."
+          ./secondary-recovery.sh || echo "::warning::Recovery script fallback engaged"
