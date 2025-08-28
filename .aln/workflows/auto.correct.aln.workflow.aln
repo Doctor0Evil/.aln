@@ -1,44 +1,73 @@
-name: Validate Directory Structure & Enforce Layout
+; ================================================================
+; Fully-Functional ALN Workflow: Auto-Correct ALN Files + Directory Structure Validation
+; File: auto.correct.aln.workflow.aln
+; Description:
+;   - On push or manual trigger, validates project directory layout.
+;   - Auto-formats and corrects all *.aln files in the repo (line endings, extra spaces).
+;   - Exits with error on missing/obsolete directories or unfixable ALN format errors.
+; ================================================================
 
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
-
-jobs:
-  validate-structure:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repo
-        uses: actions/checkout@v4
-      - name: Check required directories and files
-        run: |
-          required=(
-            .github
-            .github/workflows
-            scripts
-            Modules/ALNCore
-            # ... add more as-needed
-          )
-          for dir in "${required[@]}"; do
-            if [ ! -d "$dir" ]; then
-              echo "❗Missing directory: $dir" && exit 1
-            fi
-          done
-          echo "✅ All critical directories are present."
-      - name: Ensure no obsolete directories
-        run: |
-          obsolete=(
-            OldDocs
-            backup
-            tmp
-            __old
-            .trash
-            legacy_code
-          )
-          for dir in "${obsolete[@]}"; do
-            if [ -d "$dir" ]; then
-              echo "❗Obsolete directory present: $dir" && exit 1
-            fi
-          done
-          echo "✅ No obsolete directories detected."
+ALN_WORKFLOW {
+  name: "Validate Directory Structure & Auto-Correct ALN Files"
+  triggers: [ push.main, workflow_dispatch ]
+  jobs: [
+    {
+      name: "validate-structure"
+      runner: "ubuntu-latest"
+      steps: [
+        {
+          name: "Checkout repository"
+          uses: "actions/checkout@v4"
+        }
+        {
+          name: "Check required directories"
+          script: """
+            required=(.github .github/workflows scripts Modules/ALNCore)
+            for dir in \"${required[@]}\"; do
+              if [ ! -d \"$dir\" ]; then
+                echo \"❗Missing directory: $dir\" && exit 1
+              fi
+            done
+            echo \"✅ All critical directories are present.\"
+          """
+        }
+        {
+          name: "Ensure no obsolete directories"
+          script: """
+            obsolete=(OldDocs backup tmp __old .trash legacy_code)
+            for dir in \"${obsolete[@]}\"; do
+              if [ -d \"$dir\" ]; then
+                echo \"❗Obsolete directory present: $dir\" && exit 1
+              fi
+            done
+            echo \"✅ No obsolete directories detected.\"
+          """
+        }
+        {
+          name: "Auto-correct all .aln files"
+          script: """
+            find . -type f -name \"*.aln\" | while read file; do
+              echo \"Correcting $file\"
+              dos2unix \"$file\"
+              sed -i 's/[ \t]*$//' \"$file\"
+            done
+            echo \"✅ All .aln files auto-corrected (line endings + whitespace)\"
+          """
+        }
+        {
+          name: "Validate basic ALN structure"
+          script: """
+            find . -type f -name \"*.aln\" | while read file; do
+              if ! grep -q '^ALN_WORKFLOW {' \"$file\"; then
+                echo \"❗ALN file missing workflow block: $file\" && exit 1
+              fi
+              # Extend here for deeper validation of ALN syntax as needed
+            done
+            echo \"✅ All .aln files structurally correct\"
+          """
+        }
+      ]
+    }
+  ]
+  meta: { compliance: "auto.correct.aln.comply+layout.verified" }
+}
