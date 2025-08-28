@@ -1,6 +1,6 @@
 # Blockchain-like secure checkpointing for ALN volatile files
 
-$volatileFiles = Get-ChildItem "..\core","..\ai","..\game" -Include *.lisp,*.aln,*.txt -Recurse | 
+$volatileFiles = Get-ChildItem "..\core","..\ai","..\game" -Include *.lisp,*.aln,*.txt -Recurse |
     Where-Object { (Get-Content $_.FullName) -match "random|hotpatch|madness|event-trigger|chaos" }
 
 foreach ($file in $volatileFiles) {
