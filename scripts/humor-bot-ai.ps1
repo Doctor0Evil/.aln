@@ -1,6 +1,5 @@
-# scripts/humor-bot-ai.ps1
-# Purpose: Cross-platform preflight for humor override files, paths, and basic hygiene.
-# Fails fast with actionable messages for CI.
+# Purpose: Cross-platform preflight for humor override files, paths, and hygiene.
+# Fails fast with actionable CI messages. Warns on CRLF usage.
 
 [CmdletBinding()]
 param(
@@ -10,51 +9,57 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-function Write-Note([string]$msg){ Write-Host "[humor-bot] $msg" }
+function Write-Note([string]$msg) {
+  Write-Host "[humor-bot] $msg"
+}
+
+function Assert-Exists($path, $type) {
+  if (-not (Test-Path -LiteralPath $path)) {
+    throw "Missing required $type: $path"
+  }
+  Write-Note "$type OK: $path"
+}
 
 try {
-  Write-Note "OS=$([System.Runtime.InteropServices.RuntimeInformation]::OSDescription)"
-  Write-Note "RepoRoot=$RepoRoot"
+  Write-Note "OS = $([System.Runtime.InteropServices.RuntimeInformation]::OSDescription)"
+  Write-Note "RepoRoot = $RepoRoot"
 
-  $expected = @(
+  $requiredFiles = @(
     "src/ai/advanced-reasoning-core/logic-exe.lisp",
     "src/ai/advanced-reasoning-core/humor-classifier.lisp",
     "src/ai/advanced-reasoning-core/humor_injection_ai_override.lisp",
     "config/humor-modules.manifest.lisp"
   )
 
-  foreach ($rel in $expected) {
-    $path = Join-Path $RepoRoot $rel
-    if (-not (Test-Path -LiteralPath $path)) {
-      throw "Missing required file: $rel"
-    }
-    Write-Note "Found $rel"
+  $requiredDirs = @(
+    "logs",
+    "scripts",
+    "src/ai/advanced-reasoning-core",
+    "config"
+  )
+
+  foreach ($rel in $requiredFiles) {
+    Assert-Exists (Join-Path $RepoRoot $rel) "File"
   }
 
-  # Basic directory availability
-  foreach ($relDir in @("logs","scripts","src/ai/advanced-reasoning-core","config")) {
-    $dir = Join-Path $RepoRoot $relDir
-    if (-not (Test-Path -LiteralPath $dir)) {
-      throw "Missing required directory: $relDir"
-    }
-    Write-Note "Dir OK: $relDir"
+  foreach ($relDir in $requiredDirs) {
+    Assert-Exists (Join-Path $RepoRoot $relDir) "Directory"
   }
 
-  # Non-destructive line-ending check (warn-only)
+  # Warn on CRLF line endings (non-destructive)
   $lfFiles = Get-ChildItem -LiteralPath (Join-Path $RepoRoot "src") -Recurse -Include *.lisp -File
   foreach ($f in $lfFiles) {
     $bytes = [System.IO.File]::ReadAllBytes($f.FullName)
-    $crlf = 0; $lf = 0
-    for ($i=0; $i -lt $bytes.Length; $i++) {
-      if ($bytes[$i] -eq 10) { $lf++ }
-      if ($i -gt 0 -and $bytes[$i-1] -eq 13 -and $bytes[$i] -eq 10) { $crlf++ }
+    $crlf = 0
+    for ($i = 1; $i -lt $bytes.Length; $i++) {
+      if ($bytes[$i - 1] -eq 13 -and $bytes[$i] -eq 10) { $crlf++ }
     }
     if ($crlf -gt 0) {
-      Write-Note "Warning: CRLF detected in $($f.FullName) (CRLF lines ≈ $crlf). Prefer LF in repo."
+      Write-Note "Warning: CRLF detected in $($f.FullName) (~$crlf lines). Prefer LF."
     }
   }
 
-  Write-Note "Preflight checks passed."
+  Write-Note "✅ Preflight checks passed."
   exit 0
 }
 catch {
