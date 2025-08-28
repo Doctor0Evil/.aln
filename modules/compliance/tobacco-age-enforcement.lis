@@ -1,0 +1,89 @@
+;; Github File Path:
+;; https://github.com/Doctor0Evil/ALN_Programming_Language/blob/main/modules/compliance/tobacco-age-enforcement.lisp
+
+(defpackage :aln.compliance.tobacco
+  (:use :cl :alexandria :yason))
+
+(in-package :aln.compliance.tobacco)
+
+(defparameter *min-tobacco-age* 21)
+(defparameter *compliance-log* (make-hash-table))
+(defparameter *debug-console-enabled* t)
+
+(defun log-compliance-violation (msg trace-id)
+  (setf (gethash trace-id *compliance-log*) msg)
+  (when *debug-console-enabled*
+    (format t "[COMPLIANCE-LOG][~A]: ~A~%" trace-id msg)))
+
+(defun send-alert-compliance-team (msg trace-id)
+  (when *debug-console-enabled*
+    (format t "[ALERT][~A]: ~A~%" trace-id msg)))
+
+(defun verify-customer-age (purchaseattempt)
+  "Returns T if age >= required, else NIL."
+  (let* ((age (getf purchaseattempt :customerage)))
+    (and age (>= age *min-tobacco-age*))))
+
+(defun enforce-tobacco-age (purchaseattempt)
+  "Core rule: Block underage tobacco purchases, emit all compliance/debug events."
+  (let* ((trace-id (gensym "TRACE-"))
+         (category (getf purchaseattempt :category))
+         (complianceflags (make-hash-table)))
+    (when *debug-console-enabled*
+      (format t "[DEBUG][~A] INPUT: ~S~%" trace-id purchaseattempt))
+    (cond
+      ((string= category "tobacco")
+       (let ((age-ok (verify-customer-age purchaseattempt)))
+         (when *debug-console-enabled*
+           (format t "[DEBUG][~A] Category tobacco detected. Age Verification: ~A~%" trace-id age-ok))
+         (if age-ok
+             (progn
+               (setf (gethash :allowtransaction complianceflags) t)
+               (when *debug-console-enabled*
+                 (format t "[EVENT][~A] Transaction Allowed (Tobacco, Age OK)~%" trace-id)))
+             (progn
+               (setf (gethash :blocktransaction complianceflags) t)
+               (when *debug-console-enabled*
+                 (format t "[EVENT][~A] Transaction Blocked (Underage)~%" trace-id))
+               (log-compliance-violation "Underage tobacco purchase blocked" trace-id)
+               (send-alert-compliance-team "Blocked tobacco purchase attempt due to age verification failure" trace-id)
+               (setf (gethash :complianceviolation complianceflags) "underage-tobacco")))))
+      (t ;; not tobacco category: pass through
+         (setf (gethash :allowtransaction complianceflags) t)
+         (when *debug-console-enabled*
+           (format t "[DEBUG][~A] Non-tobacco category, no enforcement triggered.~%" trace-id))))
+    (when *debug-console-enabled*
+      (format t "[DEBUG][~A] OUTPUT: ~S~%" trace-id
+              (alexandria:hash-table-plist complianceflags)))
+    (alexandria:hash-table-plist complianceflags)))
+
+;; ======================
+;; Debug-Console Simulation Example
+;; ======================
+
+;; Test: Underage attempt
+(let ((attempt (list :category "tobacco" :customerage 17)))
+  (enforce-tobacco-age attempt))
+;; [DEBUG][TRACE-...] INPUT: (:CATEGORY "tobacco" :CUSTOMERAGE 17)
+;; [DEBUG][TRACE-...] Category tobacco detected. Age Verification: NIL
+;; [EVENT][TRACE-...] Transaction Blocked (Underage)
+;; [COMPLIANCE-LOG][TRACE-...]: Underage tobacco purchase blocked
+;; [ALERT][TRACE-...]: Blocked tobacco purchase attempt due to age verification failure
+;; [DEBUG][TRACE-...] OUTPUT: (:BLOCKTRANSACTION T :COMPLIANCEVIOLATION "underage-tobacco")
+
+;; Test: Age OK attempt
+(let ((attempt (list :category "tobacco" :customerage 25)))
+  (enforce-tobacco-age attempt))
+;; [DEBUG][TRACE-...] INPUT: (:CATEGORY "tobacco" :CUSTOMERAGE 25)
+;; [DEBUG][TRACE-...] Category tobacco detected. Age Verification: T
+;; [EVENT][TRACE-...] Transaction Allowed (Tobacco, Age OK)
+;; [DEBUG][TRACE-...] OUTPUT: (:ALLOWTRANSACTION T)
+
+;; Test: Non-tobacco item
+(let ((attempt (list :category "snack" :customerage 16)))
+  (enforce-tobacco-age attempt))
+;; [DEBUG][TRACE-...] INPUT: (:CATEGORY "snack" :CUSTOMERAGE 16)
+;; [DEBUG][TRACE-...] Non-tobacco category, no enforcement triggered.
+;; [DEBUG][TRACE-...] OUTPUT: (:ALLOWTRANSACTION T)
+
+;;; End of module
