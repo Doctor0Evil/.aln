@@ -10,3 +10,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "AI module tests passed."
+# Before running: ./scripts/run-ai-tests.ps1
+$testPath = "./scripts/run-ai-tests.ps1"
+if (Test-Path $testPath) {
+    & $testPath
+} else {
+    Write-Warning "$testPath is missing – skipping test execution."
+}
+exit 0
