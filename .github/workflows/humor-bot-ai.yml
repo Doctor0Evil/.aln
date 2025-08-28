@@ -1,0 +1,23 @@
+name: HumorBotAI-WorkflowLoop
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  humor-detect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Run Humor Bot Detection
+        run: |
+          sbcl --script ./core/humor-bot-ai/humor-detection.lisp
+
+      - name: Debug Logs Archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: humor-bot-logs
+          path: ./logs/humor-debug-*.txt
