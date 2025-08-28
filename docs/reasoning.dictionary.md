@@ -85,3 +85,6 @@ This dictionary provides a repo-wide indexed reasoning map for humor AI developm
 - Humor evaluation uses `(interpret-joke input) ⇒ (values status type)`
 - Status outcomes: `:funny | :not-funny`
 - Safe override logic:
+- Seed handling ensures reproducibility of "funny amplification."
+
+---
