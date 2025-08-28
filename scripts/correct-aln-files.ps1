@@ -76,3 +76,31 @@ catch {
 }
 
 Write-Log "=== [$scriptName] Finished ==="
+# scripts/correct-aln-files.ps1
+# ALN master corrections orchestrator for repo https://github.com/Doctor0Evil/ALN_Programming_Language.git
+
+param([string]$TargetPath="aln-files/", [string]$LispModule="correct.files.lisp")
+
+Write-Host "=== [ALN] Corrections Orchestrator Start ==="
+Write-Host "Target path: $TargetPath"
+Write-Host "Lisp module: $LispModule"
+
+# Validate input path
+if (!(Test-Path $TargetPath)) {
+    Write-Error "Target ALN files folder missing: $TargetPath"
+}
+
+# Call Lisp to correct each ALN file
+$alnFiles = Get-ChildItem -Path $TargetPath -Filter "*.aln.lisp" -File
+foreach ($file in $alnFiles) {
+    Write-Host "Correcting $($file.Name) via Lisp engine..."
+    # This assumes a lisp binary 'aln-lisp' in PATH; adapt as needed
+    $cmd = "aln-lisp --load $LispModule --eval '(correct.aln.syntax \"$($file.FullName)\")'"
+    Write-Host "[DEBUG] Running: $cmd"
+    $out = & bash -c "$cmd" 2>&1
+    Write-Host "[LOG] Output: $out"
+    Out-File -FilePath "scripts/correction-$($file.BaseName).log" -InputObject $out
+}
+
+Write-Host "=== [ALN] Corrections complete. ==="
+exit 0
