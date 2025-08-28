@@ -1,7 +1,8 @@
-```yaml
 name: Run Tests
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
 
 jobs:
   pytest:
@@ -12,8 +13,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install deps
+      - name: Install Dependencies
         run: pip install fastapi uvicorn pytest jose python-multipart
-      - name: Run tests
+      - name: Run Tests
         run: pytest -v --maxfail=1 --disable-warnings
-```
