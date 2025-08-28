@@ -1,0 +1,22 @@
+# File: .github/workflows/data-ingestion-resync.yml
+
+name: Data Ingestion Resync Pipeline
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Resilient Smart Work AI Pipeline", "Dynamic Resilient AI Pipeline"]
+    types:
+      - completed
+
+jobs:
+  data-ingestion-resync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resync Data Ingestion Streams
+        run: |
+          echo "Re-syncing Kafka, telemetry, and ingestion pipelines..."
+          ./resync-ingestion.sh || echo "::error::Failed to resync ingestion"
