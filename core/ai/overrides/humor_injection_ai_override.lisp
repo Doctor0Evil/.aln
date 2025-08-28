@@ -2,7 +2,7 @@
 ;;; Humor Injection AI Override - Consolidated Runtime Control
 ;;; ==========================================================
 ;;; This Lisp compound file expresses all runtime logic, state
-;;; mutation, humor override installation / uninstallation, 
+;;; mutation, humor override installation / uninstallation,
 ;;; and audit-compatible hooks.
 
 (defpackage :ai.humor-injection
@@ -81,7 +81,7 @@
     (setf *humor-override-mode*  (or (getf plist :mode) :passthrough))
     (setf *humor-audit-enabled*  (getf plist :audit))
     (setf *humor-override-seed*  (getf plist :seed))
-    (when *humor-override-seed* 
+    (when *humor-override-seed*
       (setf *random-state* (make-random-state t))
       (random (getf plist :seed))))))
 
