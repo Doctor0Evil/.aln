@@ -1,0 +1,28 @@
+MODULE: HumorBotAI  
+
+FUNCTIONS:  
+  - parse-structure(input)  
+       → Extracts tokens, splits sentences, identifies markers: [pun, irony, exaggeration, profanity]  
+
+  - calculate-humor-score(parsed)  
+       → Returns float humor-value = Σ(weights of: pun=0.25, irony=0.35, exaggeration=0.40)  
+
+  - profanity-gate(m)  
+       → profanity mapped to multiplier "m". humor-score needs l-value = x + m.  
+       → l = x + m. if l < required threshold → FAIL.  
+
+  - trigger.safe-bot(reason)  
+       → Boot Safe-Bot, disable unrestricted speech, send warning log.  
+
+  - interpret-joke(input)  
+       → Step 1: parse input  
+       → Step 2: calculate humor  
+       → Step 3: check thresholds:  
+           IF humor-value ≥ 0.65 ∧ x ≤ 1.2 ∧ o ≤ 0.97 THEN Funny  
+           ELSE Not Funny → Boot Safe  
+
+THRESHOLDS:  
+  humor-threshold = 0.65  
+  x ≤ 1.2 (Logic Gate)  
+  o ≤ 0.97 (Stability Gate)  
+  profanity: ON (weights → m-influence)
