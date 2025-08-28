@@ -53,7 +53,16 @@ jobs:
 # ALN Programming Language – API Reference
 
 _Last updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')_  
-_Compliance hash: $(git rev-parse HEAD)_
+      - name: Build Docker image
+        run: docker build -t aln:${{ github.sha }} .
+
+      - name: Preprocess yaml
+        uses: valentin-barbotin/preprocess_yaml@v1.0.2
+        with:
+          # The file to preprocess
+          file: myfile.yaml
+          # Output file path
+          output: myfile.out.yaml
 
 ## Overview
 Complete, audit-ready reference for all ALN public APIs.
