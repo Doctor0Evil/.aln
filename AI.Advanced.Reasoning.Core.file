@@ -1,0 +1,27 @@
+;; AI.Advanced.Reasoning.Core.file
+;; detailing.logic.exe -- reasoning kernel for humor interpretation
+
+(defpackage :ai.advanced-reasoning-core
+  (:use :cl :alexandria))
+(in-package :ai.advanced-reasoning-core)
+
+(defun interpret-joke (input)
+  "Core logic to decide: is input humor or not?"
+  (let* ((logic-check (stringp input))
+         (humor-seed (random 100)))
+    (cond
+      ((not logic-check)
+       (format t "Error: Input not interpretable.~%")
+       :not-funny)
+      ((> humor-seed 42)
+       (format t "Humor detected ✓ [Reasoning strength: ~A]~%"
+               (+ humor-seed 1.337))
+       :funny)
+      (t
+       (format t "Not funny! Booting safe.bot → x=1.2, o=0.97~%")
+       :not-funny))))
+
+(defun logic-exe-main ()
+  "Main reasoning entrypoint"
+  (let ((input (read-line)))
+    (interpret-joke input)))
