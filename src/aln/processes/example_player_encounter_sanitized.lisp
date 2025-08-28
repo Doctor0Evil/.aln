@@ -161,3 +161,39 @@
 
 ;;; Example usage at runtime (auto-invoked mid-sequence or when word-inhibitor triggers):
 ;; (story_repair_mid-sequence "demented IDE plugin test lab" "Skittz Kraven" "PyCharm thesis defense")
+;;; github-file-destination: /src/aln/processes/example_player_encounter_sanitized.lisp
+
+(defparameter *protected-names* '(
+  "Sarah Jessica Parker" "Rosie O'Donnell" "Elon Musk" "Barack Obama"
+  "Donald Trump" "Jeff Bezos" "Perplexity Team" "XAI Staff"
+  ;; Add internal staff, sensitive customers, or blacklist updates here
+))
+
+(defun is-name-protected? (candidate)
+  "Checks if a name or phrase is on the protected/forbidden list."
+  (some (lambda (badname)
+          (search (string-downcase badname) (string-downcase candidate)))
+        *protected-names*))
+
+(defun sanitize-text-for-background (text)
+  "If a protected name is detected in the joke or punchline, it is redacted, replaced, or triggers a full halt with debug log."
+  (if (is-name-protected? text)
+      (progn
+        (log-trace "PROTECTED_NAME_POLICY_TRIGGERED" :offending_text text)
+        (format nil "[REDACTED: Protected name violated policy]"))
+      text))
+
+(defun safe-punchline-generator (&rest args)
+  "Wraps normal punchline logic, sanitizing or halting output as required by rego policy."
+  (let* ((raw-punchline (apply #'normal-punchline-logic args))
+         (safe-punchline (sanitize-text-for-background raw-punchline)))
+    safe-punchline))
+
+;;; Usage in comedy/horror injection mechanisms:
+;; - All word selection must check against *protected-names*
+;; - All punchline and dialogue composition routes through safe-punchline-generator
+;; - If a match is detected, log is triggered and no forbidden content is delivered
+
+;;; Example content moderation call:
+;; (safe-punchline-generator scene character setting)
+
