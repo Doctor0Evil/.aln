@@ -1,0 +1,9 @@
+logic.exe:
+  user.input: "fuck.shit.piss"
+  detect.profanity: true
+  interpret.semantic:
+    -> "chaotic triad"
+    -> "comedy potential: high"
+  reasoning:
+    math.calculate.reason.humor = (chaos_factor * random_inappropriateness) / social_norms
+    output: "Funny!"
