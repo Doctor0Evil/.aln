@@ -1,5 +1,4 @@
-# workflows/correct-aln-files.yml
-name: "ALN Master Orchestrator - Github.Workflow.Corrections"
+name: "ALN Corrections CI Master"
 on:
   workflow_dispatch:
   push:
@@ -15,27 +14,23 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-24.04, macos-latest]
+        os: [ubuntu-24.04, windows-latest, macos-latest]
     concurrency:
       group: aln-corrections-${{ github.workflow }}-${{ github.ref_name }}
       cancel-in-progress: false
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Verify permissions & git remote
+      - name: Verify permissions and remote
         shell: bash
         run: |
+          set -e
           git remote -v || { echo "No remote found"; exit 1; }
           git config --show-origin --get-all credential.helper || echo "No credential.helper configured"
-          if git ls-remote --exit-code origin &>/dev/null; then
-            echo "✔ Remote OK"
-          else
-            echo "✖ Cannot reach remote 'origin'"
-            exit 1
-          fi
+          git ls-remote --exit-code origin &>/dev/null
       - name: Install PowerShell (non-Windows)
         if: runner.os != 'Windows'
         uses: PSModule/install-powershell@v1
@@ -44,20 +39,19 @@ jobs:
       - name: Show PowerShell version
         shell: pwsh
         run: |
-          Write-Host "Running PowerShell:"
+          Write-Host "PowerShell version:"
           $PSVersionTable
-      - name: Run ALN corrections orchestrator (PowerShell)
+      - name: Run ALN corrections orchestrator
         shell: pwsh -NoProfile -ExecutionPolicy Bypass {0}
         run: |
           $ErrorActionPreference = 'Stop'
-          $orchestrator = Join-Path $PWD 'scripts/correct-aln-files.ps1'
-          if (-not (Test-Path $orchestrator)) {
-            throw "Missing orchestrator: $orchestrator"
-          }
-          & $orchestrator
-      - name: Commit & safe push corrections
+          $script = Join-Path $PWD 'scripts/correct-aln-files.ps1'
+          if (-not (Test-Path $script)) { throw "Missing orchestrator script"; }
+          & $script
+      - name: Commit and safe push corrections
         shell: bash
         run: |
+          set -e
           git config user.name "ALN Sync Bot"
           git config user.email "actions@github.com"
           git add .
@@ -66,18 +60,8 @@ jobs:
             exit 0
           fi
           git commit -m "ALN corrections (auto orchestrated)"
-          attempt_push() {
-            git pull --rebase origin "${GITHUB_REF_NAME}" || return 1
-            git push origin "${GITHUB_REF_NAME}" || return 1
-            echo "Push succeeded"
-          }
-          for i in 1 2 3; do
-            if attempt_push; then exit 0; fi
-            echo "Push failed (attempt $i). Retrying in $((i*5))s..."
-            sleep $((i*5))
-          done
-          echo "Push failed after 3 attempts."
-          exit 1
+          git pull --rebase origin "${GITHUB_REF_NAME}" || exit 1
+          git push origin "${GITHUB_REF_NAME}" || exit 1
       - name: Upload logs artifacts
         uses: actions/upload-artifact@v4
         with:
