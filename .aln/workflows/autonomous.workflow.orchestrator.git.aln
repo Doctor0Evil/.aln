@@ -1162,3 +1162,5 @@ Write-Host "[ALN] PowerShell Workflow Orchestration Completed Successfully" -For
     adaptation_mode: "autonomous_evolution_active"
   }
 }
+chmod +x .aln/workflows/autonomous.workflow.orchestrator.git.aln
+./.aln/workflows/autonomous.workflow.orchestrator.git.aln
