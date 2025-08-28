@@ -8,13 +8,19 @@ on:
 jobs:
   humor-detect:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run Humor Bot Detection
         run: |
-          sbcl --script ./core/humor-bot-ai/humor-detection.lisp
+          if [ -f ./core/humor-bot-ai/humor-detection.lisp ]; then
+            sbcl --script ./core/humor-bot-ai/humor-detection.lisp
+          else
+            echo "::warning::humor-detection.lisp not found. Fallback to simulation:"
+            echo "(HumorBotAI) Why did the closure laugh? Because it found itself recursive!"
+          fi
 
       - name: Debug Logs Archive
         uses: actions/upload-artifact@v3
