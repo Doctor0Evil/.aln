@@ -1,0 +1,22 @@
+# File: .github/workflows/deep-ai-checks.yml
+
+name: Deep AI Diagnostic Checks
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Resilient Smart Work AI Pipeline", "Dynamic Resilient AI Pipeline"]
+    types:
+      - completed
+
+jobs:
+  deep-ai-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Deep Diagnostic Checks
+        run: |
+          echo "Performing deeper AI model validation and consistency verification..."
+          ./deep-ai-diagnostics.sh || echo "::error::Deep AI checks detected inconsistencies"
