@@ -1,35 +1,10 @@
-name: CI Preflight Namespace Healer
-on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
-
-jobs:
-  heal-workflows:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Heal all workflow namespaces
-        shell: pwsh
-        run: |
-          $workflows = Get-ChildItem ".github/workflows" -Filter "*.yml" -Recurse
-          foreach ($wf in $workflows) {
-              $content = Get-Content $wf.FullName -Raw
-              $fixedContent = $content -replace '(?m)^\s*uses:\s*powershell/setup-pwsh@v\d+', '    uses: actions/setup-pwsh@v2'
-              if ($content -ne $fixedContent) {
-                  Write-Host "🔧 Fixing namespace in $($wf.Name)..."
-                  $fixedContent | Set-Content $wf.FullName -Encoding UTF8
-                  git add $wf.FullName
-              }
-          }
-          if (git diff --cached --quiet) {
-              Write-Host "✅ No namespace issues found."
-          } else {
-              git config --global user.name "github-actions[bot]"
-              git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-              git commit -m "CI/CD: Auto‑correct setup‑pwsh namespace (in‑runner)"
-              git push origin main
-          }
+if (git diff --cached --quiet) {
+    Write-Host "✅ No namespace issues found."
+} else {
+    git config --global user.name "github-actions[bot]"
+    git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+    git commit -m "CI/CD: Auto‑correct setup‑pwsh namespace (in‑runner)"
+    git fetch origin main
+    git pull --rebase origin main
+    git push origin main
+}
