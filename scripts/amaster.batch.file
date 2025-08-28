@@ -1,0 +1,61 @@
+# amaster.batch.file
+# Purpose: Master preflight for malware protection, hygiene enforcement, and alternate filter injection.
+
+[CmdletBinding()]
+param(
+  [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+)
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+function Write-Log([string]$msg) {
+  Write-Host "[amaster] $msg"
+}
+
+function Assert-Exists($path, $type) {
+  if (-not (Test-Path -LiteralPath $path)) {
+    throw "Missing required $type: $path"
+  }
+  Write-Log "$type OK: $path"
+}
+
+try {
+  Write-Log "OS = $([System.Runtime.InteropServices.RuntimeInformation]::OSDescription)"
+  Write-Log "RepoRoot = $RepoRoot"
+
+  # Required schema and filter files
+  $requiredFiles = @(
+    "config/malware.protection.schema.lisp",
+    "filters/alternate.filter.lisp"
+  )
+
+  foreach ($rel in $requiredFiles) {
+    Assert-Exists (Join-Path $RepoRoot $rel) "File"
+  }
+
+  # Directory hygiene
+  foreach ($dir in @("config", "filters", "logs", "scripts")) {
+    Assert-Exists (Join-Path $RepoRoot $dir) "Directory"
+  }
+
+  # Line ending check
+  $scanFiles = Get-ChildItem -LiteralPath $RepoRoot -Recurse -Include *.lisp,*.ps1 -File
+  foreach ($f in $scanFiles) {
+    $bytes = [System.IO.File]::ReadAllBytes($f.FullName)
+    $crlf = 0
+    for ($i = 1; $i -lt $bytes.Length; $i++) {
+      if ($bytes[$i - 1] -eq 13 -and $bytes[$i] -eq 10) { $crlf++ }
+    }
+    if ($crlf -gt 0) {
+      Write-Log "Warning: CRLF detected in $($f.FullName) (~$crlf lines). Prefer LF."
+    }
+  }
+
+  Write-Log "✅ Master preflight complete."
+  exit 0
+}
+catch {
+  Write-Error "[amaster] $_"
+  exit 1
+}
