@@ -3,8 +3,8 @@
 ;;; ================================================================
 ;;; Purpose: Instead of censoring direct user text (including strong
 ;;; language e.g. "fuck"), this system retains original content for
-;;; runtime interpretation while attaching an alarm/flag system to 
-;;; monitor flagged entries. NOTHING is destructively removed, only 
+;;; runtime interpretation while attaching an alarm/flag system to
+;;; monitor flagged entries. NOTHING is destructively removed, only
 ;;; observed, logged, & alarmed. "FCC override behavior".
 ;;;
 ;;; ALN-Terminal => DO NOT censor messages. Just raise alarms/logs.
@@ -33,7 +33,7 @@
 ;; Core Override Behavior
 ;; ================================================================
 (defun analyze-content (text &key (source 'user-input))
-  "Instead of removing/censoring words, content is left intact. 
+  "Instead of removing/censoring words, content is left intact.
    If flagged by existing filter subsystem, an ALARM is raised instead."
   (let ((flagged (ai.advanced-reasoning-core.content-filter:scan text)))
     (cond
