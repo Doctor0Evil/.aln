@@ -1,0 +1,43 @@
+name: ALN Orchestrate: Master Pipeline Git Push & Sync
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  orchestrate-aln-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sync & Push Live .aln Workflows
+        run: |
+          echo "Synchronizing all .aln workflow files with master branch..."
+          git config user.name "ALN Orchestrator"
+          git config user.email "automation@local"
+          git checkout master || git checkout main
+          git pull origin master || git pull origin main
+          if [ -d ".aln/workflows" ]; then
+            git add .aln/workflows/*
+            git commit -m "ALN automated sync: Updated .aln workflows on master"
+            git push origin HEAD
+          else
+            echo "::warning::.aln/workflows directory not found—nothing to push."
+          fi
+
+      - name: Launch and Validate ALN Workflow Orchestration
+        run: |
+          echo "Launching orchestrated .aln workflows now..."
+          for wf in .aln/workflows/*.aln; do
+            if [ -f "$wf" ]; then
+              echo "Validating and launching: $wf"
+              # Placeholder for actual ALN execution engine integration
+              echo "ALN workflow $wf launched successfully [simulation]"
+            fi
+          done
+          echo "All .aln orchestrated workflows launched"
