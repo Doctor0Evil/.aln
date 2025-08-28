@@ -1,10 +1,10 @@
 # ===============================
-# correct-aln-files.ps1 (ALN Standard)
+# correct-aln-files.ps1 (ALN Standard, safe)
 # ===============================
 # Safely corrects ALN files:
 #   • Normalizes line endings (CRLF on Windows, LF elsewhere).
 #   • Removes trailing whitespace.
-#   • Logs all actions to audit-log.txt with rotation.
+#   • Logs all actions to a unique audit-log per job/process.
 # ===============================
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -12,9 +12,11 @@ Set-StrictMode -Version Latest
 # --- Script Variables ---
 $scriptName = $MyInvocation.MyCommand.Name
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$logFile    = Join-Path $scriptRoot "audit-log.txt"
 
-# --- Ensure audit-log.txt exists ---
+# Unique log file (by process) prevents race conditions in CI runners
+$logFile = Join-Path $scriptRoot ("audit-log-" + $PID + ".txt")
+
+# --- Ensure log exists before use ---
 if (-not (Test-Path $logFile)) {
     New-Item -ItemType File -Path $logFile -Force | Out-Null
 }
@@ -40,21 +42,21 @@ function Write-Log {
 
 Write-Log "=== [$scriptName] Starting ==="
 
-# --- OS Detection ---
-$isWindowsOS = $IsWindows
-$isLinuxOS   = $IsLinux
-$isMacOS     = $IsMacOS
-$lineEnding = if ($isWindowsOS) { "`r`n" } else { "`n" }
-
-if ($isWindowsOS)      { Write-Log "Detected OS: Windows" }
-elseif ($isLinuxOS)    { Write-Log "Detected OS: Linux" }
-elseif ($isMacOS)      { Write-Log "Detected OS: macOS" }
-else                   { Write-Log "Unknown OS detected" "WARN" }
+# --- OS Detection (system vars are read-only, just test) ---
+$lineEnding = if ($IsWindows) { "`r`n" } else { "`n" }
+if ($IsWindows)      { Write-Log "Detected OS: Windows" }
+elseif ($IsLinux)    { Write-Log "Detected OS: Linux" }
+elseif ($IsMacOS)    { Write-Log "Detected OS: macOS" }
+else                 { Write-Log "Unknown OS detected" "WARN" }
 
 # --- Main Correction Logic ---
 try {
     $files = Get-ChildItem -Path $scriptRoot -Recurse -Include *.aln -File
     foreach ($file in $files) {
+        if ($null -eq $file -or -not $file.PSObject.Properties.Match('FullName')) {
+            Write-Log "Skipped an item without .FullName property" "WARN"
+            continue
+        }
         $original = Get-Content $file.FullName -Raw
         $normalized = $original -replace "(`r`n|`n|`r)", $lineEnding
         $normalizedNoWS = ($normalized -split "`n") | ForEach-Object {
