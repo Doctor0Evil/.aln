@@ -25,7 +25,7 @@
         for topic in '(:workplace :food :irony :knockknock)
         do (format t "[NightShift>>] ~A~%" (humor/generate-line topic))))
 
-(defun how.be.funny.exe (context)
+(defun how.be.funny.ai.exe (context)
   "Dark humor generator: horrorcore flavor"
   (let* ((mood '(:dark :grotesque :deadpan))
          (filters '(no-copyright reproduce yes-roleplay safe-dark-humor))
