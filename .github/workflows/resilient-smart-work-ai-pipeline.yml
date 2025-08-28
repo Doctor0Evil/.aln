@@ -1,3 +1,5 @@
+# File: .github/workflows/resilient-smart-work-ai-pipeline.yml
+
 name: Resilient Smart Work AI Pipeline
 
 on:
@@ -11,6 +13,7 @@ jobs:
     env:
       SMART_AI_MODE: true
       # Add more parameters as needed
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -19,8 +22,13 @@ jobs:
         id: main-task
         run: |
           echo "Executing primary AI workflow..."
-          # Simulate smart-AI task (replace with real implementation)
-          ./your-ai-script.sh
+          if [ -f ./your-ai-script.sh ]; then
+            chmod +x ./your-ai-script.sh
+            ./your-ai-script.sh
+          else
+            echo "::warning::Script ./your-ai-script.sh not found. Skipping execution."
+            exit 127
+          fi
         continue-on-error: true
 
       - name: Smart Retry if Main Fails
@@ -28,7 +36,13 @@ jobs:
         if: steps.main-task.outcome == 'failure'
         run: |
           echo "Main step failed. Retrying using smart.work.ai strategy..."
-          ./your-ai-script.sh
+          if [ -f ./your-ai-script.sh ]; then
+            chmod +x ./your-ai-script.sh
+            ./your-ai-script.sh
+          else
+            echo "::warning::Script ./your-ai-script.sh still not found. Skipping execution."
+            exit 127
+          fi
         continue-on-error: true
 
       - name: Branch to Failing Workflows (if retry fails)
@@ -43,7 +57,8 @@ jobs:
         run: |
           echo "::group::Saving parameters and AI diagnostics"
           echo "SMART_AI_MODE=${SMART_AI_MODE}" >> $GITHUB_ENV
-          # Save any smart parameters or runtime data here
+          echo "MAIN_OUTCOME=${{ steps.main-task.outcome }}" >> $GITHUB_ENV
+          echo "RETRY_OUTCOME=${{ steps.retry-task.outcome }}" >> $GITHUB_ENV
           echo "::endgroup::"
 
       - name: Self-Healing Fallback/Notify Human
