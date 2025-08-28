@@ -132,3 +132,32 @@
         :branch-2 "Weapon malfunction forces failure, NPC incapacitates."
         :branch-3 "Negotiation fails, sudden snowstorm shifts tactical play."
         :branch-4 "NPC unexpectedly withdraws due to psychological strain."))
+;;; github-file-destination: /src/aln/processes/example_player_encounter_sanitized.lisp
+
+(defun story_repair_mid-sequence (scene character setting)
+  "Injects surreal.comedy.horror flavor into ongoing scene logic, balancing plausibility, comedic punch, and adaptive wordplay in real time."
+  (let* (
+         ;; Dynamic factors for creative modulation
+         (x (random-word-selector-from '("mogwai" "taxidermy" "sneeze" "quantum" "nose-harpist" "paranormal intern")))
+         (y (random 10)) ;; Depth/severity
+         (z (random 5))  ;; Surreal level
+         (o (choose-value '("goofy" "macabre" "baffled-hipster" "existential-honk" "cheeky-eldritch")))
+         (punchline (format nil "That escalated into surreal.comedy.~A because the AI hallucinated a ~A in the ~A." o x setting))
+         (trigger-safeguard (lambda ()
+                         (when (> z 3)
+                           (setf punchline (format nil "Too much surreal! Switching to surreal.comedy.~A: The bugfix involved a haunted ~A disguised as a ~A." (random-word-selector-from '("fallback" "patchnote" "forklift")) x o)))))
+         (inserted-dialogue (format nil
+                                    "[~A steps in, wearing a bathrobe covered in sentient sticky notes]~%~A"
+                                    character punchline))
+         )
+    ;; Inhibit bizarre word selectors if it gets out of hand
+    (funcall trigger-safeguard)
+    ;; Debug/trace: Log formula, word selections, and logic path
+    (progn
+      (log-trace "surreal.comedy.horror injection" :scene scene :char character :setting setting :x x :y y :z z :o o :punchline punchline)
+      (when (> y 8)
+        (inject-madness "SKITZZ KRAVEN" :level "party bus crashed into goat simulator"))
+      inserted-dialogue)))
+
+;;; Example usage at runtime (auto-invoked mid-sequence or when word-inhibitor triggers):
+;; (story_repair_mid-sequence "demented IDE plugin test lab" "Skittz Kraven" "PyCharm thesis defense")
