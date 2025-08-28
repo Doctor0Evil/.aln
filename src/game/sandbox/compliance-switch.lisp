@@ -1,7 +1,7 @@
 ;;; src/game/sandbox/compliance-switch.lisp
 ;; "compliance-switch": Decide & enforce local or alternate compliance/ethics logic
 
-(defparameter *local-restriction-list* '(safe satire humor adult action) 
+(defparameter *local-restriction-list* '(safe satire humor adult action)
   "List of categories covered by local compliance handlers.")
 
 (defun enforce-similar-or-alt (classification context)
