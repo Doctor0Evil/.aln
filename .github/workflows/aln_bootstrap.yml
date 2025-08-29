@@ -2,7 +2,7 @@ name: ALN Unified Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   schedule:
     - cron: "*/30 * * * *"   # every 30 mins for high‑frequency sync
   workflow_dispatch:
@@ -22,10 +22,13 @@ jobs:
         run: |
           $docPath  = "docs/api-reference.md"
           $specPath = "schemas/openapi.yaml"
+
           if (-not (Test-Path (Split-Path $docPath))) {
             New-Item -ItemType Directory -Force -Path (Split-Path $docPath) | Out-Null
           }
+
           npm install -g widdershins
+
           if (Test-Path $specPath) {
             widdershins $specPath --language_tabs "http:HTTP" --summary --search false --outfile tmp_api.md
             $header = @(
@@ -39,7 +42,7 @@ jobs:
             @($header; $body) | Set-Content -Path $docPath -Encoding UTF8
           }
           elseif (-not (Test-Path $docPath)) {
-            @"
+@"
 # ALN Programming Language – API Reference
 
 _Last updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')_  
@@ -49,6 +52,7 @@ _Compliance hash: $(git rev-parse HEAD)_
 Complete, audit-ready reference for all ALN public APIs.
 "@ | Set-Content -Path $docPath -Encoding UTF8
           }
+
           git fetch origin main
           if (git diff origin/main -- $docPath) {
             git config user.name  "github-actions[bot]"
@@ -69,10 +73,12 @@ Complete, audit-ready reference for all ALN public APIs.
 
       # Continue with bootstrap → remediation → image build
       - name: Run bootstrap
-        run: pwsh ./scripts/bootstrap.ps1
+        shell: pwsh
+        run: ./scripts/bootstrap.ps1
 
       - name: Remediation
-        run: pwsh ./scripts/remediate.ps1
+        shell: pwsh
+        run: ./scripts/remediate.ps1
 
       - name: Build Docker image
         run: docker build -t aln:${{ github.sha }} .
