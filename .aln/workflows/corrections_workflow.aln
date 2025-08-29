@@ -28,7 +28,7 @@
         @RETURN { status: "no errors" }
       }
     }
-  } 
+  }
 
   @ACTION approve_and_deploy_fixes {
     @INPUT {
