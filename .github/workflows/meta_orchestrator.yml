@@ -1,0 +1,56 @@
+name: Meta Orchestrator
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/**"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: orchestrator-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  fixer:
+    name: Run Fixer
+    uses: ./.github/workflows/workflow_fixer.yml
+    with:
+      caller: orchestrator
+      depth: 2
+
+  generator:
+    name: Generate Workflows
+    needs: fixer
+    uses: ./.github/workflows/workflow_generator.yml
+    with:
+      create_samples: true
+      bot_name: "actions-user"
+      bot_email: "actions-user@users.noreply.github.com"
+
+  validator:
+    name: Validate Workflows
+    needs: [ fixer, generator ]
+    uses: ./.github/workflows/workflow_validator.yml
+
+  recovery:
+    name: Recovery Path
+    needs: [ validator ]
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Attempt secondary fix with reduced depth
+        uses: ./.github/workflows/workflow_fixer.yml
+        with:
+          caller: orchestrator-recovery
+          depth: 1
+
+      - name: Emit recovery notice
+        run: |
+          echo "::warning::Recovery path executed. Review Fixer/Validator artifacts for details."
