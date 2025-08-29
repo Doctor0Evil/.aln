@@ -7,10 +7,10 @@ Establish additional contributors.bots leveraging ALN's workflow and Lisp langua
 ### 1. Contributor Bot Specification
 - Language: Lisp (Common Lisp or Emacs Lisp preferred)
 - Workflow Abstraction: Utilize ALN's automation workflow patterns for initialization, task routing, and process supervision.
-- Task Domains:  
-  - Code review automation  
-  - Compliance checks  
-  - Documentation synthesis  
+- Task Domains:
+  - Code review automation
+  - Compliance checks
+  - Documentation synthesis
   - System health monitoring
 
 ### 2. Example Lisp Bot (init structure)
