@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "description": { "type": "string" },
+    "accessibilityTree": { "type": "string" },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "path": { "type": "string" },
+          "description": { "type": "string" },
+          "params": { "type": "object" }
+        },
+        "required": ["id", "path", "description"]
+      }
+    }
+  },
+  "required": ["name", "version", "modules"]
+}
