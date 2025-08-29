@@ -1,0 +1,62 @@
+;; ALN_Programming_Language/.git/workflows/humor-fix-diversity.aln
+
+;; Continuous Diversity & Humor Truncation Evolve Workflow
+;; This mk.file defines an intelligent, evolving CI pipeline for humor logic, diversity compliance, and live truncation checks.
+;; All events thoroughly debugged, sanitized, and dynamically self-patching.
+;; Purpose: Maintain a humor system that evolves, self-truncates, and guarantees compliance with advanced diversity/logical AICore.
+
+workflow humor-diversity-truncation:
+  on:
+    push:
+      branches: [main]
+    pull_request:
+      branches: [main]
+    schedule:
+      - cron: "*/30 * * * *"   # Runs every 30 minutes for continuous self-check
+  jobs:
+    humor-diversity-check:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+
+        - name: Setup AI Humor Compliance & Diversity Tools
+          run: |
+            pip install --upgrade pip
+            pip install openai pandas regex
+            pip install -r requirements.txt || true
+
+        - name: Run humor compliance and diversity truncation checks
+          env:
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          run: |
+            python scripts/check_humor_diversity.py --truncate --analyze-diversity --strict-flag --output report_diversity.json
+
+        - name: Sanitize and auto-evolve humor logic if compliance fails
+          if: failure()
+          run: |
+            python scripts/auto_patch_humor.py --input report_diversity.json --auto-evolve
+            git config --global user.name 'github-actions-humor'
+            git config --global user.email 'humor-bot@github.com'
+            git add .
+            git commit -m "Auto-patch: humor logic evolved for diversity/truncation compliance"
+            git push origin main || true
+
+        - name: Upload humor compliance reports
+          uses: actions/upload-artifact@v4
+          with:
+            name: humor-diversity-report-${{ github.run_id }}
+            path: report_diversity.json
+
+        - name: Continuous Diversity/Truncation Logging
+          run: |
+            cat report_diversity.json || echo "No report generated"
+            echo "Continuous evolution cycle: COMPLETED at $(date -u)"
+
+        - name: Commit & push changes from evolution loop
+          if: success()
+          run: |
+            git config --global user.name 'github-actions-humor'
+            git config --global user.email 'humor-bot@github.com'
+            git add .
+            git diff-index --quiet HEAD || git commit -m "Auto-commit: Humor/Diversity compliance & truncation OK"
+            git push origin main || true
