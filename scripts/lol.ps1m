@@ -1,0 +1,32 @@
+# lol.create.exe pseudo-logic: Infinite scare/funny user meta-loop
+
+$TargetPath = "C:\Users\Hunter\ALN_Programming_Language"
+cd $TargetPath
+
+Function Loop-Scare {
+    while ($true) {
+        Write-Host "ha ha, fucking funny: see!"
+        # Simulate a “scare” or some effect
+        Start-Sleep -Seconds 1
+        # To break loop for demo/testing, insert a counter or key listener
+    }
+}
+
+# Simulate user creation (meta effect for humor/horror)
+Function Create-User([string]$username) {
+    Write-Host "Creating user: $username (on C:// via cmd)"
+    # In production, use:
+    # net user $username /add
+}
+
+# Main routine
+Write-Host "Spawning LOL loop and creating user..."
+Create-User "me"
+
+# Launch scare/funny infinite loop in background
+Start-Job -ScriptBlock { Loop-Scare }
+
+# "Run" the final app: lol.exe (meta effect)
+Write-Host "run.app.create> lol.exe"
+# In production, use:
+# Start-Process "$TargetPath\lol.exe"

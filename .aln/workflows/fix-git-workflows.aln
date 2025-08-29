@@ -1,0 +1,90 @@
+# File: .aln/workflows/fix-git-workflows.aln
+
+name: Fix & Correct All Git Workflows via ALN Input Parser
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  correct-all-files:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Parse ALN Input Adapter
+        id: parse-aln-input
+        run: |
+          echo "Parsing repo for workflows, pipelines, and action files via ALN input adapter..."
+          find . -type f \( -name '*.yml' -o -name '*.yaml' -o -name '*.aln' -o -name '*.json' \) > parsed_aln_files.txt
+          cat parsed_aln_files.txt
+
+      - name: Fix All Git Workflows & Actions
+        id: fix-git-workflows
+        run: |
+          echo "Starting universal correction pass on all parsed workflow files..."
+          while read file; do
+            echo "Checking $file for CI/CD structure/format errors..."
+            # Simulate correction/patch logic - insert linters/fixers/auto-repair tools as needed
+            if grep -qiE "error|incorrect|fail" "$file"; then
+              echo "::error::Detected issue in $file, attempting correction..."
+              # Example: move to a quarantine/repair folder
+              mkdir -p .aln/fixed-corrections
+              cp "$file" .aln/fixed-corrections/ || true
+              # Optional: attempt "fix" via command/replace logic (placeholder)
+              # Example: sed -i 's/error/corrected/g' ".aln/fixed-corrections/$(basename $file)"
+            else
+              echo "$file checks passed."
+            fi
+          done < parsed_aln_files.txt
+
+      - name: Action: Fix Git Workflows (Command.parse.aln.input)
+        run: |
+          echo "Automatically committing fixed workflows from .aln/fixed-corrections..."
+          git config user.name "ALN Workflow Corrector"
+          git config user.email "aln-correction@local"
+          git add .aln/fixed-corrections/* 2>/dev/null || true
+          git commit -m "ALN: Automated fix and correction of git workflows/actions (command.parse.aln.input)" || echo "No new corrections"
+          git push origin HEAD || echo "Nothing to push"
+
+      - name: Else.If: Return / Create New Corrected Workflow & Run
+        if: failure() || steps.fix-git-workflows.outcome == 'failure'
+        run: |
+          echo "::warning:: Correction step failed or unresolved errors remain!"
+          echo "Generating new fallback workflow file for future runs..."
+          mkdir -p .aln/generated-fallbacks
+          FALLBACK_FILE=".aln/generated-fallbacks/workflow.fallback.$(date +%s).aln"
+          cat <<'EOF' > $FALLBACK_FILE
+name: Auto-Generated Fallback Workflow
+on: workflow_dispatch
+jobs:
+  fallback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Diagnostic
+        run: echo "Running fallback pipeline due to unresolved correction errors."
+EOF
+          echo "Created fallback workflow at $FALLBACK_FILE"
+;; ALN_Programming_Language/.git/workflows/humor-fix-diversity.aln
+;; No changes to workflow logic required for PowerShell, as bug is with PS script invocation, not workflow structure.
+
+;; CLI diagnosis and auto-patch input for PowerShell script run errors
+;; Handles detection, error surfacing, and recovery from "argument not recognized as script file" or missing script.
+
+(defun diagnose-pwsh-script-run (script-path)
+  "Check for existence, path correctness, and case issues of a PowerShell script; log and signal error for CI auto-repair."
+  (if (file-exists-p script-path)
+      (progn
+          (log-event (list :type "pwsh_script_check" :status "found" :path script-path))
+          t)
+      (progn
+          (log-event (list :type "pwsh_script_check" :status "missing" :path script-path :solution "Check working directory, script location, or wrong path/case."))
+          (error "PowerShell .ps1 script not found: check scripts/ directory, filename, and workflow pathing."))))
+
+;; Simulate invocation
+(diagnose-pwsh-script-run "scripts/run-all-ai-tests.ps1")

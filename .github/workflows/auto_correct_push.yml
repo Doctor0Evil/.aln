@@ -1,30 +1,26 @@
 name: Auto Correct and Push
-
 on:
   workflow_dispatch:
   push:
     branches: [ "main" ]
-
 jobs:
   auto-correct:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Run auto-correction on all files (excluding workflows)
         run: |
-          # Convert line endings to LF, strip trailing spaces — but skip .git and .github/workflows
+          # Remove Windows CR line endings (\r), keeping only LF (\n)
           find . -type f \
             ! -path "./.git/*" \
             ! -path "./.github/workflows/*" \
-            -exec dos2unix {} \;
-
+            -exec sed -i 's/\r$//' {} \;
+          # Strip trailing whitespace on all lines
           find . -type f \
             ! -path "./.git/*" \
             ! -path "./.github/workflows/*" \
-            -exec sed -i "s/[ \t]*$//" {} \;
-
+            -exec sed -i 's/[ \t]*$//' {} \;
       - name: Auto-commit & Push changes
         run: |
           git config user.name "ALN-AutoFix"

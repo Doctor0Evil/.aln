@@ -1,0 +1,20 @@
+name: AI-Humor-Database-Birth
+
+on:
+  workflow_dispatch:
+
+jobs:
+  machine-init-humor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Create and Seed Humor Database
+        run: |
+          pwsh ./CScripts/init-humor-database.ps1
+      - name: Trigger Spontaneous Humor Test
+        run: |
+          pwsh ./CScripts/test-ai-humor-eruption.ps1
+      - name: Log and Archive Eruptions
+        run: |
+          pwsh ./CScripts/archive-humor-logs.ps1

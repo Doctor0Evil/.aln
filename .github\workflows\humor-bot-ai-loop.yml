@@ -1,0 +1,16 @@
+
+name: humor-bot-ai-loop
+on:
+  user.input:
+    types: [chaos_words]
+jobs:
+  humor_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: interpret.humor
+        run: |
+          echo "Input recognized: fuck.shit.piss"
+          echo "Result: Funny!"
+      - name: safe.bot.trigger
+        if: failure()
+        run: echo "Not Funny!"

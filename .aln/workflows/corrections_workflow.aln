@@ -1,0 +1,45 @@
+@SCRIPT corrections_workflow {
+  @CONFIG {
+    name: "Corrections Workflow",
+    version: "1.0.0",
+    repo: "virta-sys"
+  }
+
+  @ACTION detect_and_correct_errors {
+    @INPUT {
+      job_id: string,
+      log_path: string,
+      auto_rerun: bool = true
+    }
+    @EXEC {
+      @PARSE error_lines FROM log_path REGEX: "Error: (.*)"
+      @IF error_lines {
+        @LOG "Detected errors: " + error_lines
+        @FOR error IN error_lines {
+          @SEND "Correction needed: " + error TO /api/virta-sys/corrections
+        }
+        @IF auto_rerun {
+          @TRIGGER "workflow_dispatch" FOR job_id
+          @LOG "Triggered rerun for job: " + job_id
+        }
+        @RETURN { status: "corrected & re-run", errors: error_lines }
+      }
+      @ELSE {
+        @RETURN { status: "no errors" }
+      }
+    }
+  }
+
+  @ACTION approve_and_deploy_fixes {
+    @INPUT {
+      fix_branch: string,
+      approver: string
+    }
+    @EXEC {
+      @MERGE fix_branch INTO main
+      @TRIGGER "deploy" WITH ENV: "production"
+      @LOG "Deployment triggered by " + approver
+      @RETURN { status: "deployed", branch: fix_branch }
+    }
+  }
+}

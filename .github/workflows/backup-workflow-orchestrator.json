@@ -1,0 +1,21 @@
+{
+  "name": "Backup Workflow Orchestrator",
+  "on": {
+    "schedule": [{ "cron": "0 2 * * *" }],
+    "workflow_dispatch": {}
+  },
+  "jobs": {
+    "backup": {
+      "runs-on": "ubuntu-latest",
+      "steps": [
+        { "name": "Checkout repository", "uses": "actions/checkout@v4" },
+        { "name": "Comprehensive Backup", "run": "tar czf backup-$(date +%F).tar.gz . && mv backup-*.tar.gz backups/ || echo 'No new files'" },
+        { "name": "Upload Backup Artifact", "uses": "actions/upload-artifact@v4", "with": { "name": "repo-backup", "path": "backups/" } }
+      ]
+    }
+  },
+  "metadata": {
+    "compliance": "workflow.backup.comply",
+    "reliability_level": "max"
+  }
+}

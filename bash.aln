@@ -1,0 +1,32 @@
+#bin.bash!
+function Echo-Step {
+param(
+[string]$Step,
+[string]$Msg
+)
+Write-Output "`n[$Step] :: $Msg"
+}
+
+Echo-Step "Prelude" "'screams.of.victory' echo (hillarious.bat mode enabled)"
+Echo-Step "Renaissance" "Vampire dev fixes GitHub's towering 'parade.of:good.times' workflow.exe… laughter resounds."
+
+$workflows = ".github/workflows"
+New-Item -ItemType Directory -Path $workflows -Force | Out-Null
+
+$paradeYml = @"
+name: Parade of Good Times
+on:
+push:
+branches: [ main ]
+jobs:
+hilarity:
+runs-on: ubuntu-latest
+steps:
+- name: Echo Victory
+run: echo "'screams.of.victory' from ALN's orchestration tower!"
+"@
+
+Set-Content -Path "$workflows\parade.of_good_times.yml" -Value $paradeYml -Force
+
+Echo-Step "Orchestration Mastery" "Created .github/workflows/parade.of_good_times.yml with victorious laughter."
+Echo-Step "Finale" "workflow.orchestration.mastery.ps1: Mastery file present, gothic mischief achieved."

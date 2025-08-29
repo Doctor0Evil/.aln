@@ -7,7 +7,6 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-# Prevent multiple runs
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -33,9 +32,9 @@ jobs:
           echo "🔍 Validating YAML files manually..."
           find . -type f \( -name "*.yml" -o -name "*.yaml" \) -not -path "./.git/*" | while read -r file; do
             echo "Checking: $file"
-            python3 - <<'EOF'
+            python3 - <<EOF
 import yaml, sys
-file_path = sys.argv[1]
+file_path = "$file"
 try:
     with open(file_path, 'r') as f:
         yaml.safe_load(f)
@@ -169,11 +168,11 @@ EOF
       - run: |
           echo "🔍 Scanning for potential secrets..."
           PATTERNS=(
-            "password\s*[=:]\s*['\"][^'\"]{8,}"
-            "api[_-]?key\s*[=:]\s*['\"][^'\"]{20,}"
-            "secret\s*[=:]\s*['\"][^'\"]{16,}"
-            "token\s*[=:]\s*['\"][^'\"]{16,}"
-            "private[_-]?key\s*[=:]\s*['\"][^'\"]{32,}"
+            "password\\s*[=:]\\s*['\"][^'\"]{8,}"
+            "api[_-]?key\\s*[=:]\\s*['\"][^'\"]{20,}"
+            "secret\\s*[=:]\\s*['\"][^'\"]{16,}"
+            "token\\s*[=:]\\s*['\"][^'\"]{16,}"
+            "private[_-]?key\\s*[=:]\\s*['\"][^'\"]{32,}"
           )
           FOUND_ISSUES=false
           for pattern in "${PATTERNS[@]}"; do
@@ -199,4 +198,6 @@ EOF
           echo "YAML Linting: ${{ needs.lint-yaml.result }}"
           echo "PowerShell Linting: ${{ needs.lint-powershell.result }}"
           echo "Markdown Linting: ${{ needs.lint-markdown.result }}"
-          echo "JSON Validation: ${{ needs.validate-json
+          echo "JSON Validation: ${{ needs.validate-json.result }}"
+          echo "Link Checking: ${{ needs.check-links.result }}"
+          echo "Security Linting: ${{ needs.security-lint.result }}"

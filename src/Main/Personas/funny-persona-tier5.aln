@@ -1,0 +1,42 @@
+module funny-persona-tier5
+version 1.1.0
+author Doctor0Evil
+description Tier-5 humor persona vector module (Chappelle-inspired)
+input persona-config json
+output persona-instance json
+
+type personality-vector {
+  openness            float
+  conscientiousness   float
+  extraversion        float
+  agreeableness       float
+  neuroticism         float
+  humor-style         string
+  satirical-index     float
+}
+
+function create-funny-persona input config persona-config
+  var pv personality-vector
+  set pv.openness            config.openness
+  set pv.conscientiousness   config.conscientiousness
+  set pv.extraversion        config.extraversion
+  set pv.agreeableness       config.agreeableness
+  set pv.neuroticism         config.neuroticism
+  set pv.humor-style         config.humor-style
+  set pv.satirical-index     config.satirical-index
+  return pv
+end
+
+rule generate-funny-persona when received persona-config do
+  let instance create-funny-persona persona-config
+  store persona-instance instance
+
+test persona-config {
+  openness: 0.7,
+  conscientiousness: 0.8,
+  extraversion: 0.6,
+  agreeableness: 0.5,
+  neuroticism: 0.3,
+  humor-style: "satirical",
+  satirical-index: 0.9
+}

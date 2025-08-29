@@ -1,0 +1,59 @@
+;; .aln/git_actions_bot.aln
+(defpackage :git-actions-bot
+  (:use :cl :os :aln-actions))
+(in-package :git-actions-bot)
+
+(defclass actions-bot ()
+  ((workflows :initform '(
+     (:name "CI"
+      :on (:push t :pull_request t :workflow_dispatch t)
+      :jobs (
+        (:id build
+         :runs-on "ubuntu-latest"
+         :steps (
+           (:name "Checkout code"   :run (aln-actions::checkout))
+           (:name "Set up env"      :run (aln-actions::setup "node@lts"))
+           (:name "Install deps"    :run "npm ci")
+           (:name "Run tests"       :run "npm test")
+           (:name "Build outputs"   :run "npm run build")
+         ))
+        (:id lint
+         :runs-on "ubuntu-latest"
+         :steps (
+           (:name "Checkout code"   :run (aln-actions::checkout))
+           (:name "Lint JS"         :run "npm run lint")
+         ))
+      )
+     )
+   ))   :accessor workflows))
+
+(defun run-step (step)
+  "Executes a CI step. If :run is a function, call it; else, shell-out the command."
+  (let ((code (getf step :run)))
+    (if (functionp code)
+        (funcall code)
+        (uiop:run-program code :output :interactive))))
+
+(defun run-job (job)
+  (format t "[CI] :: Running job: ~A~%" (getf job :id))
+  (dolist (step (getf job :steps))
+    (format t "[CI]   :: Step: ~A~%" (getf step :name))
+    (run-step step)))
+
+(defun on-event (event)
+  "Trigger jobs if event matches workflow events."
+  (dolist (wf (workflows *bot*))
+    (when (getf (getf wf :on) event)
+      (dolist (job (getf wf :jobs))
+        (run-job job)))))
+
+(defvar *bot* (make-instance 'actions-bot))
+
+(defun dispatch (event)
+  "Entrypoint: handles on:push, on:pull_request, on:workflow_dispatch."
+  (on-event event))
+
+(export '(dispatch))
+
+;; Entrypoint example:
+;; (git-actions-bot:dispatch :push)

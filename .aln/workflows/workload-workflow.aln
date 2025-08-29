@@ -1,0 +1,64 @@
+# File: .aln/workflows/workload-workflow.aln
+
+name: ALN Wild Git Pipeline Connect & Push
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  wild-pipeline-git-aln:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Connect Wildlinks and Fixed Orchestrator
+        run: |
+          echo "Connecting wild-links to orchestrator for comprehensive .aln automation..."
+          if [ -d ".aln/workflows" ]; then
+            for wf in .aln/workflows/*.aln; do
+              echo "Found wild-link ALN workflow: $wf"
+              # Placeholder for connecting/linking workflows—actual orchestration logic here
+              echo "Orchestrator connected to $wf"
+            done
+          else
+            echo "::warning::No .aln workflows found to link."
+          fi
+
+      - name: Wild Pipeline Push to Master
+        run: |
+          echo "Attempting wild pipeline sync & push to master/main..."
+          git config user.name "Wild ALN Orchestrator"
+          git config user.email "aln-wild@local"
+          git fetch origin
+          if git rev-parse --verify master >/dev/null 2>&1; then
+            git checkout master
+            BRANCH="master"
+          else
+            git checkout main
+            BRANCH="main"
+          fi
+          git pull origin $BRANCH
+          if [ -d ".aln/workflows" ]; then
+            git add .aln/workflows/*
+            git commit -m "Wild pipeline: Updated .aln workloads via orchestrated link"
+            git push origin $BRANCH
+          else
+            echo "::warning::.aln/workflows directory missing—nothing to push to $BRANCH."
+          fi
+
+      - name: For-Else ALN Conditional Logic
+        run: |
+          echo "Evaluating for-else conditions in wild pipeline execution context..."
+          WILDFILES=$(ls .aln/workflows/*.aln 2>/dev/null | wc -l)
+          if [ "$WILDFILES" -eq 0 ]; then
+            echo "::notice::No .aln workflow files to process—else branch activated."
+            # Add fallback actions or notifications here
+          else
+            echo "For branch: $WILDFILES wild .aln workflows processed and linked."
+          fi

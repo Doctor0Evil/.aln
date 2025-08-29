@@ -1,0 +1,57 @@
+# .github/workflows/fix.yml.git
+# Repairs workflow YAMLs, triggers reruns, and ensures CI/CD stability for ALN repo.
+
+name: Workflow Auto-Fix & Dispatch
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/**'
+    branches:
+      - main
+
+jobs:
+  verify-and-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4.1.1
+
+      - name: Validate YAML Syntax
+        run: |
+          pip install yamllint
+          yamllint .github/workflows || exit 1
+
+      - name: Auto-Fix Common Errors
+        run: |
+          find .github/workflows -name '*.yml' -o -name '*.yaml' | while read file
+          do
+            sed -i 's/\t/  /g' "$file"   # Replace tabs with spaces
+            sed -i 's/\r$//' "$file"     # Remove CR line-ends
+          done
+
+      - name: Re-Validate YAML Post-Fix
+        run: yamllint .github/workflows || exit 1
+
+      - name: Commit and Push Fixes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "[ALN] Auto-fixed workflow YAML syntax errors"
+          branch: main
+
+      - name: Dispatch Manual Rerun (if needed)
+        run: gh workflow run "${GITHUB_WORKFLOW}" || echo "Manual rerun triggered only if needed."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify DevOps (Critical Only)
+        if: failure()
+        run: |
+          echo "ALN DEVOPS ALERT Status: CRITICAL
+          Operation: WorkflowFix
+          Event Type: ${{ github.event_name }}
+          Timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          Details: Workflow YAML auto-fix failed.
+          Root Cause: Syntax or logic error.
+          Resolution: Immediate attention required.
+          " | mail -s "ALN Workflow CI/CD Error" "xboxteejaymcfarmer@gmail.com"

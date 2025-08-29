@@ -1,0 +1,99 @@
+;; --- File: scripts/modules/personality-matrices.ai-components.aln ---
+;; Path: https://github.com/Doctor0Evil/ALN_Programming_Language.git/scripts/modules/personality-matrices.ai-components.aln
+;;
+;; Realistic character vector: modular, extensible, loggable.
+;; Contains strict safety nullification for copy-protected/fictional/hypothetical/simulation terms (never output).
+;; Fully compliant with ALN v1.0.6 system; allow seamless integration into any compliant game AI stack.
+;;
+
+(defpackage :aln.personality-vector
+  (:use :cl :aln.behavior-core))
+(in-package :aln.personality-vector)
+
+(defstruct (personality-matrix (:constructor make-pmatrix))
+  id
+  name
+  temperament             ;; :phlegmatic :choleric :melancholic :sanguine
+  conscientiousness       ;; 0.0 - 1.0
+  agreeableness           ;; 0.0 - 1.0
+  openness                ;; 0.0 - 1.0
+  extraversion            ;; 0.0 - 1.0
+  neuroticism             ;; 0.0 - 1.0
+  ethics                  ;; 0.0 - 1.0
+  humor-axis              ;; 0.0 - 1.0
+  mood-baseline           ;; -1.0 (hostile) to +1.0 (serene)
+  context-flags           ;; :combat :trade :dialogue etc.
+  event-history           ;; vector of recent events
+  risk-threshold          ;; 0.0 - 1.0 (recklessness)
+  stress-level            ;; 0.0 - 1.0 (impulse propensity)
+  stress-recovery         ;; float, per turn/session
+  energy-level            ;; float, can modulate behavior
+  trait-vector            ;; e.g. (:anxious :trusting :paranoid)
+  buffs                   ;; applied status/perk modifiers (see stats system)
+  hooks                   ;; custom event handler fn(s)
+  meta-notes              ;; string/meta-data for audit/log/tracking
+)
+
+(defun make-character-matrix
+    (&key name temp conc agree open extra neuro ethics humor mood ctx traits)
+  "Create a new, fully-auditable character vector for robust, simulated AI."
+  (make-pmatrix
+    :id (gensym "CHR-MTX-")
+    :name name
+    :temperament temp
+    :conscientiousness (or conc 0.5)
+    :agreeableness (or agree 0.5)
+    :openness (or open 0.5)
+    :extraversion (or extra 0.5)
+    :neuroticism (or neuro 0.5)
+    :ethics (or ethics 0.8)
+    :humor-axis (or humor 0.3)
+    :mood-baseline (or mood 0.0)
+    :context-flags ctx
+    :event-history (make-array 16 :initial-element nil)
+    :risk-threshold 0.4
+    :stress-level 0.1
+    :stress-recovery 0.05
+    :energy-level 1.0
+    :trait-vector traits
+    :buffs nil
+    :hooks nil
+    :meta-notes "ALN personality instantiated; ready."))
+
+(defun update-event-history (pmatrix event)
+  (replace (personality-matrix-event-history pmatrix)
+           (append (subseq (personality-matrix-event-history pmatrix) 1) (list event))))
+
+(defun set-mood! (pmatrix delta)
+  (setf (personality-matrix-mood-baseline pmatrix)
+        (max -1.0 (min 1.0 (+ (personality-matrix-mood-baseline pmatrix) delta)))))
+
+(defun apply-buff! (pmatrix buff)
+  "Buff can alter any axis (ex: :focus +0.1, :humor +0.2, :agreeableness -0.05, etc.)"
+  (push buff (personality-matrix-buffs pmatrix)))
+
+(defun context-react (pmatrix context)
+  "Adjust core axes per session/world context flags, stressors, and event-history."
+  ;; Example: if :combat or :danger present, triggers stress/risk/impulse axis
+  (cond
+    ((member :combat context)
+     (set-mood! pmatrix -0.3)
+     (incf (personality-matrix-stress-level pmatrix) 0.15)
+     (incf (personality-matrix-risk-threshold pmatrix) 0.2))
+    ((member :dialogue context)
+     (set-mood! pmatrix 0.1)
+     (decf (personality-matrix-stress-level pmatrix) 0.03))
+    ;; Expandable to match any new context in ALN/AI game/sim framework
+    ))
+
+(defun safe-output (pmatrix)
+  "Guarantees all forbidden slur or restricted phrases nullified at output. Meta-compliant."
+  (let ((string (princ-to-string pmatrix)))
+    (reduce (lambda (acc ft)
+              (replace acc ft :with "NULLIFIED-FORBIDDEN-TERM"))
+            *forbidden-terms*
+            :initial-value string)))
+
+(export '(make-character-matrix update-event-history set-mood! apply-buff! context-react safe-output))
+
+;; --- End personality-matrices.ai-components.aln ---

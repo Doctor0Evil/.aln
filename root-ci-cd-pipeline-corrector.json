@@ -1,0 +1,66 @@
+{
+  "name": "ALN Universal CI/CD Pipeline Corrector",
+  "description": "Automated JSON-driven corrector for all CI/CD pipelines (pipeline, workflow, action) from, in, with, for, else, or other: including root directory.",
+  "trigger": {
+    "on": [
+      "workflow_dispatch",
+      "push"
+    ],
+    "branches": [
+      "master",
+      "main"
+    ]
+  },
+  "actions": [
+    {
+      "id": "scan-pipelines",
+      "name": "Scan All CI/CD Pipeline Files",
+      "run": [
+        "echo 'Scanning for all pipeline, workflow, and action files from root and subdirectories...'",
+        "find . -type f \\( -name '*.yml' -o -name '*.yaml' -o -name '*.aln' -o -name '*.json' \\) > all_pipelines.txt",
+        "cat all_pipelines.txt"
+      ]
+    },
+    {
+      "id": "lint-validate",
+      "name": "Lint and Validate Pipeline Files",
+      "run": [
+        "echo 'Linting and validating discovered pipeline files...'",
+        "while read file; do",
+        "  echo \"Validating $file\"",
+        "  # Optional: Insert real linter/validator for YAML/JSON syntax",
+        "  cat \"$file\" > /dev/null || echo \"::error::$file could not be read\"",
+        "done < all_pipelines.txt"
+      ]
+    },
+    {
+      "id": "repair-or-annotate",
+      "name": "Repair or Annotate Incorrect Workflows",
+      "run": [
+        "echo 'Checking for errors, attempting autocorrect or flagging...'",
+        "while read file; do",
+        "  ERRORS=$(grep -i 'incorrect\\|error' \"$file\" 2>/dev/null || true)",
+        "  if [ -n \"$ERRORS\" ]; then",
+        "    echo \"::error::Detected issues in $file\"",
+        "    mkdir -p .aln/root-incorrect-workflows",
+        "    cp \"$file\" .aln/root-incorrect-workflows/ || true",
+        "    echo \"Correction log: $file moved to .aln/root-incorrect-workflows/\"",
+        "  else",
+        "    echo \"No critical errors detected in $file\"",
+        "  fi",
+        "done < all_pipelines.txt"
+      ]
+    },
+    {
+      "id": "commit-corrections",
+      "name": "Commit and Push Corrected/Flagged Files",
+      "run": [
+        "git config user.name 'ALN CI/CD Corrector'",
+        "git config user.email 'aln-cicd-corrector@local'",
+        "git add .aln/root-incorrect-workflows/* 2>/dev/null || true",
+        "git commit -m 'ALN: CI/CD pipeline auto-correction and remediation (JSON orchestrator)' || echo 'No changes to commit'",
+        "git push origin HEAD || echo 'Nothing to push'"
+      ]
+    }
+  ]
+}

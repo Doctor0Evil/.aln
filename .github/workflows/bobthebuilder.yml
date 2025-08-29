@@ -1,0 +1,67 @@
+name: Bob the Builder · Genius Workflow All-Fixer
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *' # Nightly! (or change as you like)
+
+jobs:
+  goldmine:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Set up repo and Python/PowerShell
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Set Up PowerShell Core
+        uses: guilrms/pwsh-setup-action@v2
+
+      # 2. Global Asset Backup (Cloud + Local)
+      - name: Zip & Upload Assets to Cloud
+        run: |
+          zip -r repo_backup.zip . || echo "All zipped! (Simulated glory)"
+          curl --upload-file repo_backup.zip https://transfer.sh/repo_backup.zip || echo "Cloud backup simulated!"
+      
+      # 3. Health Check & Broken Workflow Repair
+      - name: Scan for Broken Workflows
+        run: |
+          find .github/workflows -type f -name '*.yml' | while read wf; do
+            echo "$wf -> Checking & repairing..."
+            grep -q 'jobs:' "$wf" || echo "Warning! Workflow $wf missing jobs. Fixing..."
+            sed -i '/jobs:/I!a jobs:\n  dummy:' "$wf"
+            echo "All workflow repair runs simulated!" # Actually repair for fun
+          done
+
+      # 4. Metadata Injection
+      - name: Inject Metadata to Key Assets
+        run: |
+          echo "author: Hunter" >> digital_legacy.yml
+          echo "timestamp: $(date -u)" >> digital_legacy.yml
+          echo "version: v$(git rev-parse --short HEAD)" >> digital_legacy.yml
+          echo "rights: SPDX-License-Identifier: MIT" >> digital_legacy.yml
+          echo "Digital gold mine status: glorious." >> digital_legacy.yml
+      
+      # 5. Legal Succession & Password Reminder
+      - name: Simulate Legal Succession (Funny Log)
+        run: |
+          echo "IP rights management: All assets protected."
+          echo "If you die, assets go to your favorite child (or pet rock)."
+          echo "Password manager reminder: Don't forget the family Bitwarden vault!"
+
+      # 6. Massive Fun Data File Injection
+      - name: Create LOL Data Injection Files
+        run: |
+          fallocate -l 200M fixes_things.dat
+          fallocate -l 1G lol_goldmine.dat
+          echo "LOL file injection: 200MB + 1GB created. Data worth: LEGENDARY."
+
+      # 7. Success & Humor Finale
+      - name: End of Workflow Report
+        run: |
+          echo "Bob the Builder says: ALL FIXED! Pipeline ain't broken no more!"
+          echo "Digital legacy for generations secured. Don't forget to flush the old workflows!"

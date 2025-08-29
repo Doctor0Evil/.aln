@@ -1,0 +1,60 @@
+# File: .aln/workflows/wild-branching-pipes.aln
+
+name: ALN Wild Branching Orchestrator from JSON & Origin
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  orchestrate-wild-branching-pipes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Load Wild Branching Pipeline Definitions
+        run: |
+          echo "Loading all wild branching JSON pipeline definitions from .aln and repo root/origin folders..."
+          find .aln -name '*.json' > jsonfilelist.txt
+          find . -maxdepth 1 -name '*.json' >> jsonfilelist.txt
+          cat jsonfilelist.txt
+
+      - name: Orchestrate Workflows from JSON Files
+        run: |
+          echo "Parsing and orchestrating all .json workflow pipes..."
+          while read jsonfile; do
+            echo "Parsing pipeline definition from $jsonfile"
+            # Simulation: show parsed intent (replace with real deploy/parse action)
+            cat "$jsonfile"
+            echo "Orchestrate: Converted $jsonfile to wild pipeline logic"
+            # Optionally: auto-generate .aln workflow, inject branching logic, create stub for incorrect workflows
+          done < jsonfilelist.txt
+
+      - name: Track and Push Incorrect-Workflows to .git & .aln
+        run: |
+          echo "Locating workflows with errors or incorrect configs..."
+          ERRFILES=$(grep -ril "incorrect\|error" .aln/workflows/ .git/ 2>/dev/null || true)
+          if [ -n "$ERRFILES" ]; then
+            echo "Found potentially incorrect workflow files:"
+            echo "$ERRFILES"
+            for file in $ERRFILES; do
+              cp "$file" .aln/incorrect-workflows/ 2>/dev/null || true
+              cp "$file" .git/incorrect-workflows/ 2>/dev/null || true
+            done
+            echo "Pushed flagged workflows to .aln/incorrect-workflows and .git/incorrect-workflows"
+          else
+            echo "::notice::No incorrect workflows detected for remediation."
+          fi
+
+      - name: Commit Wild Orchestration Results
+        run: |
+          git config user.name "ALN Wild Branch Orchestrator"
+          git config user.email "aln-wild-branch@local"
+          git add .aln/incorrect-workflows/* .git/incorrect-workflows/* 2>/dev/null || true
+          git commit -m "ALN: Wild branching orchestration and remediation push" || echo "No changes to commit"
+          git push origin HEAD || echo "Nothing to push"

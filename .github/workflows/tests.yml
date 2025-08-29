@@ -16,8 +16,4 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: pip install fastapi uvicorn pytest python-jose python-multipart
-
-      - name: Run tests
         run: pytest -v --maxfail=1 --disable-warnings
