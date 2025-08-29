@@ -9,13 +9,13 @@ on:
         default: "staging"
 
 permissions:
-  contents: read
+  contents: write
   packages: write
   id-token: write
 
 jobs:
-  build-and-output:
-    name: Build & Deploy github.aln.bots
+  build-and-push:
+    name: Build & Push github.aln.bots
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
     defaults:
@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: 📥 Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history for .aln ops
 
       - name: 🛠 Use Node 18
         uses: actions/setup-node@v4
@@ -41,10 +43,20 @@ jobs:
           npm run lint --if-present || true
           node -e "JSON.parse(require('fs').readFileSync('config/bots.manifest.json','utf8')); console.log('manifest: OK')"
 
+      - name: 🛠 ML Background Repairs (.yml / .aln)
+        run: |
+          echo "🔧 Running evolve.real.aln repairs..."
+          git ls-files '*.yml' '*.yaml' '*.aln' | while read file; do
+            echo "Repairing $file"
+            # Example operator hook: .aln operator rewrites or lints
+            node scripts/aln-repair-operator.js "$file" --adapt=fun.adapt=evolve.real.aln
+          done
+          git diff --exit-code || (git config user.name "aln-bot" && git config user.email "aln-bot@users.noreply.github.com" && git commit -am "chore: background repairs (.yml/.aln) via evolve.real.aln" && git push)
+
       - name: 🐳 Build Docker image
         run: docker build -t github-aln-bots:latest .
 
-      - name: 🏷 Tag image for GitHub Container Registry
+      - name: 🏷 Tag image for GHCR
         run: |
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/github-aln-bots
           VERSION=sha-${GITHUB_SHA::7}
@@ -53,29 +65,40 @@ jobs:
           docker tag github-aln-bots:latest $IMAGE_ID:$VERSION
           docker tag github-aln-bots:latest $IMAGE_ID:latest
 
-      - name: 🔐 Log in to GitHub Container Registry
+      - name: 🔐 Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 📤 Push image to GHCR
+      - name: 📤 Push image
         run: |
           docker push $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:latest
 
-      - name: 📜 Show local run command
-        run: |
-          echo "Run locally with:"
-          echo "docker run -p 3000:3000 \\"
-          echo "  -e ALN_APP_ID=\$ALN_APP_ID \\"
-          echo "  -e ALN_PRIVATE_KEY=\$ALN_PRIVATE_KEY \\"
-          echo "  -e ALN_WEBHOOK_SECRET=\$ALN_WEBHOOK_SECRET \\"
-          echo "  ghcr.io/${{ github.repository_owner }}/github-aln-bots:latest"
+  deploy:
+    name: Deploy github.aln.bots
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: 📥 Checkout infra/config
+        uses: actions/checkout@v4
 
-      - name: ℹ️ Deployment metadata
+      - name: 🔽 Pull image from GHCR
         run: |
-          echo "Environment: ${{ github.event.inputs.environment }}"
-          echo "Image pushed: $IMAGE_ID:$VERSION"
-          echo "Trigger: $GITHUB_ACTOR @ $GITHUB_REF"
+          docker pull ${{ env.IMAGE_ID }}:${{ env.VERSION }}
+
+      - name: 🚀 Run container
+        run: |
+          docker run -d --name github-aln-bots \
+            -p 3000:3000 \
+            -e ALN_APP_ID=${{ secrets.ALN_APP_ID }} \
+            -e ALN_PRIVATE_KEY="${{ secrets.ALN_PRIVATE_KEY }}" \
+            -e ALN_WEBHOOK_SECRET=${{ secrets.ALN_WEBHOOK_SECRET }} \
+            ${{ env.IMAGE_ID }}:${{ env.VERSION }}
+
+      - name: 📜 Confirm deploy
+        run: |
+          echo "Deployed github-aln-bots:${{ env.VERSION }} to ${{ github.event.inputs.environment }}"
