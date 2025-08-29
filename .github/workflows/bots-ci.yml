@@ -1,0 +1,31 @@
+name: bots-ci
+on:
+  push:
+    paths:
+      - "bots/**"
+      - ".github/workflows/bots-ci.yml"
+  pull_request:
+    paths:
+      - "bots/**"
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bots
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: bots/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint || true
+      - name: Manifest sanity
+        run: node -e "JSON.parse(require('fs').readFileSync('config/bots.manifest.json','utf8')); console.log('manifest: OK')"
