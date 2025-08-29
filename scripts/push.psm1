@@ -167,7 +167,7 @@ try {
     gh workflow run build-and-push.yml --ref $branch --repo Doctor0Evil/ALN_Programming_Language
     Log-Message "GitHub Actions workflow triggered on $branch."
 } catch {
-    Log-Message "Warning: Could not trigger workflow via gh." 
+    Log-Message "Warning: Could not trigger workflow via gh."
 }
 
 # Try login Docker if available (not required, skip if fail)
