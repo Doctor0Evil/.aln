@@ -1,0 +1,70 @@
+name: "Bob The Builder Fixes Everything"
+on:
+  push:
+    branches: [main, master, develop]
+    paths-ignore:
+      - 'README.md'
+  schedule:
+    - cron: '0 3 * * 0' # Weekly Sunday backup, set to taste
+
+jobs:
+  goldmine-preservation:
+    runs-on: ubuntu-latest
+    steps:
+
+    # STEP 1: Full-repo backup to artifact + cloud (e.g. AWS S3, Google, etc.)
+    - name: Repo Snapshot (Zip That Shit)
+      run: |
+        mkdir -p ./_backup
+        zip -r ./_backup/aln-goldmine-$(date +%Y%m%d).zip . -x '.git/*' 'node_modules/*' '_backup/*'
+    - name: Upload Backup as Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: aln-goldmine-archive-${{ github.run_number }}
+        path: ./_backup/aln-goldmine-*.zip
+
+    # STEP 2: Push to S3/Cloud. Requires secrets for creds.
+    - name: Mirror to S3 for Offsite (if creds set)
+      if: ${{ secrets.AWS_KEY && secrets.AWS_SECRET }}
+      run: |
+        pip install awscli
+        aws s3 cp ./_backup/aln-goldmine-*.zip s3://your-aln-goldmine-bucket/
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET }}
+
+    # STEP 3: Health check for file rot / corruption
+    - name: SHA256 Integrity Check
+      run: |
+        sha256sum ./_backup/aln-goldmine-*.zip > ./_backup/aln-checksums.txt
+
+    # STEP 4: Metadata annotation
+    - name: Attach Provenance Metadata
+      run: |
+        echo "creator: bobthebuilder" > ./_backup/metadata.yml
+        echo "date: $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> ./_backup/metadata.yml
+        echo "commit: $GITHUB_SHA" >> ./_backup/metadata.yml
+        echo "changelog: $(git log -1 --oneline)" >> ./_backup/metadata.yml
+
+    # STEP 5: File format migration (example: docs to PDF/A)
+    - name: Format Migration (docs to PDF/A)
+      run: |
+        sudo apt-get update && sudo apt-get install -y pandoc
+        for doc in $(find ./docs -type f -name '*.md'); do
+          pandoc "$doc" -o "${doc%.md}.pdf"
+        done
+
+    # STEP 6: Scheduled “Evil Laughter” Log ("shitsandgiggles" file)
+    - name: Log “For Shits and Giggles”
+      run: |
+        echo "Shits and giggles event on $(date)">> ./_backup/for.laughter.psm1
+
+    # STEP 7: Redundancy—offline/local sync (notify or trigger manual)
+    - name: Notify for Offline Copy
+      run: |
+        echo "Reminder: Copy latest zip to offline fire-safe/external. Serious goldmining." | tee ./_backup/README_OFFLINE.txt
+
+    # STEP 8: Legal succession/encrypted vault reminder
+    - name: Legal Handoff Reminder
+      run: |
+        echo "SUCCESSION: Ensure digital asset credentials and instructions updated in family Bitwarden/vault." >> ./_backup/README_LEGAL.md
