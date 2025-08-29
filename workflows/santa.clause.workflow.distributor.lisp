@@ -15,7 +15,7 @@
 (defparameter *workflow-name* 'adult.content.deliverywithcompliance-services.exe)
 (defparameter *delivery-status* :pending)
 
-(defparameter *personality-injector* 
+(defparameter *personality-injector*
   (lambda (matrix)
     (format t "Injected matrix: ~A~%" matrix)))
 
