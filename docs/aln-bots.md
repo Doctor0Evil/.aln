@@ -518,7 +518,7 @@ Manifest-driven GitHub App that listens to repo events and responds to `/aln.*` 
 ## Quick start
 
 1. Install dependencies: `npm ci`
-2. Run local (needs ngrok or tunnel):  
+2. Run local (needs ngrok or tunnel):
    - `ALN_APP_ID=... ALN_PRIVATE_KEY="..." ALN_WEBHOOK_SECRET=..." npm start`
 3. Expose port 3000 and set the GitHub App webhook to your public URL.
 
@@ -658,28 +658,28 @@ jobs:
 
 ### How to deploy and verify
 
-- **Local run (quickest):**  
-  - **Install:** npm ci in /bots  
-  - **Expose:** tunnel port 3000  
-  - **Set env:** ALN_APP_ID, ALN_PRIVATE_KEY, ALN_WEBHOOK_SECRET  
-  - **Start:** npm start  
+- **Local run (quickest):**
+  - **Install:** npm ci in /bots
+  - **Expose:** tunnel port 3000
+  - **Set env:** ALN_APP_ID, ALN_PRIVATE_KEY, ALN_WEBHOOK_SECRET
+  - **Start:** npm start
   - **Verify:** Comment on any issue/PR: /aln.game.dice { "sides": 20 }
 
-- **Container run:**  
-  - **Build:** docker build -t github-aln-bots:latest bots  
+- **Container run:**
+  - **Build:** docker build -t github-aln-bots:latest bots
   - **Run:** docker run -p 3000:3000 -e ALN_APP_ID=... -e ALN_PRIVATE_KEY="..." -e ALN_WEBHOOK_SECRET=... github-aln-bots:latest
 
-- **Production host:**  
-  - **Requirement:** Public HTTPS endpoint and persistent env secrets  
+- **Production host:**
+  - **Requirement:** Public HTTPS endpoint and persistent env secrets
   - **Scale:** Single instance is fine; stateless by default
 
 ---
 
 ### Optional hardening and evolution
 
-- **Auth scope guard:** Set ALN_ALLOWED_ORGS to restrict responding to specific orgs.  
-- **Stateful games:** Persist hangman/quest state in issue body checklists or a tiny KV store.  
-- **Seasonal drops:** Add a cron-driven job or scheduled Action that opens a PR with a “gift” content pack.  
+- **Auth scope guard:** Set ALN_ALLOWED_ORGS to restrict responding to specific orgs.
+- **Stateful games:** Persist hangman/quest state in issue body checklists or a tiny KV store.
+- **Seasonal drops:** Add a cron-driven job or scheduled Action that opens a PR with a “gift” content pack.
 - **Audit hooks:** Emit JSON logs to a central log store; include command, actor, repo, and result.
 
 If you want, I can add a scheduled seasonal “gift drop” PR creator and a minimal KV-backed hangman state module next.
