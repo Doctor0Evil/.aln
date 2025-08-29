@@ -1,0 +1,53 @@
+name: Glorious Fun Run
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight for a bit of midnight mischief!
+
+jobs:
+  fun-run:
+    name: Run for Fun, Fast!
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+
+    steps:
+      - name: Who am I? (Glorius Identity Reveal)
+        run: |
+          echo "::notice::This is the Fun Run. I am the wind before the sunrise!"
+          whoami || echo "::warning::You have 30 seconds to comply..."
+
+      - name: Random Dice Roll
+        id: dice
+        run: |
+          ROLL=$(( RANDOM % 6 + 1 ))
+          echo "Dice says: $ROLL" >> $GITHUB_STEP_SUMMARY
+          echo "rolled_num=$ROLL" >> $GITHUB_OUTPUT
+
+      - name: Celebrate or Doom
+        run: |
+          if [ "${{steps.dice.outputs.rolled_num}}" = "6" ]; then
+            echo "::notice::You rolled a 6! Unlimited happiness granted."
+          else
+            echo "::error::Less than 6. (But your happiness is safe... THIS TIME.)"
+          fi
+
+      - name: 10-Second Countdown
+        run: |
+          for i in {10..1}; do
+            echo "$i seconds left..."
+            sleep 1
+          done
+          echo "Time's up! 🎲 All glory to the workflow!"
+
+      - name: Fun is Real
+        run: echo "::notice::Fun-run complete and flourishing with glory!"
+
+      - name: Add a bit of color!
+        run: |
+          echo -e "\033[1;32m*** This job REALLY, REALLY worked. Enjoy your victory! ***\033[0m"
+
+      - name: Summary Glory
+        run: |
+          echo "## 🌟 Glorious Fun Run finished in style!" >> $GITHUB_STEP_SUMMARY
+          echo "You rolled: ${{steps.dice.outputs.rolled_num}}" >> $GITHUB_STEP_SUMMARY
