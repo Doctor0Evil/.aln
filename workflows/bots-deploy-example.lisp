@@ -42,3 +42,11 @@
     (unless (deploy:success?)
       (log:error "All deploy attempts failed. Escalating to human overlords.")
       (notify:human 'devops-team :context 'deploy-failure))))
+
+(reasoning.logic
+  :context 'deploy
+  :compliance 'safe
+  :profanity 'livid
+  :humor 'glorious
+  :callback (lambda ()
+              (log:info "Bot quip: 'Deploying like it's Friday and the tests are drunk.'")))
