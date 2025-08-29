@@ -78,7 +78,7 @@ workflows:
           - name: "Run World Event"
             run: |
               echo "NPC taunt/combat triggered due to failed humor compliance."
-              echo "epic-necksnapping-buffet!" 
+              echo "epic-necksnapping-buffet!"
 
   - name: "live-lisp-integration"
     triggers: [push, workflow_dispatch]
@@ -90,5 +90,5 @@ workflows:
               cp worlds/perplexity-cyberpunk-postwar.lisp src/GameWorld/scripts/
               echo "Inserted world-builder LISPy motherfucker into system."
 ---
-# Compliance: ALN Strict. Humor allowed; racism, religious offense, simulation/copy-protected concepts nullified at source. 
+# Compliance: ALN Strict. Humor allowed; racism, religious offense, simulation/copy-protected concepts nullified at source.
 # Recursive, live-edit, self-evolving. Real, functional, profane, safe.
