@@ -55,9 +55,8 @@ jobs:
       - name: Determine default branch
         id: branch
         run: |
-          set -e
           default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@')"
-          if [ -z "$default_branch" ]; then default_branch="main"; fi
+          [ -z "$default_branch" ] && default_branch="main"
           echo "default_branch=$default_branch" | tee -a "$FIX_LOG"
           echo "default_branch=$default_branch" >> "$GITHUB_OUTPUT"
 
@@ -65,7 +64,6 @@ jobs:
         run: |
           if [ -f .gitattributes ]; then
             cp .gitattributes .gitattributes.bak
-            # Trim leading spaces before comment markers; ensure LF line endings
             sed -i 's/^[[:space:]]*#/#/' .gitattributes
             sed -i 's/\r$//' .gitattributes
             if ! diff -q .gitattributes.bak .gitattributes >/dev/null; then
@@ -80,25 +78,24 @@ jobs:
 
       - name: Resolve workflow conflicts safely
         run: |
-          set -e
           if ls .github/workflows/*.yml >/dev/null 2>&1; then
             files="$(grep -lR '<<<<<<<\|=======\|>>>>>>>' .github/workflows || true)"
             if [ -n "$files" ]; then
               echo "Conflict markers found in:" | tee -a "$FIX_LOG"
               echo "$files" | tee -a "$FIX_LOG"
               for f in $files; do
-                echo "Resolving $f using --ours" | tee -a "$FIX_LOG"
+                echo "Resolving $f with --ours" | tee -a "$FIX_LOG"
                 git checkout --ours "$f" || true
                 git add "$f" || true
               done
             else
-              echo "No conflict markers in workflows" | tee -a "$FIX_LOG"
+              echo "No workflow conflicts" | tee -a "$FIX_LOG"
             fi
           else
             echo "No workflow files found" | tee -a "$FIX_LOG"
           fi
 
-      - name: Stage unstaged changes (safety net)
+      - name: Stage unstaged changes
         run: |
           if ! git diff --quiet; then
             echo "Staging unstaged changes..." | tee -a "$FIX_LOG"
@@ -117,31 +114,54 @@ jobs:
           fi
           git config --global user.name  "${{ inputs.bot_name }}"
           git config --global user.email "${{ inputs.bot_email }}"
-          msg="ci(fixer): normalize .gitattributes, resolve workflow conflicts (caller=${{ inputs.caller }})"
-          git commit -m "$msg" | tee -a "$FIX_LOG"
+          git commit -m "ci(fixer): normalize attributes, resolve workflow conflicts (caller=${{ inputs.caller }})" | tee -a "$FIX_LOG"
           echo "nothing_to_commit=false" >> "$GITHUB_OUTPUT"
+
+      # === NEW: Ensure aln-analyze exists ===
+      - name: Ensure aln-analyze CLI
+        run: |
+          if command -v aln-analyze >/dev/null 2>&1; then
+            echo "aln-analyze already available" | tee -a "$FIX_LOG"
+          else
+            echo "Installing aln-analyze..." | tee -a "$FIX_LOG"
+            set +e
+            python3 -m pip install --upgrade pip && pip install aln-analyze
+            if ! command -v aln-analyze >/dev/null 2>&1; then
+              echo "::warning::Unable to install via pip, trying binary fetch" | tee -a "$FIX_LOG"
+              curl -sL -o aln-analyze https://github.com/Doctor0Evil/ALN_ProgrammingLanguage/releases/latest/download/aln-analyze-linux-x64 \
+                && chmod +x aln-analyze \
+                && sudo mv aln-analyze /usr/local/bin/ || true
+            fi
+            set -e
+          fi
+
+      - name: Run aln-analyze (safe mode)
+        run: |
+          if command -v aln-analyze >/dev/null 2>&1; then
+            aln-analyze --input /github/logs --output /tmp/failure.lst --profane-allow 'fuck,shit,bitch,asshole,cunt' \
+              || echo "::warning::aln-analyze exited with an error"
+          else
+            echo "::error::aln-analyze not found — skipping analysis"
+          fi
 
       - name: Rebase and push
         id: push
         continue-on-error: true
         run: |
-          set -e
           target="${{ steps.branch.outputs.default_branch }}"
           git fetch origin "$target" | tee -a "$FIX_LOG"
-          # Handle detached HEAD gracefully
           if ! git rev-parse --abbrev-ref HEAD | grep -qv '^HEAD$'; then
-            echo "On detached HEAD; creating temp branch for push" | tee -a "$FIX_LOG"
             git checkout -b "fixer/${GITHUB_RUN_ID}" | tee -a "$FIX_LOG"
           fi
-          git pull --rebase origin "$target" | tee -a "$FIX_LOG" || true
+          git pull --rebase origin "$target" || true
           git push origin HEAD:"$target" | tee -a "$FIX_LOG"
 
-      - name: Fallback to PR if push failed or nothing to commit
-        if: steps.push.outcome == 'failure' || steps.commit.outputs.nothing_to_commit == 'true'
+      - name: Fallback to PR if push failed
+        if: steps.push.outcome == 'failure'
         uses: peter-evans/create-pull-request@v6
         with:
-          title: "Fixer PR: normalize workflows and attributes (run ${{ github.run_id }})"
-          commit-message: "ci(fixer): normalize .gitattributes, resolve workflow conflicts"
+          title: "Fixer PR: normalize workflows (run ${{ github.run_id }})"
+          commit-message: "ci(fixer): normalize attributes, resolve workflow conflicts"
           branch: "fixer/autofix-${{ github.run_id }}"
           body: |
             Automated fixes by Workflow Fixer.
@@ -149,14 +169,6 @@ jobs:
             - Depth: `${{ inputs.depth }}`
             - SHA: `${{ github.sha }}`
           delete-branch: true
-          signoff: false
-
-      - name: Loop guard and status
-        run: |
-          echo "Depth remaining: ${LOOP_DEPTH}" | tee -a "$FIX_LOG"
-          if [ "${LOOP_DEPTH}" -le 0 ]; then
-            echo "Loop depth exhausted; stopping recursion." | tee -a "$FIX_LOG"
-          fi
 
       - name: Upload fixer logs
         if: always()
