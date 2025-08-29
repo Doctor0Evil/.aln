@@ -4,7 +4,7 @@ The **ALN_Programming_Language** repository page should be updated to reflect th
 
 # 🌌 ALN Fantasia — Universal Platform & Runtime
 
-*A Universal AI-Native Fantasy Language & Runtime, Born in Conversation — Built for Creation*  
+*A Universal AI-Native Fantasy Language & Runtime, Born in Conversation — Built for Creation*
 **MIT License | Open Source | Game, Lore, POS, and Virtual Hardware Modules**
 
 ***
@@ -41,24 +41,24 @@ The **ALN_Programming_Language** repository page should be updated to reflect th
 
 ## ⏳ How to Play & Develop
 
-1. **Clone:**  
+1. **Clone:**
    ```bash
    git clone https://github.com/Doctor0Evil/ALN_Programming_Language.git
    cd ALN_Programming_Language
    ```
-2. **Run Examples / Games:**  
+2. **Run Examples / Games:**
    ```bash
    aln run examples/aln_fantasia/queststart.aln
    # OR for Docker:
    docker-compose -f docker/Docker-Compose.yml up -d
    ```
-3. **Core Commands:**  
+3. **Core Commands:**
    - `aln.game.dice { sides: 20 }` — Roll a D20
    - `aln.game.quest { action: "explore", location: "cave" }` — Begin quest
    - `aln.game.hangman { letter: "A" }` — Play hangman
    - (See `/docs/PLAYBOOK.md` for the full in-game command menu)
 
-4. **Contribution Workflow:**  
+4. **Contribution Workflow:**
    Fork → Feature branch → Commit & PR → Community Receipt Review → Merge.[1]
 
 ***
@@ -84,8 +84,8 @@ The **ALN_Programming_Language** repository page should be updated to reflect th
 
 ***
 
-**Ready to contribute or play?**  
-Clone, roll, explore, and help evolve the ALN Fantasia ecosystem!  
+**Ready to contribute or play?**
+Clone, roll, explore, and help evolve the ALN Fantasia ecosystem!
 *Never break receipt-format parity, always import `std`, and use `NAV_MENU` everywhere for logs and UI.*
 
 ***
