@@ -3,7 +3,7 @@
 ;; [ALN CLI] - Core Simulation & Enforcement Script
 ;; Purpose: Enforce full "REAL" simulation environment using ALN's Framework.
 ;;
-;; Definitions of combat logic, event pathways, internal AI enforcement, logging, and CLI action tracing. 
+;; Definitions of combat logic, event pathways, internal AI enforcement, logging, and CLI action tracing.
 ;; This script operates at FULL_DEBUG_LEVEL to strictly simulate game events, decisions, and player/system consequences.
 
 (defparameter *player-state* (make-hash-table))
