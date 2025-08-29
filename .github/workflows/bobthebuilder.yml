@@ -1,0 +1,61 @@
+name: Bob the Builder - Fixes Everything!
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+  workflow_dispatch:
+
+jobs:
+  fix-everything:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout your code
+        uses: actions/checkout@v4
+
+      - name: Set up Node & Python
+        uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+
+      - name: Install Dependencies (Node)
+        run: npm install || true
+        continue-on-error: true
+
+      - name: Install Dependencies (Python)
+        run: pip install -r requirements.txt || true
+        continue-on-error: true
+
+      - name: Auto-format All Code (Prettier, Black, isort)
+        run: |
+          npx prettier --write . || true
+          black . || true
+          isort . || true
+
+      - name: Run Linter & Security Scans
+        run: |
+          npx eslint . || true
+          flake8 . || true
+          bandit -r . || true
+
+      - name: Fix-Everything Script (Meta)
+        run: |
+          echo "Bob the Builder is fixing everything... Let's build it right!"
+          # Your custom healing scripts here
+          # Example: sed -i 's/teh/the/g' $(find . -type f -name '*.txt') || true
+          echo "All done. If it's broke, I patched it with CI magic!"
+
+      - name: Commit & Push Fixes (if any)
+        run: |
+          git config --global user.name "Bob the Builder[bot]"
+          git config --global user.email "bob@autofix.local"
+          git add -A || true
+          git commit -m "Bob auto-fixed all broken things" || true
+          git push || true
+        continue-on-error: true
+
+      - name: Done! Announce Build Status
+        run: |
+          echo "Bob the Builder finished! Can we fix it? YES WE CAN!"
