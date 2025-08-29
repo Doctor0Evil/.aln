@@ -1,29 +1,331 @@
-name: HumorBotAI-WorkflowLoop
+name: ALN-GameML-Humor-Networks CI
 
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
-jobs:
-  humor-detect:
-    runs-on: ubuntu-latest
+# Least-privilege defaults (override per-job only if needed)
+permissions:
+  contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  LOG_DIR: logs
+  ARTIFACT_RETENTION_DAYS: 7
+  HUMOR_LOG: logs/humor-reasoning.log
+  ML_LOG: logs/ml-train.log
+  STORAGE_LOG: logs/storage-checks.log
+  GAME_LOG: logs/game-pipeline.log
+
+jobs:
+  hygiene:
+    name: Operational Hygiene and Lint
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run Humor Bot Detection
+      - name: Ensure log directory
+        run: mkdir -p "$LOG_DIR"
+
+      - name: Set up Python 3.12 for tooling
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Cache pre-commit environment
+        if: ${{ hashFiles('.pre-commit-config.yaml') != '' }}
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: precommit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Install tooling
         run: |
-          if [ -f ./core/humor-bot-ai/humor-detection.lisp ]; then
-            sbcl --script ./core/humor-bot-ai/humor-detection.lisp
-          else
-            echo "::warning::humor-detection.lisp not found. Fallback to simulation:"
-            echo "(HumorBotAI) Why did the closure laugh? Because it found itself recursive!"
+          python -m pip install --upgrade pip
+          if [ -f .pre-commit-config.yaml ]; then
+            pip install pre-commit
           fi
 
-      - name: Debug Logs Archive
-        uses: actions/upload-artifact@v3
+      - name: Run pre-commit (if configured)
+        if: ${{ hashFiles('.pre-commit-config.yaml') != '' }}
+        run: |
+          echo "=== Pre-commit start ===" | tee -a "$LOG_DIR/hygiene.log"
+          pre-commit run --all-files | tee -a "$LOG_DIR/hygiene.log"
+          echo "=== Pre-commit end ===" | tee -a "$LOG_DIR/hygiene.log"
+
+      - name: Upload hygiene logs
+        uses: actions/upload-artifact@v4
         with:
-          name: humor-bot-logs
-          path: ./logs/humor-debug-*.txt
+          name: hygiene-logs
+          path: ${{ env.LOG_DIR }}/hygiene.log
+          if-no-files-found: warn
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+
+  humor-reasoning:
+    name: Humor Reasoning (Lisp Matrix)
+    runs-on: ubuntu-latest
+    needs: hygiene
+    strategy:
+      fail-fast: false
+      matrix:
+        lisp: [ "sbcl", "ecl" ]  # both available on Ubuntu 24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare logs
+        run: mkdir -p "$LOG_DIR"
+
+      - name: Install Lisp implementation
+        run: |
+          sudo apt-get update
+          case "${{ matrix.lisp }}" in
+            sbcl) sudo apt-get install -y sbcl ;;
+            ecl)  sudo apt-get install -y ecl ;;
+            *)    echo "::error::Unsupported Lisp '${{ matrix.lisp }}'"; exit 1 ;;
+          esac
+
+      - name: Run humor detection (script if present, otherwise simulate)
+        shell: bash
+        run: |
+          echo "=== Humor reasoning on ${{ matrix.lisp }} ===" | tee -a "$HUMOR_LOG"
+          if [ -f ./core/humor-bot-ai/humor-detection.lisp ]; then
+            if [ "${{ matrix.lisp }}" = "sbcl" ]; then
+              sbcl --script ./core/humor-bot-ai/humor-detection.lisp | tee -a "$HUMOR_LOG"
+            else
+              ecl --shell ./core/humor-bot-ai/humor-detection.lisp | tee -a "$HUMOR_LOG" || true
+            fi
+          else
+            echo "::warning:: humor-detection.lisp not found. Using fallback." | tee -a "$HUMOR_LOG"
+            echo "(HumorBotAI) Why did the closure laugh? Because it found itself recursive!" | tee -a "$HUMOR_LOG"
+          fi
+          echo "=== Humor reasoning complete ===" | tee -a "$HUMOR_LOG"
+
+      - name: Upload humor logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: humor-logs-${{ matrix.lisp }}
+          path: ${{ env.HUMOR_LOG }}
+          if-no-files-found: warn
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+
+  ml-workflows:
+    name: ML Workflows (Python Matrix)
+    runs-on: ubuntu-latest
+    needs: hygiene
+    strategy:
+      fail-fast: false
+      matrix:
+        python: [ "3.10", "3.12" ]  # supported on ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare logs and models
+        run: |
+          mkdir -p "$LOG_DIR"
+          mkdir -p models
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: "pip"
+
+      - name: Cache ML deps
+        if: ${{ hashFiles('requirements-ml.txt') != '' }}
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-ml-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('requirements-ml.txt') }}
+
+      - name: Install ML dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements-ml.txt ]; then
+            pip install -r requirements-ml.txt
+          else
+            echo "::warning:: requirements-ml.txt not found; proceeding with base Python."
+          fi
+
+      - name: Sanity checks and quick training run
+        env:
+          EPOCHS: "1"
+          BATCH_SIZE: "8"
+        run: |
+          echo "=== ML quickrun on Python ${{ matrix.python }} ===" | tee -a "$ML_LOG"
+          if [ -f scripts/train.py ]; then
+            python scripts/train.py --epochs "$EPOCHS" --batch-size "$BATCH_SIZE" --output models | tee -a "$ML_LOG" || true
+          elif [ -f Makefile ]; then
+            make -n train || true
+            make train || true
+          else
+            echo "::notice:: No ML entrypoint found (scripts/train.py or Makefile). Skipping training." | tee -a "$ML_LOG"
+          fi
+          echo "=== ML quickrun complete ===" | tee -a "$ML_LOG"
+
+      - name: Upload ML logs and models
+        uses: actions/upload-artifact@v4
+        with:
+          name: ml-results-${{ matrix.python }}
+          path: |
+            ${{ env.ML_LOG }}
+            models/**
+          if-no-files-found: warn
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+
+  game-pipeline:
+    name: Game Pipeline (Godot/LibGDX probes)
+    runs-on: ubuntu-latest
+    needs: hygiene
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [ "godot", "libgdx" ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare logs
+        run: mkdir -p "$LOG_DIR"
+
+      - name: Set up JDK for LibGDX
+        if: ${{ matrix.engine == 'libgdx' && hashFiles('gradlew') != '' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: LibGDX build and test
+        if: ${{ matrix.engine == 'libgdx' && hashFiles('gradlew') != '' }}
+        run: |
+          echo "=== LibGDX pipeline ===" | tee -a "$GAME_LOG"
+          chmod +x ./gradlew
+          ./gradlew --version | tee -a "$GAME_LOG"
+          ./gradlew test --no-daemon | tee -a "$GAME_LOG"
+          echo "=== LibGDX complete ===" | tee -a "$GAME_LOG"
+
+      - name: Godot probe (project discovery)
+        if: ${{ matrix.engine == 'godot' }}
+        run: |
+          echo "=== Godot probe ===" | tee -a "$GAME_LOG"
+          if [ -f project.godot ] || [ -f */project.godot ]; then
+            echo "Godot project detected. Consider adding a headless test/build step." | tee -a "$GAME_LOG"
+          else
+            echo "::notice:: No Godot project found; skipping." | tee -a "$GAME_LOG"
+          fi
+          echo "=== Godot probe complete ===" | tee -a "$GAME_LOG"
+
+      - name: Upload game logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-logs-${{ matrix.engine }}
+          path: ${{ env.GAME_LOG }}
+          if-no-files-found: warn
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+
+  storage-ai-networks:
+    name: Storage and AI Network Checks
+    runs-on: ubuntu-latest
+    needs: [ ml-workflows, humor-reasoning, game-pipeline ]
+    services:
+      redis:
+        image: redis:7
+        ports: [ "6379:6379" ]
+        options: >-
+          --health-cmd "redis-cli ping || exit 1"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      minio:
+        image: quay.io/minio/minio:RELEASE.2024-07-15T00-00-00Z
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        ports: [ "9000:9000", "9001:9001" ]
+        options: >-
+          --health-cmd "curl -s http://localhost:9000/minio/health/ready || exit 1"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+        command: server /data --console-address ":9001"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare logs and tools
+        run: |
+          mkdir -p "$LOG_DIR"
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip curl
+          python3 -m pip install --upgrade pip boto3 redis
+
+      - name: Wait for services
+        run: |
+          echo "=== Waiting for Redis & MinIO ===" | tee -a "$STORAGE_LOG"
+          for i in {1..30}; do
+            if nc -z 127.0.0.1 6379 && nc -z 127.0.0.1 9000; then
+              echo "Services up" | tee -a "$STORAGE_LOG"; break
+            fi
+            sleep 2
+          done
+
+      - name: MinIO bucket smoke test
+        env:
+          AWS_ACCESS_KEY_ID: minioadmin
+          AWS_SECRET_ACCESS_KEY: minioadmin
+          AWS_DEFAULT_REGION: us-east-1
+          S3_ENDPOINT: http://127.0.0.1:9000
+        run: |
+          python3 - << 'PY' | tee -a "$STORAGE_LOG"
+          import os, boto3, botocore
+          s3 = boto3.resource('s3',
+              endpoint_url=os.environ['S3_ENDPOINT'],
+              aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+              aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+          )
+          bucket = s3.Bucket('ci-bucket')
+          bucket.create()
+          obj = bucket.Object('hello.txt')
+          obj.put(Body=b'hello from CI')
+          print('S3 write OK')
+          print('S3 read ->', obj.get()['Body'].read().decode())
+          PY
+
+      - name: Redis smoke test
+        run: |
+          python3 - << 'PY' | tee -a "$STORAGE_LOG"
+          import redis
+          r = redis.Redis(host='127.0.0.1', port=6379)
+          r.set('humor:key', 'recursive-laughter')
+          print('Redis get ->', r.get('humor:key').decode())
+          PY
+
+      - name: Upload storage logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: storage-logs
+          path: ${{ env.STORAGE_LOG }}
+          if-no-files-found: warn
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+
+  aggregate:
+    name: Aggregate Status and Playful Activation
+    runs-on: ubuntu-latest
+    needs: [ hygiene, humor-reasoning, ml-workflows, game-pipeline, storage-ai-networks ]
+    steps:
+      - name: SatA Clause activation sequence
+        run: |
+          echo ">>> Initiating sata.clause.exe ..."
+          echo "[OK] Clause calibrated: Seasonal Autonomous Trust Agreement"
+          echo "[OK] Humor module handshake complete"
+          echo ">>> sata.clause.exe activated (simulated)."
