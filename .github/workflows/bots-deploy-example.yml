@@ -1,0 +1,81 @@
+name: bots-deploy-example
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deploy environment"
+        required: true
+        default: "staging"
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  build-and-output:
+    name: Build & Deploy github.aln.bots
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    defaults:
+      run:
+        working-directory: bots
+
+    steps:
+      - name: 📥 Checkout source
+        uses: actions/checkout@v4
+
+      - name: 🛠 Use Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: bots/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: ✅ Lint & Manifest sanity
+        run: |
+          npm run lint --if-present || true
+          node -e "JSON.parse(require('fs').readFileSync('config/bots.manifest.json','utf8')); console.log('manifest: OK')"
+
+      - name: 🐳 Build Docker image
+        run: docker build -t github-aln-bots:latest .
+
+      - name: 🏷 Tag image for GitHub Container Registry
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/github-aln-bots
+          VERSION=sha-${GITHUB_SHA::7}
+          echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          docker tag github-aln-bots:latest $IMAGE_ID:$VERSION
+          docker tag github-aln-bots:latest $IMAGE_ID:latest
+
+      - name: 🔐 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📤 Push image to GHCR
+        run: |
+          docker push $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:latest
+
+      - name: 📜 Show local run command
+        run: |
+          echo "Run locally with:"
+          echo "docker run -p 3000:3000 \\"
+          echo "  -e ALN_APP_ID=\$ALN_APP_ID \\"
+          echo "  -e ALN_PRIVATE_KEY=\$ALN_PRIVATE_KEY \\"
+          echo "  -e ALN_WEBHOOK_SECRET=\$ALN_WEBHOOK_SECRET \\"
+          echo "  ghcr.io/${{ github.repository_owner }}/github-aln-bots:latest"
+
+      - name: ℹ️ Deployment metadata
+        run: |
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Image pushed: $IMAGE_ID:$VERSION"
+          echo "Trigger: $GITHUB_ACTOR @ $GITHUB_REF"
