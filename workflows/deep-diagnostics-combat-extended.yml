@@ -19,7 +19,7 @@
         (game-world-events '())
         (combat-trigger nil)
         (npc '("NPC_Name" . "Debugger_Enforcer")))
-    
+
     ;; Step 1: Workspace Init
     (push "Workspace cleanup and prep complete." workflow-log)
 
@@ -40,7 +40,7 @@
           (setq humor-check 'verified)
           (push "Deep AI Humor Compliance: VERIFIED." workflow-log)
           (push "Skipping in-game combat trigger." workflow-log))))
-    
+
     ;; Build final execution state
     (list :workspace workspace
           :humor-check humor-check
