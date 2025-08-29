@@ -1,0 +1,28 @@
+WORKFLOW NAME "LOL FLOOR-TO-CEILING GIT WIZARD"
+ON push branches main,develop
+  pullrequest branches main
+
+JOBS
+  JOB lol-it-to-the-ceiling
+    RUNSON ubuntu-latest
+    STEPS
+      # Checkout all repo code (floor sweep)
+      STEP "Checkout" 
+        USES actions/checkout@v4
+        
+      # Show off, sweep in logs, raise the bar ("ceiling")
+      STEP "Echo Laughing Logs"
+        RUN echo "Sweeping commits from the floor, launching them to the ceiling! $(date)"
+        
+      # ALN-syntax joke automation!
+      STEP "Ceiling-lol"
+        RUN >
+          echo "======== GIT LOL LIFTOFF ========"
+          git log --oneline | tee gitfloor.log
+          echo "======== REACHING FOR THE GIT CEILING ========"
+          tail -n 10 gitfloor.log | awk '{ print \"🎈 \"$0 \" 🎉\" }'
+          echo "Big laugh: Those are your last 10 commits liftoff complete!"
+      
+      # Optional: Push a punchline
+      STEP "Celebrate"
+        RUN echo "Done! Your Git workflow is now officially funnier and taller than before."
