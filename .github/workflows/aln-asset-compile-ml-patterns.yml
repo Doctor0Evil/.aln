@@ -1,0 +1,46 @@
+;; ALN_Programming_Language/.github/workflows/aln-asset-compile-ml-patterns.yml
+;; Robust compilation and ML pattern workflow for .aln scripts, ML integration, asset management, directory detection.
+;; Compound event debug, continuous output, and event flag trace.
+
+workflow aln-asset-compile-ml-patterns
+  on:
+    push:
+      branches: [ "main", "dev" ]
+      paths:
+        - .aln/**
+        - .github/workflows/**
+        - src/Main/Systems/**
+    workflow_dispatch:
+  jobs:
+    detect-and-compile-aln:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Detect .aln directory in root
+          id: detect_aln
+          run: |
+            if [ -d ".aln" ]; then
+              echo "::notice::.aln directory detected in repo root"
+              echo "found_aln=true" >> $GITHUB_ENV
+            else
+              echo "::error::.aln directory NOT found in repo root"
+              echo "found_aln=false" >> $GITHUB_ENV
+            fi
+        - name: Compile binaries from .aln scripts
+          if: env.found_aln == 'true'
+          run: |
+            for f in .aln/*.aln; do
+              echo "Compiling $f..."
+              ./aln_compiler "$f" -o "src/Main/Binaries/$(basename $f .aln).bin"
+            done
+        - name: Parse ALN interpreters/modules for ML workflows
+          if: env.found_aln == 'true'
+          run: |
+            for f in .aln/*.aln; do
+              echo "Parsing $f for ML pattern detection..."
+              python3 scripts/parse_aln_ml_patterns.py "$f"
+            done
+        - name: Set .git path include and connect workflows
+          run: |
+            echo "Git root: $(git rev-parse --show-toplevel)"
+            echo "Connecting .github/workflows logic to .aln and binaries for ML integration."
