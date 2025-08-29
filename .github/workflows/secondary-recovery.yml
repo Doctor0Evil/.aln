@@ -1,7 +1,4 @@
-# File: .github/workflows/secondary-recovery.yml
-
 name: Secondary Recovery Pipeline
-
 on:
   workflow_dispatch:
   workflow_run:
@@ -11,12 +8,54 @@ on:
 
 jobs:
   secondary-recovery:
+    name: Secondary Recovery Job
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Secondary Recovery Task
+        
+      - name: Ensure recovery script is present
+        run: |
+          if [ ! -x "./secondary-recovery.sh" ]; then
+            echo "::error::Recovery script 'secondary-recovery.sh' is missing or not executable."
+            exit 1
+          fi
+          
+      - name: Run Secondary Recovery Task
+        id: secondary_recovery
+        continue-on-error: true
         run: |
           echo "Running secondary recovery logic..."
-          ./secondary-recovery.sh || echo "::warning::Recovery script fallback engaged"
+          ./secondary-recovery.sh
+          
+      - name: Handle Recovery Failure
+        if: steps.secondary_recovery.outcome == 'failure'
+        run: |
+          echo "::warning::Secondary recovery failed. Fallback procedures engaged."
+          echo "Review logs and consider manual intervention."
+          
+      - name: Upload Recovery Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovery-logs
+          path: |
+            ./recovery*.log
+            ./logs/
+            !./logs/exclude-this.log
+            
+      - name: Notify on Recovery Events
+        if: failure()
+        run: |
+          echo "Sending notifications for recovery failure."
+          # Optional: Integrate with Slack, Teams, or email APIs here.
+          
+      - name: Job Summary
+        run: |
+          if [ "${{ steps.secondary_recovery.outcome }}" = "success" ]; then
+            echo "### Secondary recovery completed **successfully** :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Secondary recovery **failed** :x:" >> $GITHUB_STEP_SUMMARY
+            echo "Logs and fallback info uploaded as workflow artifacts." >> $GITHUB_STEP_SUMMARY
+          fi
