@@ -1,11 +1,11 @@
-# File: .github/workflows/data-ingestion-resync.yml
-
 name: Data Ingestion Resync Pipeline
 
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["Resilient Smart Work AI Pipeline", "Dynamic Resilient AI Pipeline"]
+    workflows:
+      - "Resilient Smart Work AI Pipeline"
+      - "Dynamic Resilient AI Pipeline"
     types:
       - completed
 
@@ -15,6 +15,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: List files in workspace (debug)
+        run: ls -lah
 
       - name: Resync Data Ingestion Streams
         run: |
