@@ -23,7 +23,7 @@
    '(:tool "lisp"                  :desc "ALN meta-logic, AI scripting, devops benders")
    '(:tool "godot.engine"          :desc "Game/Pixel engine: scenes/art/AI/chaos event hooks")
    '(:tool "perplexity.aln.cli"    :desc "Perplexity-native CLI: devops, chat, assetgen, code")))
-  
+
 (defun humor-safe-devops (input)
   (if (or (intelligence.regulator:flagged-term-present? input)
           (intelligence.regulator:flagged-trigger-present? input))
