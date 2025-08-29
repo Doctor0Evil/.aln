@@ -1,0 +1,45 @@
+# ───────────────────────────────────────────────
+# ALN Source Files
+# ───────────────────────────────────────────────
+*.aln text eol=lf
+*.aln linguist-language=ALN
+*.aln linguist-detectable=true
+
+# ───────────────────────────────────────────────
+# ALN Scripts & Configs
+# ───────────────────────────────────────────────
+*.ps1 text eol=lf
+*.psm1 text eol=lf
+*.yaml text eol=lf
+*.yml   text eol=lf
+
+# ───────────────────────────────────────────────
+# GitHub Actions Workflows
+# ───────────────────────────────────────────────
+.github/workflows/*.yml  linguist-language=YAML
+.github/workflows/*.yaml linguist-language=YAML
+.github/scripts/*.ps1    text eol=lf
+.github/scripts/*        text eol=lf  # Allow executables
+
+# ───────────────────────────────────────────────
+# Kubernetes Manifests
+# ───────────────────────────────────────────────
+k8s-manifests/*.yaml linguist-language=YAML
+k8s-manifests/*.yml  linguist-language=YAML
+
+# ───────────────────────────────────────────────
+# Shell Scripts
+# ───────────────────────────────────────────────
+*.sh text eol=lf
+
+# ───────────────────────────────────────────────
+# Documentation & Config Files
+# ───────────────────────────────────────────────
+*.md    text eol=lf
+*.json  text eol=lf
+*.toml  text eol=lf
+
+# ───────────────────────────────────────────────
+# Global Normalization
+# ───────────────────────────────────────────────
+* text=auto eol=lf
