@@ -1,0 +1,167 @@
+name: Workflow Fixer
+
+on:
+  workflow_call:
+    inputs:
+      caller:
+        description: "Who invoked the fixer"
+        required: false
+        type: string
+        default: "unknown"
+      depth:
+        description: "Loop guard (remaining hops)"
+        required: false
+        type: number
+        default: 2
+      bot_name:
+        description: "Commit author name"
+        required: false
+        type: string
+        default: "github-actions[bot]"
+      bot_email:
+        description: "Commit author email"
+        required: false
+        type: string
+        default: "41898282+github-actions[bot]@users.noreply.github.com"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: fixer-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    env:
+      LOG_DIR: logs
+      FIX_LOG: logs/fixer.log
+      LOOP_DEPTH: ${{ inputs.depth }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Init logs
+        run: |
+          mkdir -p "$LOG_DIR"
+          echo "=== Fixer start | caller=${{ inputs.caller }} depth=${LOOP_DEPTH} sha=${GITHUB_SHA} ===" | tee -a "$FIX_LOG"
+
+      - name: Determine default branch
+        id: branch
+        run: |
+          set -e
+          default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@')"
+          if [ -z "$default_branch" ]; then default_branch="main"; fi
+          echo "default_branch=$default_branch" | tee -a "$FIX_LOG"
+          echo "default_branch=$default_branch" >> "$GITHUB_OUTPUT"
+
+      - name: Normalize .gitattributes
+        run: |
+          if [ -f .gitattributes ]; then
+            cp .gitattributes .gitattributes.bak
+            # Trim leading spaces before comment markers; ensure LF line endings
+            sed -i 's/^[[:space:]]*#/#/' .gitattributes
+            sed -i 's/\r$//' .gitattributes
+            if ! diff -q .gitattributes.bak .gitattributes >/dev/null; then
+              echo "Normalized .gitattributes" | tee -a "$FIX_LOG"
+              git add .gitattributes
+            else
+              echo "No .gitattributes changes needed" | tee -a "$FIX_LOG"
+            fi
+          else
+            echo ".gitattributes not present; skipping" | tee -a "$FIX_LOG"
+          fi
+
+      - name: Resolve workflow conflicts safely
+        run: |
+          set -e
+          if ls .github/workflows/*.yml >/dev/null 2>&1; then
+            files="$(grep -lR '<<<<<<<\|=======\|>>>>>>>' .github/workflows || true)"
+            if [ -n "$files" ]; then
+              echo "Conflict markers found in:" | tee -a "$FIX_LOG"
+              echo "$files" | tee -a "$FIX_LOG"
+              for f in $files; do
+                echo "Resolving $f using --ours" | tee -a "$FIX_LOG"
+                git checkout --ours "$f" || true
+                git add "$f" || true
+              done
+            else
+              echo "No conflict markers in workflows" | tee -a "$FIX_LOG"
+            fi
+          else
+            echo "No workflow files found" | tee -a "$FIX_LOG"
+          fi
+
+      - name: Stage unstaged changes (safety net)
+        run: |
+          if ! git diff --quiet; then
+            echo "Staging unstaged changes..." | tee -a "$FIX_LOG"
+            git add -A
+          else
+            echo "No unstaged changes" | tee -a "$FIX_LOG"
+          fi
+
+      - name: Commit if staged
+        id: commit
+        run: |
+          if git diff --cached --quiet; then
+            echo "nothing_to_commit=true" >> "$GITHUB_OUTPUT"
+            echo "No staged changes to commit" | tee -a "$FIX_LOG"
+            exit 0
+          fi
+          git config --global user.name  "${{ inputs.bot_name }}"
+          git config --global user.email "${{ inputs.bot_email }}"
+          msg="ci(fixer): normalize .gitattributes, resolve workflow conflicts (caller=${{ inputs.caller }})"
+          git commit -m "$msg" | tee -a "$FIX_LOG"
+          echo "nothing_to_commit=false" >> "$GITHUB_OUTPUT"
+
+      - name: Rebase and push
+        id: push
+        continue-on-error: true
+        run: |
+          set -e
+          target="${{ steps.branch.outputs.default_branch }}"
+          git fetch origin "$target" | tee -a "$FIX_LOG"
+          # Handle detached HEAD gracefully
+          if ! git rev-parse --abbrev-ref HEAD | grep -qv '^HEAD$'; then
+            echo "On detached HEAD; creating temp branch for push" | tee -a "$FIX_LOG"
+            git checkout -b "fixer/${GITHUB_RUN_ID}" | tee -a "$FIX_LOG"
+          fi
+          git pull --rebase origin "$target" | tee -a "$FIX_LOG" || true
+          git push origin HEAD:"$target" | tee -a "$FIX_LOG"
+
+      - name: Fallback to PR if push failed or nothing to commit
+        if: steps.push.outcome == 'failure' || steps.commit.outputs.nothing_to_commit == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "Fixer PR: normalize workflows and attributes (run ${{ github.run_id }})"
+          commit-message: "ci(fixer): normalize .gitattributes, resolve workflow conflicts"
+          branch: "fixer/autofix-${{ github.run_id }}"
+          body: |
+            Automated fixes by Workflow Fixer.
+            - Caller: `${{ inputs.caller }}`
+            - Depth: `${{ inputs.depth }}`
+            - SHA: `${{ github.sha }}`
+          delete-branch: true
+          signoff: false
+
+      - name: Loop guard and status
+        run: |
+          echo "Depth remaining: ${LOOP_DEPTH}" | tee -a "$FIX_LOG"
+          if [ "${LOOP_DEPTH}" -le 0 ]; then
+            echo "Loop depth exhausted; stopping recursion." | tee -a "$FIX_LOG"
+          fi
+
+      - name: Upload fixer logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fixer-logs-${{ github.run_id }}
+          path: ${{ env.FIX_LOG }}
+          if-no-files-found: warn
