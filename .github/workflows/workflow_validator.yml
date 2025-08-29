@@ -1,0 +1,54 @@
+name: Workflow Validator
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      LOG_DIR: logs
+      VAL_LOG: logs/validator.log
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Init logs
+        run: mkdir -p "$LOG_DIR" && echo "=== Validator start ===" | tee -a "$VAL_LOG"
+
+      - name: Install yamllint
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install yamllint
+
+      - name: Lint workflow YAML
+        run: |
+          echo "Linting .github/workflows" | tee -a "$VAL_LOG"
+          if ls .github/workflows/*.yml >/dev/null 2>&1; then
+            yamllint -d "{extends: default, rules: {line-length: {max: 140}}}" .github/workflows | tee -a "$VAL_LOG"
+          else
+            echo "No workflow files found." | tee -a "$VAL_LOG"
+          fi
+
+      - name: Detect merge conflict markers
+        run: |
+          conflicts="$(grep -lR '<<<<<<<\|=======\|>>>>>>>' .github/workflows || true)"
+          if [ -n "$conflicts" ]; then
+            echo "::error::Conflict markers present in workflow files:"
+            echo "$conflicts" | tee -a "$VAL_LOG"
+            exit 1
+          else
+            echo "No conflict markers detected." | tee -a "$VAL_LOG"
+          fi
+
+      - name: Upload validator logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validator-logs-${{ github.run_id }}
+          path: ${{ env.VAL_LOG }}
+          if-no-files-found: warn
