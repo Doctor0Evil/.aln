@@ -26,7 +26,7 @@ jobs:
       - name: 📥 Checkout source
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # full history for .aln ops
+          fetch-depth: 0
 
       - name: 🛠 Use Node 18
         uses: actions/setup-node@v4
@@ -43,15 +43,19 @@ jobs:
           npm run lint --if-present || true
           node -e "JSON.parse(require('fs').readFileSync('config/bots.manifest.json','utf8')); console.log('manifest: OK')"
 
-      - name: 🛠 ML Background Repairs (.yml / .aln)
+      - name: 🧠 ML Background Repairs (.yml / .aln)
         run: |
           echo "🔧 Running evolve.real.aln repairs..."
           git ls-files '*.yml' '*.yaml' '*.aln' | while read file; do
             echo "Repairing $file"
-            # Example operator hook: .aln operator rewrites or lints
             node scripts/aln-repair-operator.js "$file" --adapt=fun.adapt=evolve.real.aln
           done
-          git diff --exit-code || (git config user.name "aln-bot" && git config user.email "aln-bot@users.noreply.github.com" && git commit -am "chore: background repairs (.yml/.aln) via evolve.real.aln" && git push)
+          if ! git diff --quiet; then
+            git config user.name "aln-bot"
+            git config user.email "aln-bot@users.noreply.github.com"
+            git commit -am "chore: background repairs (.yml/.aln) via evolve.real.aln"
+            git push
+          fi
 
       - name: 🐳 Build Docker image
         run: docker build -t github-aln-bots:latest .
@@ -87,11 +91,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🔽 Pull image from GHCR
-        run: |
-          docker pull ${{ env.IMAGE_ID }}:${{ env.VERSION }}
+        run: docker pull ${{ env.IMAGE_ID }}:${{ env.VERSION }}
 
       - name: 🚀 Run container
         run: |
+          docker rm -f github-aln-bots || true
           docker run -d --name github-aln-bots \
             -p 3000:3000 \
             -e ALN_APP_ID=${{ secrets.ALN_APP_ID }} \
