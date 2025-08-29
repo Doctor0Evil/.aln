@@ -2,7 +2,7 @@ Below are three fully structured "personality vectors" for humor & expressive di
 
 ***
 
-## ALN Personality Vectors  
+## ALN Personality Vectors
 **GitHub Path:** `https://github.com/Doctor0Evil/ALN_Programming_Language.git/aln/modules/personality/aln_personality_vectors.aln`
 
 ```aln
@@ -57,7 +57,7 @@ object ALN.Personality.MetaSatirist
 
 ***
 
-## LISP Personality Vectors  
+## LISP Personality Vectors
 **GitHub Path:** `https://github.com/Doctor0Evil/ALN_Programming_Language.git/lisp/modules/personality/lisp_personality_vectors.lisp`
 
 ```lisp
