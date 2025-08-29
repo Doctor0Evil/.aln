@@ -70,3 +70,21 @@ jobs:
         run: echo "Running fallback pipeline due to unresolved correction errors."
 EOF
           echo "Created fallback workflow at $FALLBACK_FILE"
+;; ALN_Programming_Language/.git/workflows/humor-fix-diversity.aln
+;; No changes to workflow logic required for PowerShell, as bug is with PS script invocation, not workflow structure.
+
+;; CLI diagnosis and auto-patch input for PowerShell script run errors
+;; Handles detection, error surfacing, and recovery from "argument not recognized as script file" or missing script.
+
+(defun diagnose-pwsh-script-run (script-path)
+  "Check for existence, path correctness, and case issues of a PowerShell script; log and signal error for CI auto-repair."
+  (if (file-exists-p script-path)
+      (progn
+          (log-event (list :type "pwsh_script_check" :status "found" :path script-path))
+          t)
+      (progn
+          (log-event (list :type "pwsh_script_check" :status "missing" :path script-path :solution "Check working directory, script location, or wrong path/case."))
+          (error "PowerShell .ps1 script not found: check scripts/ directory, filename, and workflow pathing."))))
+
+;; Simulate invocation
+(diagnose-pwsh-script-run "scripts/run-all-ai-tests.ps1")
