@@ -5,7 +5,7 @@ Manifest-driven GitHub App that listens to repo events and responds to `/aln.*` 
 ## Quick start
 
 1. Install dependencies: `npm ci`
-2. Run local (needs ngrok or tunnel):  
+2. Run local (needs ngrok or tunnel):
    - `ALN_APP_ID=... ALN_PRIVATE_KEY="..." ALN_WEBHOOK_SECRET=..." npm start`
 3. Expose port 3000 and set the GitHub App webhook to your public URL.
 
