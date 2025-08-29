@@ -42,7 +42,7 @@ jobs:
             @($header; $body) | Set-Content -Path $docPath -Encoding UTF8
           }
           elseif (-not (Test-Path $docPath)) {
-@"
+            @"
 # ALN Programming Language – API Reference
 
 _Last updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')_  
@@ -60,7 +60,8 @@ Complete, audit-ready reference for all ALN public APIs.
             git add $docPath
             git commit -m "docs(api): auto-sync api-reference.md from spec [ci skip]" || true
             git push || true
-          } else {
+          }
+          else {
             Write-Host "API reference already up-to-date — no commit."
           }
 
