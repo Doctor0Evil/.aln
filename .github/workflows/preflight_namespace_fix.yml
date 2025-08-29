@@ -1,10 +1,49 @@
-if (git diff --cached --quiet) {
-    Write-Host "✅ No namespace issues found."
-} else {
-    git config --global user.name "github-actions[bot]"
-    git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-    git commit -m "CI/CD: Auto‑correct setup‑pwsh namespace (in‑runner)"
-    git fetch origin main
-    git pull --rebase origin main
-    git push origin main
-}
+name: Preflight Namespace & Workflow Auto‑Fix
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  preflight-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect and auto‑stage changes
+        shell: pwsh
+        run: |
+          $hasUnstaged = (git status --porcelain | Select-String '^[ M]\s').Count -gt 0
+          $hasStaged   = (git diff --cached --name-only).Count -gt 0
+
+          if (-not $hasStaged -and $hasUnstaged) {
+              Write-Host "📌 Unstaged changes found — auto‑adding to index..."
+              git add -A
+          }
+
+          if (git diff --cached --quiet) {
+              Write-Host "✅ No staged changes to commit."
+              exit 0
+          }
+
+          Write-Host "📦 Committing staged changes..."
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "ci(preflight): auto‑fix namespaces & sync workflows [skip ci]" || exit 0
+
+          Write-Host "⬇️ Fetching latest main..."
+          git fetch origin main
+
+          Write-Host "📤 Rebasing and pushing..."
+          git pull --rebase origin main
+          git push origin main
+
+      - name: Report post‑fix status
+        run: |
+          echo "Post‑fix HEAD: $(git rev-parse HEAD)"
+          echo "Branch: $(git branch --show-current)"
