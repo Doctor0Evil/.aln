@@ -17,10 +17,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify and prepare AI script
+        run: |
+          if [ ! -f ./your-ai-script.sh ]; then
+            echo "::error::Primary AI script not found at ./your-ai-script.sh"
+            exit 1
+          fi
+          chmod +x ./your-ai-script.sh
+          file ./your-ai-script.sh
+
       - name: Run Primary Workflow Logic
         id: main-task
         run: |
-          echo "Executing primary pipeline tasks..."
+          echo "=== Executing primary pipeline tasks ==="
           ./your-ai-script.sh
         continue-on-error: true
 
@@ -28,7 +37,7 @@ jobs:
         id: retry-task
         if: failure() && steps.main-task.outcome == 'failure'
         run: |
-          echo "Retrying with dynamic strategy..."
+          echo "=== Retrying with dynamic strategy ==="
           ./your-ai-script.sh --retry
         continue-on-error: true
 
@@ -36,22 +45,24 @@ jobs:
         id: load-balance
         run: |
           echo "Loading corrective routing and volatility strategies..."
-          cat $CORRECTIVE_LOAD_BALANCER
-          echo "CONFIG_HASH=$(sha256sum $CORRECTIVE_LOAD_BALANCER | cut -d ' ' -f1)" >> $GITHUB_ENV
+          cat "$CORRECTIVE_LOAD_BALANCER"
+          echo "CONFIG_HASH=$(sha256sum "$CORRECTIVE_LOAD_BALANCER" | cut -d ' ' -f1)" >> $GITHUB_ENV
 
       - name: Branch into Alternate Workflows
         if: failure() && steps.retry-task.outcome == 'failure'
         run: |
           echo "Both main task and retry failed. Dynamically branching..."
-          echo "Scanning repo for other workflows to invoke..."
-          ls .github/workflows/*.yml | grep -v resilient-smart-work-ai-pipeline-dynamic.yml > workflows.txt
-          echo "Available corrective workflows:"
-          cat workflows.txt
-
-          while read wf; do
-            echo "Triggering corrective workflow: $wf"
-            gh workflow run $(basename $wf)
-          done < workflows.txt
+          ls .github/workflows/*.yml | grep -v "$(basename "$GITHUB_WORKFLOW_FILE")" > workflows.txt || true
+          if [ -s workflows.txt ]; then
+            echo "Available corrective workflows:"
+            cat workflows.txt
+            while read wf; do
+              echo "Triggering corrective workflow: $wf"
+              gh workflow run "$(basename "$wf")"
+            done < workflows.txt
+          else
+            echo "::notice::No alternate workflows found."
+          fi
 
       - name: Diagnostics and Storage
         run: |
