@@ -1,5 +1,4 @@
 name: Deep AI Diagnostic Checks
-
 on:
   workflow_dispatch:
   workflow_run:
@@ -19,16 +18,15 @@ jobs:
           echo "Performing deeper AI model validation and consistency verification..."
           if [[ ! -f ./deep-ai-diagnostics.sh ]]; then
             echo "::warning::deep-ai-diagnostics.sh missing—generating placeholder diagnostic script for human-like humor/reasoning test."
-            cat <<'EOF' > ./deep-ai-diagnostics.sh
-            #!/usr/bin/env bash
-            echo "Deep Humor Reasoning AI Test:"
-            echo "Why did the neural network refuse to cross the road? It couldn't find enough data on the other side!"
-            echo "Simulated diagnostic: Model reasoning and wit modules pass baseline."
-            exit 0
-            EOF
+cat <<'EOF' > ./deep-ai-diagnostics.sh
+#!/usr/bin/env bash
+echo "Deep Humor Reasoning AI Test:"
+echo "Why did the neural network refuse to cross the road? It couldn't find enough data on the other side!"
+echo "Simulated diagnostic: Model reasoning and wit modules pass baseline."
+exit 0
+EOF
             chmod +x ./deep-ai-diagnostics.sh
           fi
-
           ./deep-ai-diagnostics.sh || echo "::error::Deep AI checks detected inconsistencies"
 
       - name: Parse Workload & Recovery Flow
