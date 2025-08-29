@@ -1,0 +1,51 @@
+# Main commands for git and automation workflows
+
+[command "prune-old"]
+description = "Delete obsolete branches from origin"
+run = git fetch --all && git remote prune origin
+
+[alias]
+st = status
+ci = commit -v
+br = branch -a
+lg = log --oneline
+
+[custom-script "deploy-lambda"]
+description = "Trigger AWS Lambda deploy workflow"
+run = python scripts/deploy_lambda.py --env={env}
+
+[user.inputs]
+env = ["prod", "staging", "dev"]
+
+# VSC upgrade modules and secure system operations
+
+[command "upgrade-module"]
+description = "Trigger VSC upgrade and validation checks"
+run = vsc upgrade --module={module} && vsc validate --module={module}
+
+[module.inputs]
+module = ["ai-core", "neurogatt-defender", "blackice", "defi-adapter"]
+
+[command "secure-model-acquire"]
+description = "Obtain and register a classified government AI model"
+run = vsc model acquire --source=agency --model={model_id}
+
+[model.inputs]
+model_id = ["GOV-ML-001", "BLACKICE-AI", "NEURO-GATT-PRO"]
+
+[command "keygen-activate"]
+description = "Activate VSC autonomous keygen for secure integration"
+run = vsc keygen activate --mode={mode} --audit={audit}
+
+[keygen.inputs]
+mode = ["permanent", "timed", "audit-only"]
+audit = ["enabled", "disabled"]
+
+# Virtual system/game automation
+
+[command "plague-protocol-launch"]
+description = "Start the horror game Plague Protocol – MT6883"
+run = vsys game launch --title="Plague Protocol – MT6883" --mode={mode}
+
+[game.inputs]
+mode = ["singleplayer", "sandbox", "audit"]
