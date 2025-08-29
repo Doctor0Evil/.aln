@@ -160,7 +160,7 @@
 
 (defun run-policy-loop (input classification &optional (severity "normal") violation-code prev-class)
   (let ((result (policy-check classification severity violation-code prev-class input)))
-    (cond 
+    (cond
       ((not result)
        (setf *flagged-last-action* input)
        (format t "~&BLOCKED: Output denied by policy. See logs~%"))
@@ -181,12 +181,12 @@
   name
   emotions      ;; alist: ((frustrated . 0.41) (wary . 0.8) ...)
   priorities    ;; alist: ((nightkin . 1.0) ...)
-  humor-level   
+  humor-level
   status)
 
 (defun adjust-emotion (npc action)
   "Adjust NPC emotion parameters; action = context keyword e.g., 'helped, 'delayed, 'joke"
-  (let ((emap `((helped . ((hope . 0.4))) (delayed . ((frustrated . 0.22))) 
+  (let ((emap `((helped . ((hope . 0.4))) (delayed . ((frustrated . 0.22)))
                 (betrayed . ((skepticism . 0.2))) (joke . ((frustrated . -0.12)))))
         (emo (npc-emotions npc)))
     (dolist (e (cdr (assoc action emap)))
@@ -221,7 +221,7 @@
 (defun compute-player-stats (player)
   (let* ((stat-keys '(:S :P :E :C :I :A :L))
          (base (player-base-stats player))
-         (sum-mods (reduce (lambda (acc mod) 
+         (sum-mods (reduce (lambda (acc mod)
                              (loop for k in stat-keys
                                    do (incf (getf acc k) (getf (cdr mod) k 0)))
                              acc)
