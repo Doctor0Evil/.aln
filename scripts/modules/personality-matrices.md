@@ -110,27 +110,27 @@ To design **serious** and **finely-tuned** character vectors using **realistic p
 
 ### Integration/Usage
 
-- **Instantiate:**  
-  (make-character-matrix  
-  :name "Keene"  
-  :temp :choleric  
-  :conc 0.55  
-  :agree 0.12  
-  :open 0.51  
-  :extra 0.46  
-  :neuro 0.68  
-  :ethics 0.81  
-  :humor 0.22  
-  :mood -0.3  
-  :ctx '(:combat :dialogue)  
-  :traits '(:violent :impulsive :cynical))  
+- **Instantiate:**
+  (make-character-matrix
+  :name "Keene"
+  :temp :choleric
+  :conc 0.55
+  :agree 0.12
+  :open 0.51
+  :extra 0.46
+  :neuro 0.68
+  :ethics 0.81
+  :humor 0.22
+  :mood -0.3
+  :ctx '(:combat :dialogue)
+  :traits '(:violent :impulsive :cynical))
 
-- **Update during session:**  
-  (context-react keene-obj '(:combat))  
-  (apply-buff! keene-obj '(:focus +0.11))  
+- **Update during session:**
+  (context-react keene-obj '(:combat))
+  (apply-buff! keene-obj '(:focus +0.11))
   (safe-output keene-obj) ; *always* filtered for policy/nullification
 
-- **Audit and Logging:**  
+- **Audit and Logging:**
   All state-mods, context-changes, and outputs are meta-logged, ALN-standards-compliant, and mapped to their GitHub workflow for traceability.[1]
 
 ***
@@ -144,23 +144,23 @@ To design **serious** and **finely-tuned** character vectors using **realistic p
 
 ***
 
-## GitHub File Path  
-- `scripts/modules/personality-matrices.ai-components.aln`  
+## GitHub File Path
+- `scripts/modules/personality-matrices.ai-components.aln`
 - Repo: https://github.com/Doctor0Evil/ALN_Programming_Language.git
 
 ***
 
-**Debug Console – Internals/Reasoning/Logic Path:**  
-1. [INIT] New pmatrix created: log meta, randomize axes, assign context.  
-2. [CTX-REACT] On event, axes shifted by context/risk/stressors (e.g., :combat raises stress, drops mood).  
-3. [BUFF-APPLY] Buff/trait applied; logs are stored (fight/flight, morality, focus, etc.).  
+**Debug Console – Internals/Reasoning/Logic Path:**
+1. [INIT] New pmatrix created: log meta, randomize axes, assign context.
+2. [CTX-REACT] On event, axes shifted by context/risk/stressors (e.g., :combat raises stress, drops mood).
+3. [BUFF-APPLY] Buff/trait applied; logs are stored (fight/flight, morality, focus, etc.).
 4. [SANITIZE] When output requested, live scan of all forbidden terms and meta-tokens, nullifies as needed (policy guard enforced).[1]
-5. [TRACE] Every step written to debug stream; all session changes audit-traceable by step/cycle context for full compliance and development reproducibility.  
+5. [TRACE] Every step written to debug stream; all session changes audit-traceable by step/cycle context for full compliance and development reproducibility.
 6. [EXPORT] Module ready for hotpatch/hook-in to any ALN-compliant AI/game system—can drive dialogue/NPC logic or behavior learning-loop.
 
 ***
 
-**Summary:**  
+**Summary:**
 This script provides a complete, practical, and safe way to define and evolve character personality matrices as scalable, serious, and high-fidelity AI components for ALN, with full workflow, compliance, and debug/audit support.[1]
 **Repo:** [scripts/modules/personality-matrices.ai-components.aln — Doctor0Evil/ALN_Programming_Language.git][1]
 
