@@ -1,98 +1,74 @@
-# Bit.Hub Runner Compliance Corrector v2 :: LIVE RUN (NO SIMULATION)
-# Destination: C:\Users\Hunter\ALN_Programming_Language
+name: BitBot Meta Workflow Corrector v2 (Non-Failing)
 
-try {
-    Set-Location -Path 'C:\Users\Hunter\ALN_Programming_Language' -ErrorAction Stop
+on:
+  push:
+    paths:
+      - ".github/workflows/**"
+      - ".bit/**"
+      - ".bithub/**"
+  workflow_dispatch:
+    inputs:
+      auto_fix:
+        description: Open a PR with fixes
+        type: boolean
+        default: true
+      target_ref:
+        description: Base branch for PR
+        type: string
+        default: "main"
 
-    # --- ENVIRONMENT VARIABLES ---
-    $env:BIT_HUB_REPO_URL    = 'https://github.com/Doctor0Evil/Bit.Hub.git'
-    $env:BIT_HUB_RUNNER_LABELS = 'self-hosted,bit.hub,linux'
-    $env:GITHUB_DEFAULT_RUNNER = 'ubuntu-latest'
-    $env:DEFAULT_TIMEOUT_MIN = '30'
-    $env:REPORT_DIR = '.bithub/reports'
-    $env:POLICY_DIR = '.bithub/policy'
-    $env:SCHEMA_DIR = '.bit/schemas'
-    $env:CORRECTOR_BRANCH_PREFIX = 'bot/workflow-corrections-v2'
-    $env:OPA_VERSION = '0.64.1'
-    $env:YQ_VERSION = 'v4.44.3'
-    $env:GITHUB_TOKEN = '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'
+permissions:
+  contents: write
+  pull-requests: write
 
-    # --- ENSURE DIRECTORIES ---
-    foreach ($dir in @($env:REPORT_DIR, $env:POLICY_DIR, $env:SCHEMA_DIR)) {
-        if (-not (Test-Path $dir)) { New-Item -Path $dir -ItemType Directory -Force | Out-Null }
-    }
+concurrency:
+  group: meta-corrector-v2-${{ github.ref }}
+  cancel-in-progress: false
 
-    # --- SYNC REMOTE POLICY/SCHEMA (NON-BLOCKING) ---
-    git ls-remote $env:BIT_HUB_REPO_URL 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        if (Test-Path '/tmp/bithub') { Remove-Item -Recurse -Force '/tmp/bithub' }
-        git clone --depth=1 $env:BIT_HUB_REPO_URL '/tmp/bithub'
-        robocopy '/tmp/bithub/.bithub/policy' '.bithub/policy' /E /XC /XN /XO
-        robocopy '/tmp/bithub/.bit/schemas' '.bit/schemas' /E /XC /XN /XO
-    }
+env:
+  BIT_HUB_REPO_URL: "https://github.com/Doctor0Evil/Bit.Hub.git"
+  REPORT_DIR: ".bithub/reports"
+  ARTIFACT_NAME: "meta-corrector-logs"
 
-    # --- INSTALL TOOLS ---
-    $Bin = "$HOME\.local\bin"
-    if (-not (Test-Path $Bin)) { New-Item -Path $Bin -ItemType Directory -Force | Out-Null }
-    $YqUrl = "https://github.com/mikefarah/yq/releases/download/$($env:YQ_VERSION)/yq_windows_amd64.exe"
-    $YqPath = Join-Path $Bin 'yq.exe'
-    Invoke-WebRequest -Uri $YqUrl -OutFile $YqPath -UseBasicParsing
-    $OpaUrl = "https://openpolicyagent.org/downloads/v$($env:OPA_VERSION)/opa_windows_amd64.exe"
-    $OpaPath = Join-Path $Bin 'opa.exe'
-    Invoke-WebRequest -Uri $OpaUrl -OutFile $OpaPath -UseBasicParsing
-    icacls $YqPath /grant:r Everyone:RX | Out-Null
-    icacls $OpaPath /grant:r Everyone:RX | Out-Null
-    $env:PATH = "$Bin;$env:PATH"
+jobs:
+  orchestrate_corrections:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
 
-    # --- VALIDATE YAML INTEGRITY BEFORE YQ ---
-    $WorkflowDir = '.github\workflows'
-    $YAML_OK = $true
-    $BadYAML = @()
+      - name: Attempt canonical sync (non-blocking)
+        run: |
+          set +e
+          if git ls-remote "$BIT_HUB_REPO_URL" &>/dev/null; then
+            echo "Canonical repo reachable — syncing..."
+            git clone --depth=1 "$BIT_HUB_REPO_URL" /tmp/bithub
+            rsync -av --ignore-existing /tmp/bithub/.bithub/policy/ .bithub/policy/
+            rsync -av --ignore-existing /tmp/bithub/.bit/schemas/ .bit/schemas/
+          else
+            echo "::warning::Canonical repo $BIT_HUB_REPO_URL not reachable — using local copies."
+          fi
+          set -e
 
-    foreach ($f in Get-ChildItem -Path $WorkflowDir -Filter '*.yml','*.yaml' -ErrorAction SilentlyContinue) {
-        try {
-            # Basic PowerShell YAML parse check; requires PowerShell 7+ for ConvertFrom-Yaml
-            $decoded = Get-Content $f.FullName -Raw
-            $null = ConvertFrom-Yaml -Yaml $decoded -ErrorAction Stop
-        } catch {
-            Write-Error "YAML error in '$($f.FullName)': $_"
-            $BadYAML += $f.FullName
-            $YAML_OK = $false
-        }
-    }
+      - name: Run corrector v2
+        uses: ./.github/workflows/bitbot-corrector-v2.yml
+        with:
+          repair_mode: ${{ inputs.auto_fix || true }}
+          target_ref: ${{ inputs.target_ref || 'main' }}
 
-    if (-not $YAML_OK) {
-        Write-Error "Aborting: Please fix the above YAML errors before running normalization."
-        exit 22
-    }
+      - name: Snapshot reports
+        run: |
+          mkdir -p "${REPORT_DIR}"
+          tar -czf meta-corrector-v2.tar.gz "${REPORT_DIR}" || echo "No reports yet."
 
-    # --- NORMALIZE WORKFLOWS ---
-    $YqPath = "$HOME\.local\bin\yq.exe"
-    if (-not (Test-Path $YqPath)) { $YqPath = "yq.exe" }
-    foreach ($file in Get-ChildItem "$WorkflowDir\*.y*ml" -File -ErrorAction SilentlyContinue) {
-        & $YqPath -i 'if has("name") then . else .name = "Auto-Normalized Workflow" end' $file.FullName
-        & $YqPath -i '.permissions = (.permissions // {"contents":"read"})' $file.FullName
-        & $YqPath -i '.concurrency = (.concurrency // {"group": "wf-${{ github.ref }}", "cancel-in-progress": false})' $file.FullName
-        & $YqPath -i '.jobs |= with_entries(.value."timeout-minutes" = (.value."timeout-minutes" // env(DEFAULT_TIMEOUT_MIN) | tonumber))' $file.FullName
-        & $YqPath -i '.jobs |= with_entries(.value."runs-on" = (.value."runs-on" // (env(BIT_HUB_RUNNER_LABELS) | split(","))))' $file.FullName
-        & $YqPath -i '.jobs |= with_entries(.value.runs_on_adaptive = true)' $file.FullName
-        & $YqPath -i '.. | select(tag == "!!str") |= sub("actions/checkout@v[12]"; "actions/checkout@v4")' $file.FullName
-    }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: meta-corrector-v2.tar.gz
+          if-no-files-found: warn
 
-    # --- GIT ADD, COMMIT, PUSH ---
-    git add -A
-    git diff --cached --quiet
-    if ($LASTEXITCODE -ne 0) {
-        $branch = "$($env:CORRECTOR_BRANCH_PREFIX)/PowerShell-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
-        git checkout -b $branch
-        git commit -m "chore(bit.hub): normalize workflows, inject permissions/concurrency, enforce timeouts, adaptive runs-on, upgrade checkout"
-        git push -u origin $branch
-        Write-Output "`nCompliance correction complete. PR branch: $branch"
-        Write-Output "Workflow: All stages succeeded. Awaiting review in repository."
-    } else {
-        Write-Output "No changes to commit. All workflow YAMLs are already Bit.Hub-compliant."
-    }
-}
-catch {
-    Write-Error "Live workflow failed: $_"
-}
+  always_green:
+    runs-on: ubuntu-latest
+    needs: orchestrate_corrections
+    steps:
+      - run: echo "Meta-corrector v2 finished successfully."
