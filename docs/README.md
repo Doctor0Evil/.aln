@@ -4,7 +4,7 @@ The recommended README update for the **ALN Programming Language** repository in
 
 # 🌌 ALN Fantasia — Universal Platform & Runtime
 
-*A Universal AI-Native Fantasy Language & Runtime, Born in Conversation — Built for Creation*  
+*A Universal AI-Native Fantasy Language & Runtime, Born in Conversation — Built for Creation*
 **MIT License | Open Source | Game, Lore, POS, and Virtual Hardware Modules**
 
 ## 💾 Repo Structure & Quickstart
@@ -57,13 +57,13 @@ The recommended README update for the **ALN Programming Language** repository in
    ```
    See `/docs/PLAYBOOK.md` for the complete menu.
 
-4. **Contribution:**  
+4. **Contribution:**
    Fork → Feature branch → Commit & PR → Community Receipt Review → Merge
 
 ## 🎲 Interactive Features & Games
 
 - **Community-Driven Dice Mechanics:** Dice outcome affects rewards, challenges, and story elements per session[2]
-- **Shortcut/Command Expansion:**  
+- **Shortcut/Command Expansion:**
   - `DICE.ROLL.dX` (roll dice), `GENERATE.QUEST`, `CHALLENGE.CODE`, `HELP`, `MARKET`, etc.
 - **Community Games Module:** Includes Trivia, Hangman, Tic-Tac-Toe, Code Quests using ALN syntax
 - **Lore/Grimoire System:** Submit, upvote, and remix lore and spells; collaborative multi-author Sagas
@@ -73,7 +73,7 @@ The recommended README update for the **ALN Programming Language** repository in
 
 - **Receipt Menus:** Export/verify all logs and events (CircleK style)[1]
 - **Full Regulatory Coverage:** PCI-DSS, GDPR, HIPAA, SOC2, ISO-27001, FDA 1143.5 (age-check, reporting for tobacco, etc.)[3]
-- **Secure By Design:**  
+- **Secure By Design:**
   - Quantum-safe AES/PKC crypto, blockchain audit, RBAC, automated compliance report pipelines
 - **GPG Commit Signing:** Enforced in CI with hooks, pre-commit checks, and automated validation[5]
 - **Kubernetes-Native Security:** Signed deployment manifests, Helm charts, Secret management[5][4]
@@ -89,7 +89,7 @@ The recommended README update for the **ALN Programming Language** repository in
 | Grimoire Docs | `/docs/Grimoire.md`                        |
 | Main Team     | Jacob Scott Corey Farmer, ALN Team (Phoenix, AZ) |
 
-**Legal:** MIT License. See LICENSE.  
+**Legal:** MIT License. See LICENSE.
 Third-party and Grimoire/creative works are cited with in-code attribution and README notice.[2]
 
 ## 💡 Quick-Reference Table
@@ -104,7 +104,7 @@ Third-party and Grimoire/creative works are cited with in-code attribution and R
 
 ## 🚦 Getting Involved
 
-To contribute or play:  
+To contribute or play:
 - Clone, roll, explore, and help evolve the ALN Fantasia ecosystem
 - **Never break receipt-format parity** (see `/docs/PLAYBOOK.md`)
 - Always import `std`, use `NAV_MENU` everywhere for UI/logs
