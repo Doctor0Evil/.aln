@@ -1,0 +1,12 @@
+(defmodule bithub.trace
+  (defvar trace_id) (defvar span_id) (defvar phase)
+  (defvar component) (defvar func) (defvar args)
+  (defvar vars) (defvar env) (defvar dur_ms) (defvar checksum) (defvar redactions)
+  (defun sanitize (data)
+    ;; Redact per redactions with SHA256
+    (mapcar #'(lambda (kv) (if (member (car kv) redactions)
+          (sha256 (cdr kv)) (cdr kv))) data))
+  (defun trace-log (entry)
+    ;; Write sanitized JSONL trace
+    (write-jsonl (sanitize entry) :file "bithub-trace.jsonl"))
+)
