@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "runs-on": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    }
+  }
+}
