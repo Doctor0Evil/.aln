@@ -1,0 +1,80 @@
+name: Bit.Hub SLSA + SBOM Supremacy
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      power_threshold:
+        description: "standard | strict | paranoid"
+        type: choice
+        default: "standard"
+        options: [ "standard", "strict", "paranoid" ]
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: slsa-sbom-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REPORT_DIR: ".bithub/reports"
+  POWER_THRESHOLD: ${{ inputs.power_threshold || vars.POWER_THRESHOLD || 'standard' }}
+
+jobs:
+  attest_and_sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate SBOM (dir)
+        run: |
+          mkdir -p ${REPORT_DIR}/sbom
+          curl -fsSL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . || true
+          if [ -x ./syft ]; then
+            ./syft packages dir:. -o json > ${REPORT_DIR}/sbom/syft-dir.json || true
+          else
+            echo "::warning::Syft unavailable; SBOM skipped"
+          fi
+
+      - name: Create minimal provenance predicate
+        run: |
+          mkdir -p ${REPORT_DIR}/attest
+          cat > ${REPORT_DIR}/attest/in-toto-predicate.json <<'JSON'
+          {
+            "_type": "https://in-toto.io/Statement/v1",
+            "predicateType": "https://slsa.dev/provenance/v1",
+            "predicate": {
+              "buildType": "bithub/supremacy",
+              "builder": { "id": "github-actions" },
+              "buildConfig": { "powerThreshold": "${{ env.POWER_THRESHOLD }}" }
+            },
+            "subject": []
+          }
+          JSON
+
+      - name: Sign (cosign) if available
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          set +e
+          curl -sSfL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 -o cosign && chmod +x cosign || true
+          if [ -x ./cosign ] && [ "${{ secrets.COSIGN_PRIVATE_KEY != '' }}" = "true" ]; then
+            echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
+            echo "${{ secrets.COSIGN_PASSWORD }}" | ./cosign attest --predicate ${REPORT_DIR}/attest/in-toto-predicate.json --key cosign.key --type slsaprovenance || true
+          else
+            echo "::notice::Cosign not configured; skipping signing"
+          fi
+          set -e
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: slsa-sbom-artifacts
+          path: |
+            ${REPORT_DIR}/sbom/**
+            ${REPORT_DIR}/attest/**
+          if-no-files-found: warn
