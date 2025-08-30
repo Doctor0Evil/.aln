@@ -106,7 +106,7 @@ alnfantasia:
     magic_lol: true
     dice_roll: true
     creative_enjoyments: true
-  
+
 # Bob the Builder integration
 bob_builder:
   repair_mode: "professional"
