@@ -1,0 +1,205 @@
+name: Bit.Hub Runner Trainer v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      enforce:
+        description: "Enforce violations (fail CI) instead of audit-only"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "17 3 * * *"  # daily “training” pass
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bit-hub-runner-trainer-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BIT_HUB_REPO_URL: "https://github.com/Doctor0Evil/Bit.Hub.git"
+  REPORT_DIR: ".bithub/reports"
+  POLICY_DIR: ".bithub/policy"
+  OPA_VERSION: "0.64.1"
+  YQ_VERSION: "v4.44.3"
+
+jobs:
+  train_runner_baseline:
+    name: Train runner baseline (audit-first)
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ inputs.enforce != true }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure dirs
+        run: mkdir -p "${REPORT_DIR}" "${POLICY_DIR}"
+
+      - name: Attempt canonical sync (non-blocking)
+        run: |
+          set +e
+          if git ls-remote "$BIT_HUB_REPO_URL" &>/dev/null; then
+            echo "Sync canonical policies..."
+            git clone --depth=1 "$BIT_HUB_REPO_URL" /tmp/bithub
+            rsync -av --ignore-existing /tmp/bithub/.bithub/policy/ .bithub/policy/
+          else
+            echo "::warning::Canonical repo unreachable — using local policy"
+          fi
+          set -e
+
+      - name: Install yq + OPA
+        run: |
+          BIN="$HOME/.local/bin"; mkdir -p "$BIN"
+          curl -fsSL -o "$BIN/yq" "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          curl -fsSL -o "$BIN/opa" "https://openpolicyagent.org/downloads/v${OPA_VERSION}/opa_linux_amd64_static"
+          chmod +x "$BIN/yq" "$BIN/opa"
+          echo "$BIN" >> $GITHUB_PATH
+
+      - name: Collect runner facts
+        id: facts
+        shell: bash
+        run: |
+          mkdir -p "${REPORT_DIR}"
+          {
+            echo "{"
+            echo "\"timestamp\": \"$(date -Is)\","
+            echo "\"github_runner\": {"
+            echo "  \"os\": \"${RUNNER_OS}\","
+            echo "  \"arch\": \"$(uname -m)\","
+            echo "  \"labels\": \"${RUNNER_LABELS}\","
+            echo "  \"temp\": \"${RUNNER_TEMP}\","
+            echo "  \"tool_cache\": \"${RUNNER_TOOL_CACHE}\""
+            echo "},"
+            echo "\"system\": {"
+            echo "  \"kernel\": \"$(uname -sr)\","
+            echo "  \"distro\": \"$(. /etc/os-release; echo $NAME $VERSION 2>/dev/null || echo unknown)\","
+            echo "  \"hostname\": \"$(hostname)\""
+            echo "},"
+            echo "\"docker\": {"
+            docker -v >/dev/null 2>&1 && { 
+              echo "  \"present\": true,"
+              echo "  \"info\": \"$(docker version --format '{{.Server.Version}}' 2>/dev/null || echo n/a)\""
+            } || { 
+              echo "  \"present\": false"
+            }
+            echo "},"
+            echo "\"gpu\": {"
+            nvidia-smi >/dev/null 2>&1 && {
+              echo "  \"present\": true,"
+              echo "  \"name\": \"$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)\""
+            } || {
+              echo "  \"present\": false"
+            }
+            echo "}"
+            echo "}"
+          } > "${REPORT_DIR}/runner-facts.json"
+          cat "${REPORT_DIR}/runner-facts.json"
+
+      - name: Seed security policy (if missing)
+        run: |
+          test -s "${POLICY_DIR}/comply.rego" || cat > "${POLICY_DIR}/comply.rego" <<'REGO'
+          package bithub.workflow
+
+          # Security training signals for runner + workflow hygiene:
+          # - Minimal permissions, timeouts, concurrency, safe triggers
+          # - Disallow pull_request_target for forks
+          # - Recommend pinning actions to SHAs (warn by default)
+          # - Flag docker privileged or service-containers with --privileged
+          # - Prefer non-root containers
+
+          deny[msg] {
+            input.kind == "workflow"
+            not input.workflow.permissions
+            msg := "Missing top-level permissions"
+          }
+
+          warn[msg] {
+            input.kind == "workflow"
+            not input.workflow.concurrency
+            msg := "Missing top-level concurrency"
+          }
+
+          deny[msg] {
+            input.kind == "workflow"
+            some i
+            input.uses[i] == "actions/checkout@v1" or input.uses[i] == "actions/checkout@v2"
+            msg := "Outdated actions/checkout (< v4)"
+          }
+
+          warn[msg] {
+            input.kind == "workflow"
+            some i
+            re_match("^[^@]+@v\\d+$", input.uses[i])
+            msg := "Action pinned by floating tag; prefer commit SHA"
+          }
+
+          deny[msg] {
+            input.kind == "workflow"
+            input.workflow.on.pull_request_target
+            input.repo_is_fork == true
+            msg := "pull_request_target used with forks (dangerous)"
+          }
+
+          warn[msg] {
+            input.kind == "runner"
+            input.system.kernel == ""
+            msg := "Kernel not detected; baseline unknown"
+          }
+
+          warn[msg] {
+            input.kind == "runner"
+            input.docker.present == true
+            input.docker.privileged == true
+            msg := "Docker privileged detected; disallow for CI"
+          }
+          REGO
+
+      - name: Evaluate workflow hygiene across repo
+        shell: bash
+        run: |
+          REPORT="${REPORT_DIR}/training-report.ndjson"
+          : > "$REPORT"
+          shopt -s nullglob
+          for y in .github/workflows/*.y*ml; do
+            uses=$(yq '.. | select(tag == "!!str") | select(test("^[^ ]+@[^ ]+$"))' "$y" | tr '\n' ' ' || true)
+            jq -n \
+              --arg kind "workflow" \
+              --arg path "$y" \
+              --arg uses "$uses" \
+              --arg repo_is_fork "${{ github.event.repository.fork || false }}" \
+              --argjson wf "$(yq -o=json '.' "$y")" '
+              {kind:$kind, path:$path, repo_is_fork:($repo_is_fork=="true"), uses:($uses|split(" ")|map(select(length>0))), workflow:$wf}
+            ' > /tmp/input.json
+            opa eval -f json -I -d "${POLICY_DIR}" -i /tmp/input.json 'data.bithub.workflow' \
+              | jq -c '.result[].expressions[].value | {path: input.path, deny:(.deny // []), warn:(.warn // [])}' --argfile input /tmp/input.json \
+              >> "$REPORT" || true
+          done
+          echo "Wrote $REPORT"
+
+      - name: Evaluate runner baseline
+        shell: bash
+        run: |
+          jq -n \
+            --arg kind "runner" \
+            --slurpfile facts "${REPORT_DIR}/runner-facts.json" \
+            '$facts[0] + {kind:$kind}' > /tmp/runner.json
+          opa eval -f pretty -I -d "${POLICY_DIR}" -i /tmp/runner.json 'data.bithub.workflow' || true
+
+      - name: Upload training artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bit-hub-runner-training
+          path: .bithub/reports
+          if-no-files-found: warn
+
+      - name: Enforce (optional)
+        if: ${{ inputs.enforce == true }}
+        shell: bash
+        run: |
+          DENY=$(jq '[.deny[]] | length' "${REPORT_DIR}/training-report.ndjson" 2>/dev/null || echo 0)
+          if [ "$DENY" -gt 0 ]; then
+            echo "Policy denials: $DENY"
+            exit 1
+          fi
+          echo "No denials — training passed."
