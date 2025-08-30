@@ -1,5 +1,5 @@
-# .bit-actions/secondary-recovery.yml
 name: ".bit Secondary Recovery (Bit.Hub-Compliant)"
+
 on:
   workflow_dispatch:
   workflow_run:
@@ -12,16 +12,28 @@ jobs:
     name: ".bit: Secondary Recovery Job (with Bit.Hub Audit)"
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
     steps:
       - name: ".bit: Checkout repository"
         uses: actions/checkout@v4
+
+      - name: ".bit: Ensure context.json exists"
+        run: |
+          mkdir -p .bit
+          if [ ! -f ".bit/context.json" ]; then
+            echo '{"event":"manual","timestamp":"'"$(date -u +%FT%TZ)"'"}' > .bit/context.json
+            echo "[.bit] Created default context.json"
+          fi
 
       - name: ".bit: OPA/Bit.Hub Policy Gate"
         uses: open-policy-agent/setup-opa@v2
 
       - name: ".bit: Evaluate Step Policy"
         run: |
-          opa eval --data .bit/policy --input .bit/context.json --format pretty 'data.bithub.secondary_recovery.allow'
+          opa eval --data .bit/policy \
+                   --input .bit/context.json \
+                   --format pretty \
+                   'data.bithub.secondary_recovery.allow'
 
       - name: ".bit: Ensure recovery script present"
         run: |
@@ -29,6 +41,13 @@ jobs:
             echo "::error::Recovery script 'secondary-recovery.sh' is missing or not executable."
             exit 1
           fi
+
+      - name: Setup Go environment
+        uses: actions/setup-go@v5.5.0
+        with:
+          go-version: '1.22.x'
+          check-latest: true
+          cache: true
 
       - name: ".bit: Run Secondary Recovery Task"
         id: secondary_recovery
@@ -49,9 +68,9 @@ jobs:
         with:
           name: .bit-recovery-logs
           path: |
-            ./recovery*.log
-            ./logs/
-            !./logs/exclude-this.log
+            "./recovery*.log"
+            "./logs/"
+            "!./logs/exclude-this.log"
 
       - name: ".bit: Notify on Recovery Events"
         if: failure()
