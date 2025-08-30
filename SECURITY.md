@@ -1,13 +1,13 @@
 # Security Policy
 
-This project is orchestrated under the **.bithub** governance model.  
+This project is orchestrated under the **.bithub** governance model.
 Security handling is **compatible with GitHub’s vulnerability reporting** but extended with `.bithub`’s own bot‑driven triage, VM.cluster isolation, and infinite‑scale patch pipelines.
 
 ---
 
 ## Supported Versions
 
-The table below lists which versions currently receive security updates.  
+The table below lists which versions currently receive security updates.
 `.bithub-bots` automatically enforce these rules in CI/CD and will block deployments of unsupported versions.
 
 | Version | Supported          | Notes (.bithub) |
@@ -40,8 +40,8 @@ We support **two fully compatible reporting paths**:
 - **Acknowledgement**: Within 24 hours (automated by `.bithub-bots`).
 - **Triage**: Vulnerability is replicated in isolated VM.clusters for verification.
 - **Status Updates**: Every 72 hours until resolution.
-- **Fix Deployment**:  
-  - Supported versions: patched and deployed to `.bithub` VM.clusters automatically.  
+- **Fix Deployment**:
+  - Supported versions: patched and deployed to `.bithub` VM.clusters automatically.
   - GitHub releases updated within 48 hours of fix merge.
 - **Credit**: Researchers credited in release notes unless anonymity requested.
 
