@@ -81,5 +81,5 @@ jobs:
 
 ***
 
-**Summary:**  
+**Summary:**
 Bit.Hub’s `.bit` commands and `.bithub` actions leap past GitHub by offering a *smarter, more adaptive, and more deeply compliant* foundation—fully compatible with legacy Git for integration, but running on richer, VM-backed, policy-driven, and entertainment-ready nodes. All logs, UIs, and workflows are CircleK receipt format, with full audit and game governance by design.
