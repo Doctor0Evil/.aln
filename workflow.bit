@@ -29,7 +29,7 @@
         (bitbot.run-workflow bitbot-id wf.inputs)
         (log-event "bitbot" (concat "Scheduled new workflow via BitBot for " wf.name)))))
   ;; 7. Verify site build status, trigger 'site:build' if needed
-  (unless (site.status "bit.hub" :target "production") 
+  (unless (site.status "bit.hub" :target "production")
     (let ((main-bb (bitbot.deploy-agent :pattern "ml.patterns.learn.bitbot.bit")))
       (bitbot.run-workflow main-bb '("site:build" "publish:latest"))
       (log-event "bitbot" "Triggered full site:build & publish via BitBot.")))
