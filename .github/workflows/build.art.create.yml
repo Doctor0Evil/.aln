@@ -1,0 +1,70 @@
+build:
+  matrix:
+    - id: "node"
+      lang: "node"
+      install: "npm ci"
+      build: "npm run build"
+      cache_paths: ["~/.npm","node_modules"]
+      cache_files: ["package-lock.json","packages/*/package-lock.json"]
+      artifacts:
+        - path: "dist/**"
+          name: "web-dist"
+    - id: "python"
+      lang: "python"
+      install: "pip install -r requirements.txt"
+      build: "pytest -q"
+      cache_paths: ["~/.cache/pip"]
+      cache_files: ["requirements.txt","requirements.lock"]
+      artifacts:
+        - path: "reports/**"
+          name: "test-reports"
+    - id: "dotnet"
+      lang: "dotnet"
+      setup: "dotnet --info"
+      install: "dotnet restore"
+      build: "dotnet build --configuration Release"
+      cache_paths: ["~/.nuget/packages"]
+      cache_files: ["**/packages.lock.json","**/*.csproj","**/*.sln"]
+      artifacts:
+        - path: "**/bin/Release/**"
+          name: "dotnet-release"
+    - id: "java"
+      lang: "java"
+      install: "mvn -q -B -DskipTests dependency:go-offline"
+      build: "mvn -q -B package"
+      cache_paths: ["~/.m2/repository"]
+      cache_files: ["pom.xml","**/pom.xml"]
+      artifacts:
+        - path: "**/target/*.jar"
+          name: "maven-jars"
+artifacts:
+  retention_days: 7
+             
+              - name: Upload a Build Artifact
+  uses: actions/upload-artifact@v4.6.2
+  with:
+    # Artifact name
+    name: # optional, default is artifact
+    # A file, directory or wildcard pattern that describes what to upload
+    path: 
+    # The desired behavior if no files are found using the provided path.
+Available Options:
+  warn: Output a warning but do not fail the action
+  error: Fail the action with an error message
+  ignore: Do not output any warnings or errors, the action does not fail
+
+    if-no-files-found: # optional, default is warn
+    # Duration after which artifact will expire in days. 0 means using default retention.
+Minimum 1 day. Maximum 90 days unless changed from the repository settings page.
+
+    retention-days: # optional
+    # The level of compression for Zlib to be applied to the artifact archive. The value can range from 0 to 9: - 0: No compression - 1: Best speed - 6: Default compression (same as GNU Gzip) - 9: Best compression Higher levels will result in better compression, but will take longer to complete. For large files that are not easily compressed, a value of 0 is recommended for significantly faster uploads.
+
+    compression-level: # optional, default is 6
+    # If true, an artifact with a matching name will be deleted before a new one is uploaded. If false, the action will fail if an artifact for the given name already exists. Does not fail if the artifact does not exist.
+
+    overwrite: # optional, default is false
+    # If true, hidden files will be included in the artifact. If false, hidden files will be excluded from the artifact.
+
+    include-hidden-files: # optional, default is false
+          
