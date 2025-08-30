@@ -1,0 +1,15 @@
+package bithub.humor
+
+# Respect ALN content rules (example: forbid mature humor unless flagged)
+moderation_violation[msg] {
+  input.humor.mature == true
+  not input.platform.content_moderation.mature_content_allowed
+  msg := "Mature humor not allowed without proper flags and parental controls."
+}
+
+# Prevent “git push” from Humor Bot workflow
+moderation_violation[msg] {
+  input.workflow == "humor-bot-ai-powershell.yml"
+  input.detected.git_push == true
+  msg := "Humor Bot cannot push to the repository; use artifacts instead."
+}
