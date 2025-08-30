@@ -1,0 +1,8 @@
+- name: Assert critical files
+  uses: ./.github/actions/assert-files
+  with:
+    files: |
+      .bit/linking.repo.bit.yml
+      .bit/loaders/validate_loop.sh
+      scripts/resync-ingestion.sh
+    require_exec: "true"
