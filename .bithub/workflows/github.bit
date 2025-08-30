@@ -6,7 +6,7 @@ on:
     paths:
       - ".bit/**"
       - ".bithub/**"
-      - ".bit-actions/**" 
+      - ".bit-actions/**"
       - ".github/workflows/**"
       - "bithub/**"
       - "scripts/**"
@@ -68,22 +68,22 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y jq yq tree shellcheck yamllint python3-pip
           pip3 install ruamel.yaml
-          
+
           # Install OPA/conftest for policy validation
           wget -q https://github.com/open-policy-agent/conftest/releases/download/v0.45.0/conftest_0.45.0_Linux_x86_64.tar.gz
           tar xzf conftest_0.45.0_Linux_x86_64.tar.gz
           sudo mv conftest /usr/local/bin/
-          
+
           echo "🎯 Bob: All tools loaded and ready!"
 
       - name: "🔍 Bob's Comprehensive Infrastructure Audit"
         id: inspect
         run: |
           echo "🔎 Bob: Inspecting the Bit.Hub construction site for issues..."
-          
+
           ISSUES=0
           CRITICAL=()
-          
+
           # Check .bit structure integrity
           echo "🏗️ Checking .bit architecture..."
           if [ ! -d ".bit" ]; then
@@ -91,7 +91,7 @@ jobs:
             CRITICAL+=("missing_bit_dir")
             ISSUES=$((ISSUES + 10))
           fi
-          
+
           # Validate .bit compliance files
           for required in ".bit/policy.json" ".bit/contract.aln" ".bit/workflow_manifest.aln"; do
             if [ ! -f "$required" ]; then
@@ -99,14 +99,14 @@ jobs:
               ISSUES=$((ISSUES + 1))
             fi
           done
-          
+
           # Check .bithub structure
           echo "🏢 Checking .bithub infrastructure..."
           if [ ! -d ".bithub" ]; then
             echo "⚠️ .bithub directory missing, will create"
             ISSUES=$((ISSUES + 1))
           fi
-          
+
           # Validate workflow files
           echo "⚙️ Checking workflow syntax..."
           for wf in .github/workflows/*.yml .github/workflows/*.yaml; do
@@ -116,7 +116,7 @@ jobs:
               ISSUES=$((ISSUES + 1))
             fi
           done
-          
+
           # Check for required scripts
           echo "📜 Checking critical scripts..."
           for script in ".bit/loaders/lisp_verify.sh" ".bit/loaders/validate_adaptable_patterns.sh"; do
@@ -125,7 +125,7 @@ jobs:
               ISSUES=$((ISSUES + 1))
             fi
           done
-          
+
           # Determine repair level needed
           REPAIR_LEVEL="standard"
           if [ $ISSUES -gt 10 ]; then
@@ -134,14 +134,14 @@ jobs:
           if [ ${#CRITICAL[@]} -gt 0 ]; then
             REPAIR_LEVEL="nuclear"
           fi
-          
+
           # Output results
           NEEDS_REPAIR=$([ $ISSUES -gt 0 ] && echo "true" || echo "false")
-          
+
           echo "needs_repair=$NEEDS_REPAIR" >> $GITHUB_OUTPUT
           echo "repair_level=$REPAIR_LEVEL" >> $GITHUB_OUTPUT
           echo "critical_issues=$(printf '%s,' "${CRITICAL[@]}" | sed 's/,$//')" >> $GITHUB_OUTPUT
-          
+
           echo "🎯 Bob's Inspection Complete!"
           echo "   Issues Found: $ISSUES"
           echo "   Needs Repair: $NEEDS_REPAIR"
@@ -169,13 +169,13 @@ jobs:
       - name: "🔨 Bob's Critical Infrastructure Repairs"
         run: |
           echo "🛠️ Bob: Starting emergency repairs..."
-          
+
           # Create missing .bit structure
           echo "🏗️ Bob: Building missing .bit architecture..."
           mkdir -p .bit/{loaders,policies,workflows,patterns}
           mkdir -p .bithub/{logs,reports,ledger,policies,scripts}
           mkdir -p .bit-actions/{templates,policy}
-          
+
           # Create missing policy files
           if [ ! -f ".bit/policy.json" ]; then
             echo "📝 Bob: Creating missing policy.json..."
@@ -195,7 +195,7 @@ jobs:
           }
           EOF
           fi
-          
+
           # Create missing contract file
           if [ ! -f ".bit/contract.aln" ]; then
             echo "📋 Bob: Creating emergency contract..."
@@ -208,7 +208,7 @@ jobs:
           BOB_CERTIFICATION: emergency_repairs_complete
           EOF
           fi
-          
+
           # Create missing workflow manifest
           if [ ! -f ".bit/workflow_manifest.aln" ]; then
             echo "⚙️ Bob: Creating workflow manifest..."
@@ -219,45 +219,45 @@ jobs:
           REPAIR_STATUS: bob_completed
           EOF
           fi
-          
+
           # Fix script permissions
           echo "🔧 Bob: Fixing script permissions..."
           find .bit/loaders -name "*.sh" -type f -exec chmod +x {} \; 2>/dev/null || true
           find .bithub/scripts -name "*.sh" -type f -exec chmod +x {} \; 2>/dev/null || true
           find scripts -name "*.sh" -type f -exec chmod +x {} \; 2>/dev/null || true
-          
+
           echo "✅ Bob: Emergency repairs completed!"
 
       - name: "🔍 Bob's Compliance Patch Application"
         run: |
           echo "🛡️ Bob: Applying compliance patches to workflows..."
-          
+
           # Apply compliance patches to all workflows
           for wf in .github/workflows/*.yml .github/workflows/*.yaml; do
             [ -f "$wf" ] || continue
-            
+
             echo "🔧 Bob: Patching $wf..."
-            
+
             # Ensure permissions exist
             if ! grep -q "^permissions:" "$wf"; then
               echo "🔐 Bob: Adding permissions to $wf"
               sed -i '1i permissions:\n  contents: read\n' "$wf"
             fi
-            
+
             # Add Bob's signature to repaired files
             if ! grep -q "# Bob the Builder repaired" "$wf"; then
               sed -i '1i # Bob the Builder repaired this workflow\n' "$wf"
             fi
           done
-          
+
           echo "✅ Bob: All workflows patched and Bob-certified!"
 
       - name: "📊 Bob's Repair Documentation"
         run: |
           echo "📋 Bob: Documenting repairs for the construction log..."
-          
+
           mkdir -p .bithub/logs
-          
+
           cat > .bithub/logs/bob-repair-$(date +%Y%m%d-%H%M%S).json << EOF
           {
             "timestamp": "$(date -Iseconds)",
@@ -266,7 +266,7 @@ jobs:
             "issues_found": ${{ needs.bob-preflight-inspection.outputs.critical_issues != '' && '5' || '2' }},
             "repairs_completed": [
               "missing_bit_structure",
-              "policy_files_created", 
+              "policy_files_created",
               "script_permissions_fixed",
               "workflow_compliance_patched"
             ],
@@ -274,31 +274,31 @@ jobs:
             "message": "Can we fix it? YES WE CAN! 🛠️"
           }
           EOF
-          
+
           echo "✅ Bob: Repair documentation complete!"
 
       - name: "🎯 Bob Commits His Professional Work"
         run: |
           echo "💾 Bob: Committing professional-grade repairs..."
-          
+
           git config user.name "Bob the Builder Bot"
           git config user.email "bob@bithub.construction"
-          
+
           git add .bit/ .bithub/ .github/workflows/
-          
+
           if git diff --staged --quiet; then
             echo "🎯 Bob: No changes needed - infrastructure was already Bob-certified!"
           else
             git commit -m "🛠️ Bob the Builder: Emergency infrastructure repairs
 
           - Created missing .bit architecture
-          - Fixed policy and contract files  
+          - Fixed policy and contract files
           - Repaired script permissions
           - Applied workflow compliance patches
           - Added Bob's professional certification
-          
+
           Can we fix it? YES WE CAN! 🏗️"
-            
+
             git push origin HEAD || echo "⚠️ Bob: Push failed, but repairs are complete locally"
           fi
 
@@ -311,7 +311,7 @@ jobs:
       matrix:
         component:
           - { name: "bit-core", path: ".bit/**", test: "validate_bit_structure" }
-          - { name: "bithub-hub", path: ".bithub/**", test: "validate_bithub_hub" }  
+          - { name: "bithub-hub", path: ".bithub/**", test: "validate_bithub_hub" }
           - { name: "workflows", path: ".github/workflows/**", test: "validate_workflows" }
           - { name: "scripts", path: "scripts/**", test: "validate_scripts" }
     steps:
@@ -321,7 +321,7 @@ jobs:
       - name: "🔧 Bob's Component Testing: ${{ matrix.component.name }}"
         run: |
           echo "🧪 Bob: Testing ${{ matrix.component.name }} component..."
-          
+
           case "${{ matrix.component.test }}" in
             "validate_bit_structure")
               echo "🔍 Testing .bit architecture..."
@@ -329,7 +329,7 @@ jobs:
               [ -f ".bit/policy.json" ] && echo "✅ policy.json exists"
               echo "🎯 .bit structure validated!"
               ;;
-            "validate_bithub_hub") 
+            "validate_bithub_hub")
               echo "🔍 Testing .bithub hub..."
               mkdir -p .bithub/logs
               echo "✅ .bithub hub operational"
@@ -347,7 +347,7 @@ jobs:
               done
               ;;
           esac
-          
+
           echo "🏗️ Bob: ${{ matrix.component.name }} component build complete!"
 
   bob-final-inspection:
@@ -362,31 +362,31 @@ jobs:
       - name: "🎯 Bob's Professional Certification Process"
         run: |
           echo "🏆 Bob: Conducting final quality inspection..."
-          
+
           # Check all components
           CERTIFICATION_SCORE=0
-          
+
           # .bit structure check
           if [ -d ".bit" ] && [ -f ".bit/policy.json" ]; then
             echo "✅ .bit architecture: CERTIFIED"
             CERTIFICATION_SCORE=$((CERTIFICATION_SCORE + 25))
           fi
-          
-          # .bithub check  
+
+          # .bithub check
           if [ -d ".bithub" ]; then
             echo "✅ .bithub hub: CERTIFIED"
             CERTIFICATION_SCORE=$((CERTIFICATION_SCORE + 25))
           fi
-          
+
           # Workflows check
           if ls .github/workflows/*.yml >/dev/null 2>&1; then
             echo "✅ Workflow system: CERTIFIED"
             CERTIFICATION_SCORE=$((CERTIFICATION_SCORE + 25))
           fi
-          
+
           # Scripts check
           if [ -d "scripts" ] || ls .bit/loaders/*.sh >/dev/null 2>&1; then
-            echo "✅ Script infrastructure: CERTIFIED" 
+            echo "✅ Script infrastructure: CERTIFIED"
             CERTIFICATION_SCORE=$((CERTIFICATION_SCORE + 25))
           fi
 
@@ -415,7 +415,7 @@ jobs:
           echo ""
           echo "📋 Next Steps:"
           echo "   • Deploy with confidence"
-          echo "   • Monitor with Bob's tools"  
+          echo "   • Monitor with Bob's tools"
           echo "   • Call Bob for any future repairs"
           echo ""
           echo "🛠️ Construction completed by: Bob the Builder Bot"
