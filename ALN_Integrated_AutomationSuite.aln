@@ -57,7 +57,7 @@
       (contamination-update)
       (ai-behavior-update)
       (incf *cycle*))
-    
+
     (defun event-dispatch (evt)
       (case evt
         ("world.birth" (log "The mists part. The Chosen awakens."))
