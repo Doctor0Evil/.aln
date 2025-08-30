@@ -16,3 +16,4 @@ for t in node.tgz python.tgz dotnet.tgz java.tgz; do
     java.tgz)   mkdir -p ~/.m2/repository;    tar -xzf "$ROOT/$t" -C . ;;
   esac
 done
+chmod +x .bit/loaders/bitrunners_boot.sh .bit/loaders/cache_prewarm.sh
