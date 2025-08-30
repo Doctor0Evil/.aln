@@ -1,0 +1,7 @@
+- name: Notify agentic.ai (success)
+  if: success()
+  run: .bit/loaders/agentic-dispatch.sh preflight.ok
+
+- name: Notify agentic.ai (failure)
+  if: failure()
+  run: .bit/loaders/agentic-dispatch.sh preflight.fail
