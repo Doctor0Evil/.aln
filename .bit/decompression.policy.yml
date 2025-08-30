@@ -1,0 +1,21 @@
+version: "1.0.0"
+allowed_formats:
+  - zip
+  - tar.gz
+  - tar.bz2
+  - tar.xz
+  - gz
+  - bz2
+  - xz
+  - zstd
+  -.bithub
+destinations:
+  - .bithub/tmp
+  -.bit/workflows
+  - assets
+  - data
+compliance:
+  overwrite: false
+  checksum_required: true
+  log_to_ledger: .bithub/ledger/decompression.log
+  quarantine_on_fail: .bithub/quarantine
