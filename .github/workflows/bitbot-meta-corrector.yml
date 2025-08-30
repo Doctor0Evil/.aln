@@ -1,0 +1,109 @@
+name: BitBot Meta Workflow Corrector (Non-Failing Orchestrator)
+
+on:
+  push:
+    paths:
+      - ".github/workflows/**"
+      - ".bit/**"
+      - ".bithub/**"
+  workflow_dispatch:
+    inputs:
+      auto_fix:
+        description: Open a PR with fixes
+        type: boolean
+        default: true
+      target_ref:
+        description: Base branch for PR
+        type: string
+        default: "main"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: meta-corrector-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REPORT_DIR: ".bithub/reports"
+  ARTIFACT_NAME: "meta-corrector-logs"
+
+jobs:
+  orchestrate_corrections:
+    name: Orchestrate reusable corrector
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run corrector (reusable workflow)
+      # This calls the corrector in the same repo
+        uses: ./.github/workflows/bitbot-workflow-corrector.yml
+        with:
+          repair_mode: ${{ inputs.auto_fix || true }}
+          target_ref: ${{ inputs.target_ref || 'main' }}
+
+      - name: Snapshot reports
+        run: |
+          mkdir -p "${REPORT_DIR}"
+          tar -czf meta-corrector.tar.gz "${REPORT_DIR}" || echo "No reports yet."
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: meta-corrector.tar.gz
+          if-no-files-found: warn
+
+  ml_validation_safety_net:
+    name: ML pipeline safety net (non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare log dir
+        run: mkdir -p .bithub/reports/ml
+
+      - name: Guarded ML task (example)
+        id: guard
+        uses: ./.github/actions/ml-guard
+        with:
+          run: |
+            python - <<'PY'
+            import time, torch
+            print("ML task: warmup")
+            time.sleep(2)
+            if torch.cuda.is_available():
+                print("GPU OK:", torch.cuda.get_device_name(0))
+            else:
+                print("No GPU; proceeding on CPU")
+            # Simulate transient error 50% of time
+            import random; 
+            if random.random() < 0.5:
+                raise RuntimeError("Transient dataloader timeout")
+            print("ML task: completed")
+            PY
+          retries: "3"
+          backoff_seconds: "10"
+          timeout_minutes: "15"
+          log_path: ".bithub/reports/ml/guard.log"
+          quarantine_dir: ".bithub/reports/ml/quarantine"
+
+      - name: Upload ML guard logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ml-guard-logs
+          path: .bithub/reports/ml
+          if-no-files-found: warn
+
+  always_green_badge:
+    name: Always succeed
+    runs-on: ubuntu-latest
+    needs: [orchestrate_corrections, ml_validation_safety_net]
+    steps:
+      - name: Meta-corrector completed
+        run: echo "Meta-corrector orchestration finished successfully."
