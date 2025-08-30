@@ -49,7 +49,7 @@ runs:
         detect_hint() {
           local msg="$1"
           if grep -qiE "cuda error|out of memory|cublas|cudnn|resource temporarily unavailable" <<<"$msg"; then
-            echo "hint=GPU_or_OOM" 
+            echo "hint=GPU_or_OOM"
             return 0
           elif grep -qiE "dataloader|timeout|connection reset|econnreset|broken pipe" <<<"$msg"; then
             echo "hint=Transient_IO"
