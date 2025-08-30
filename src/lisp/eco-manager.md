@@ -137,10 +137,10 @@ LLM neural cache PURGED.
 (SystemFlags): {maintenance_mode: false, trace_enabled: true, auditTrailLength: 22, disaster_test_last: "2025-08-29"}
 ```
 ***
-**Snippets attached:**  
-- SuperBoxExecute: `src/automation/super_box_execute.rb`  
-- System modules: `src/infrastructure/system_modules.rb`  
-- CheatCodeManager: `src/devtools/cheat_codes.rb`  
+**Snippets attached:**
+- SuperBoxExecute: `src/automation/super_box_execute.rb`
+- System modules: `src/infrastructure/system_modules.rb`
+- CheatCodeManager: `src/devtools/cheat_codes.rb`
 - Solidity contract: `src/contracts/virta_sys_contract.sol`
 
 Would you like to continue with backup, discovery, job automation, permissions, or API orchestration routines next?
