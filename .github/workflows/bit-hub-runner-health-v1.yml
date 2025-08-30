@@ -1,0 +1,37 @@
+name: Bit.Hub Runner Health v1
+
+on:
+  workflow_run:
+    workflows: [ "Bit.Hub Runner Trainer v1", "Bit.Hub Security Gate v1" ]
+    types: [ completed ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bit-hub-runner-health-${{ github.run_id }}
+  cancel-in-progress: false
+
+env:
+  REPORT_DIR: ".bithub/reports"
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collate last reports (best-effort)
+        shell: bash
+        run: |
+          echo "Health summary (best-effort):"
+          for f in "${REPORT_DIR}/security-gate.ndjson" "${REPORT_DIR}/training-report.ndjson"; do
+            if [ -f "$f" ]; then
+              echo "== $(basename "$f") =="
+              jq -r '. | select(.deny!=null or .warn!=null) | "DENY=\(.deny|length) WARN=\(.warn|length) FILE=\(.path)"' "$f" || true
+            fi
+          done
+          echo "Done."
+
+      - name: Always succeed
+        run: echo "Runner health summarized."
