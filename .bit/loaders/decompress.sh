@@ -50,3 +50,18 @@ SHA=$(sha256sum "$SRC" | awk '{print $1}')
 echo "{\"ts\":\"$TS\",\"src\":\"$SRC\",\"dest\":\"$DEST\",\"sha256\":\"$SHA\"}" >> "$LOGFILE"
 
 echo "✅ Decompression complete and logged."
+
+set -euo pipefail
+EVENT="decompression"
+PAYLOAD_FILE="$1"
+ENDPOINT="${AGENTIC_ENDPOINT:-}"
+TOKEN="${AGENTIC_TOKEN:-}"
+
+[[ -z "$ENDPOINT" || -z "$TOKEN" ]] && exit 0
+
+curl -sS -X POST "$ENDPOINT" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  --data @"$PAYLOAD_FILE"
+  chmod +x .bit/loaders/decompress.sh
+  exit 0
