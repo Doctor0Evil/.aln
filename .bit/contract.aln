@@ -36,8 +36,8 @@ SECTION 6: AUTO-DETECTION & GITHUB COMPATIBILITY
 - Any file matching pattern: `aln-*.aln`, `*.lisp`, `*.batch`
     * If it imports `aln.git`, `lisp.git`, or `batch.git` namespace, CI MUST run the equivalent GitHub CLI framework.
     * Output, diffs, and results are directly parseable and displayed in GitHub’s UI as if native `.git` commands were used.
-- Custom commands may be aliased in GitHub Actions with:  
-    `gh extension create --precompiled=other bit-hub-aln-lisp-batch`  
+- Custom commands may be aliased in GitHub Actions with:
+    `gh extension create --precompiled=other bit-hub-aln-lisp-batch`
     and installed as GH CLI extensions for local or CI/CD use.
 SECTION 7: COMPLIANCE POLICY HOOK (Rego Integration Reference)
 - References strict OPA integration for command permissioning, logging, rollback, and conflict resolution.
