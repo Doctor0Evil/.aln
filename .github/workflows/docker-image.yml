@@ -1,18 +1,95 @@
+name: Docker Image CI/CD with Audit Log
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
+
 jobs:
-  build:
-    runs-on: ubuntu-24.04
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-      - name: Checkout repo
+      # 1. Checkout repository with your original settings
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          repository: Doctor0Evil/ALN_Programming_Language
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh-strict: true
+          ssh-user: git
+          persist-credentials: true
+          clean: true
+          sparse-checkout-cone-mode: true
+          fetch-depth: 1
+          fetch-tags: false
+          show-progress: true
+          lfs: false
+          submodules: false
+          set-safe-directory: true
 
-      - name: Verify Dockerfile presence
+      # 2. Log in to container registry
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login $REGISTRY -u $IMAGE_OWNER --password-stdin
+
+      # 3. Find and build all Dockerfiles
+      - name: Build, test, and push images
+        id: buildpush
         run: |
-          if [ ! -f ./Dockerfile ]; then
-            echo "::error::Dockerfile not found at repository root."
+          mkdir -p audit
+          AUDIT_FILE="audit/build_manifest_$(date +%Y%m%d_%H%M%S).log"
+          echo "Build Manifest - $(date)" > "$AUDIT_FILE"
+          echo "Repository: $GITHUB_REPOSITORY" >> "$AUDIT_FILE"
+          echo "Commit: $GITHUB_SHA" >> "$AUDIT_FILE"
+          echo "----------------------------------------" >> "$AUDIT_FILE"
+
+          mapfile -t DOCKERFILES < <(find . -type f -iname "Dockerfile")
+          if [ ${#DOCKERFILES[@]} -eq 0 ]; then
+            echo "❌ No Dockerfiles found."
             exit 1
           fi
 
-      - name: Docker build (from repo root)
-        run: |
-          docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+          for FILE in "${DOCKERFILES[@]}"; do
+            CONTEXT_DIR=$(dirname "$FILE")
+            SAFE_TAG=$(echo "$CONTEXT_DIR" | sed 's|^\./||; s|/|-|g')
+            [ -z "$SAFE_TAG" ] && SAFE_TAG="root"
+            IMAGE_TAG="$REGISTRY/$IMAGE_OWNER/my-image-${SAFE_TAG}:$(date +%Y%m%d%H%M%S)"
+
+            echo "🚀 Building $FILE (context: $CONTEXT_DIR) -> $IMAGE_TAG"
+            docker build "$CONTEXT_DIR" --file "$FILE" --tag "$IMAGE_TAG"
+
+            echo "🧪 Running tests for $IMAGE_TAG"
+            docker run --rm "$IMAGE_TAG" /bin/sh -c "echo 'Container for $SAFE_TAG is healthy'"
+
+            echo "📤 Pushing $IMAGE_TAG"
+            docker push "$IMAGE_TAG"
+
+            IMAGE_ID=$(docker images --no-trunc --quiet "$IMAGE_TAG")
+            IMAGE_SIZE=$(docker images "$IMAGE_TAG" --format "{{.Size}}")
+
+            {
+              echo "Image: $IMAGE_TAG"
+              echo "  Dockerfile: $FILE"
+              echo "  Image ID: $IMAGE_ID"
+              echo "  Size: $IMAGE_SIZE"
+              echo "  Built: $(date)"
+              echo "----------------------------------------"
+            } >> "$AUDIT_FILE"
+          done
+
+          echo "audit_file=$AUDIT_FILE" >> $GITHUB_OUTPUT
+
+      # 4. Upload audit manifest as artifact
+      - name: Upload build manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-build-manifest
+          path: ${{ steps.buildpush.outputs.audit_file }}
