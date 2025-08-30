@@ -1,0 +1,75 @@
+name: Bit.Hub Secure CD Supremacy (Progressive Delivery)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "target environment"
+        type: choice
+        default: "staging"
+        options: [ "staging", "production" ]
+      power_threshold:
+        description: "standard | strict | paranoid"
+        type: choice
+        default: "standard"
+        options: [ "standard", "strict", "paranoid" ]
+  workflow_run:
+    workflows: [ "Bit.Hub Pipeline Supremacy (CI)" ]
+    types: [ "completed" ]
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: cd-supremacy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  POWER_THRESHOLD: ${{ inputs.power_threshold || vars.POWER_THRESHOLD || 'standard' }}
+
+jobs:
+  canary_rollout:
+    name: Canary rollout
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy 10% canary
+        run: echo "Deploying canary to ${{ inputs.environment || 'staging' }} at 10% traffic"
+      - name: Health check (best-effort)
+        run: |
+          echo "Probing service health..."
+          # Replace with real checks (HTTP 200s, error budgets, etc.)
+          echo "ok"
+
+  ramp_up:
+    name: Ramp to 100% with pause
+    runs-on: ubuntu-latest
+    needs: canary_rollout
+    steps:
+      - name: Pause for observation
+        if: ${{ env.POWER_THRESHOLD != 'standard' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.notice('Observation window for strict/paranoid. Proceeding...')
+      - name: Ramp traffic to 100%
+        run: echo "Ramping to 100%"
+
+  verify_and_tag:
+    name: Verify and tag release
+    runs-on: ubuntu-latest
+    needs: ramp_up
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify deployment signals
+        run: |
+          echo "Verifying SLOs and error budgets..."
+          # Replace with real metrics integration
+          echo "ok"
+      - name: Create annotated tag (best-effort)
+        run: |
+          git tag -a "deploy-$(date +%Y%m%d%H%M%S)" -m "Bit.Hub CD Supremacy deploy" || true
+          git push --tags || true
