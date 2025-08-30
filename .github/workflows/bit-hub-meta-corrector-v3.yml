@@ -1,0 +1,154 @@
+name: Bit.Hub Meta Corrector v3 (Supremacy Alignment)
+
+on:
+  push:
+    paths:
+      - ".github/workflows/**"
+      - ".bit/**"
+      - ".bithub/**"
+  schedule:
+    - cron: "0 4 * * *" # daily alignment pass
+  workflow_dispatch:
+    inputs:
+      auto_fix:
+        description: "Open a PR with fixes"
+        type: boolean
+        default: true
+      power_threshold:
+        description: "standard | strict | paranoid"
+        type: choice
+        default: "standard"
+        options: [ "standard", "strict", "paranoid" ]
+      target_ref:
+        description: "Base branch for PR"
+        type: string
+        default: "main"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: meta-corrector-v3-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BIT_HUB_REPO_URL: "https://github.com/Doctor0Evil/Bit.Hub.git"
+  REPORT_DIR: ".bithub/reports"
+  POLICY_DIR: ".bithub/policy"
+  SCHEMA_DIR: ".bit/schemas"
+  POWER_THRESHOLD: ${{ inputs.power_threshold || vars.POWER_THRESHOLD || 'standard' }}
+  CORRECTOR_BRANCH_PREFIX: "bot/workflow-corrections-v3"
+  OPA_VERSION: "0.64.1"
+  YQ_VERSION: "v4.44.3"
+
+jobs:
+  sync_policies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Attempt canonical sync (non-blocking)
+        run: |
+          set +e
+          if git ls-remote "$BIT_HUB_REPO_URL" &>/dev/null; then
+            echo "Syncing canonical Bit.Hub policies..."
+            git clone --depth=1 "$BIT_HUB_REPO_URL" /tmp/bithub
+            rsync -av --ignore-existing /tmp/bithub/.bithub/policy/ .bithub/policy/
+            rsync -av --ignore-existing /tmp/bithub/.bit/schemas/ .bit/schemas/
+          else
+            echo "::warning::Canonical repo unreachable — using local copies."
+          fi
+          set -e
+
+  correct_and_audit:
+    runs-on: ubuntu-latest
+    needs: sync_policies
+    outputs:
+      changes: ${{ steps.diff.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yq + OPA
+        run: |
+          BIN="$HOME/.local/bin"; mkdir -p "$BIN"
+          curl -fsSL -o "$BIN/yq" "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          curl -fsSL -o "$BIN/opa" "https://openpolicyagent.org/downloads/v${OPA_VERSION}/opa_linux_amd64_static"
+          chmod +x "$BIN/yq" "$BIN/opa"
+          echo "$BIN" >> $GITHUB_PATH
+
+      - name: Normalize and fix workflows
+        run: |
+          shopt -s nullglob
+          for y in .github/workflows/*.y*ml; do
+            yq -i 'if has("name") then . else .name = "Auto-Normalized Workflow" end' "$y"
+            yq -i '.permissions = (.permissions // {"contents":"read"})' "$y"
+            yq -i '.concurrency = (.concurrency // {"group": "wf-${{ github.ref }}", "cancel-in-progress": false})' "$y"
+            yq -i '.jobs |= with_entries(.value."timeout-minutes" = (.value."timeout-minutes" // 30 | tonumber))' "$y"
+            yq -i '.jobs |= with_entries(.value."runs-on" = (.value."runs-on" // ["self-hosted","bit.hub","linux"]))' "$y"
+            yq -i '.jobs |= with_entries(.value.runs_on_adaptive = true)' "$y"
+            yq -i '.. | select(tag == "!!str") |= sub("actions/checkout@v[12]"; "actions/checkout@v4")' "$y"
+          done
+
+      - name: Policy evaluation
+        run: |
+          mkdir -p "${REPORT_DIR}"
+          REPORT="${REPORT_DIR}/meta-corrector-v3.ndjson"
+          : > "$REPORT"
+          for y in .github/workflows/*.y*ml; do
+            uses=$(yq '.. | select(tag == "!!str") | select(test("^[^ ]+@[^ ]+$"))' "$y" | tr '\n' ' ' || true)
+            jq -n --arg path "$y" --arg uses "$uses" --argjson wf "$(yq -o=json '.' "$y")" \
+              '{path:$path, uses:($uses|split(" ")|map(select(length>0))), workflow:$wf}' > /tmp/input.json
+            opa eval -f json -I -d "${POLICY_DIR}" -i /tmp/input.json 'data.bithub.workflow' \
+              | jq -c '.result[].expressions[].value | {path: input.path, deny:(.deny // []), warn:(.warn // [])}' --argfile input /tmp/input.json \
+              >> "$REPORT" || true
+          done
+          echo "Wrote $REPORT"
+
+      - name: Stage changes
+        id: diff
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+  propose_changes:
+    needs: correct_and_audit
+    if: needs.correct_and_audit.outputs.changes == 'true' && inputs.auto_fix == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: git add -A
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ env.CORRECTOR_BRANCH_PREFIX }}/${{ github.run_id }}
+          base: ${{ inputs.target_ref || 'main' }}
+          title: "Bit.Hub Supremacy Alignment v3"
+          commit-message: "chore(bit.hub): align workflows to Supremacy standards"
+          body: |
+            Automated corrections to align workflows with Bit.Hub Supremacy CI/CD standards.
+            Canonical repo: $BIT_HUB_REPO_URL
+            Power threshold: $POWER_THRESHOLD
+          labels: compliance, automation
+          delete-branch: true
+
+  enforce_threshold:
+    needs: correct_and_audit
+    if: ${{ env.POWER_THRESHOLD != 'standard' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce policy by threshold
+        run: |
+          DENY=$(jq '[.deny[]] | length' "${REPORT_DIR}/meta-corrector-v3.ndjson" 2>/dev/null || echo 0)
+          WARN=$(jq '[.warn[]] | length' "${REPORT_DIR}/meta-corrector-v3.ndjson" 2>/dev/null || echo 0)
+          if [ "$DENY" -gt 0 ]; then
+            echo "Policy denials: $DENY"
+            exit 1
+          fi
+          if [ "${POWER_THRESHOLD}" = "paranoid" ] && [ "$WARN" -gt 0 ]; then
+            echo "Warnings blocked in paranoid mode: $WARN"
+            exit 1
+          fi
+          echo "Policy gate passed for threshold ${POWER_THRESHOLD}"
