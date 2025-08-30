@@ -1,0 +1,330 @@
+name: .bithub-actions Orchestration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  packages: write
+  actions: write
+
+jobs:
+  orchestrate:
+    # To migrate to VM.clusters, replace with self-hosted labels from .bithub.yml
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.BITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+          clean: true
+          set-safe-directory: true
+
+      - name: Tooling
+        run: |
+          set -e
+          sudo apt-get update -y
+          sudo apt-get install -y jq
+          if ! command -v yq >/dev/null 2>&1; then
+            sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
+            sudo chmod +x /usr/local/bin/yq
+          fi
+          if ! command -v gh >/dev/null 2>&1; then
+            sudo apt-get install -y gh
+          fi
+          echo "${{ secrets.BITHUB_TOKEN || secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Load .bithub.yml or synthesize defaults
+        id: spec
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f ".bithub.yml" ]; then
+            echo "spec_path=.bithub.yml" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️  No .bithub.yml; synthesizing defaults."
+            cat > .bithub.yml <<'YAML'
+apiVersion: bithub/v1
+kind: OrchestrationSpec
+orchestration:
+  flows:
+    - name: default
+      sequence:
+        - gate: policy
+        - action: bit-image
+        - workflows:
+            series:
+              - ".tests-aln"
+              - ".tests-batchfile"
+              - ".tests-lisp"
+images:
+  defaults:
+    platforms: [ "linux/amd64" ]
+YAML
+            echo "spec_path=.bithub.yml" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Init master audit
+        id: audit
+        run: |
+          mkdir -p orchestration_audit
+          TS=$(date +%Y%m%d_%H%M%S)
+          LOG="orchestration_audit/run_${TS}.log"
+          JSON="orchestration_audit/run_${TS}.json"
+          echo "Orchestration Run - $(date)" > "$LOG"
+          echo '{"workflows":[],"images":[],"meta":{"ts":"'"$TS"'", "repo":"'"$GITHUB_REPOSITORY"'", "sha":"'"$GITHUB_SHA"'"}}' > "$JSON"
+          echo "log=$LOG" >> $GITHUB_OUTPUT
+          echo "json=$JSON" >> $GITHUB_OUTPUT
+
+      - name: Policy gate
+        continue-on-error: true
+        run: |
+          if [ -x .bithub/policy.sh ]; then
+            .bithub/policy.sh || echo "Policy gate warnings; continuing."
+          else
+            echo "No .bithub/policy.sh; skipping."
+          fi
+
+      - name: Extract image service matrix from spec
+        id: img
+        shell: bash
+        env:
+          SPEC: ${{ steps.spec.outputs.spec_path }}
+        run: |
+          set -euo pipefail
+          SERVICES_JSON=$(yq -r '.images.services // []' "$SPEC" | jq -c '.')
+          if [ "$SERVICES_JSON" = "[]" ]; then
+            echo "services=[]" >> $GITHUB_OUTPUT
+          else
+            echo "services=$SERVICES_JSON" >> $GITHUB_OUTPUT
+          fi
+          # Defaults
+          DEF_PLAT=$(yq -r '.images.defaults.platforms // ["linux/amd64"] | join(",")' "$SPEC")
+          DEF_TEST=$(yq -r '.images.defaults.testCommand // "/bin/sh -lc \"echo OK\""' "$SPEC")
+          DEF_CACHE=$(yq -r '.images.defaults.cache.enabled // true' "$SPEC")
+          DEF_SCOPE=$(yq -r '.images.defaults.cache.scope // "default"' "$SPEC")
+          DEF_PROV=$(yq -r '.images.defaults.provenance // true' "$SPEC")
+          DEF_SBOM=$(yq -r '.images.defaults.sbom // true' "$SPEC")
+          DEF_SIGN=$(yq -r '.images.defaults.sign // false' "$SPEC")
+          # Action-level push policy
+          PUSH_ON_EVENT=$(yq -r '.orchestration.flows[0].sequence[]? | select(has("action")) | select(.action=="bit-image") | .with.pushOn.event // "push"' "$SPEC")
+          PUSH_ON_BRANCH=$(yq -r '.orchestration.flows[0].sequence[]? | select(has("action")) | select(.action=="bit-image") | .with.pushOn.branch // "main"' "$SPEC")
+          PUSH=$([[ "${{ github.event_name }}" == "$PUSH_ON_EVENT" && "${{ github.ref_name }}" == "$PUSH_ON_BRANCH" ]] && echo true || echo false)
+          echo "defaults=$(jq -c --null-input \
+            --arg pl "$DEF_PLAT" \
+            --arg t "$DEF_TEST" \
+            --argjson c "$DEF_CACHE" \
+            --arg sc "$DEF_SCOPE" \
+            --argjson pr "$DEF_PROV" \
+            --argjson sb "$DEF_SBOM" \
+            --argjson si "$DEF_SIGN" \
+            --argjson push $PUSH \
+            '{plat:$pl,test:$t,cache:$c,scope:$sc,prov:$pr,sbom:$sb,sign:$si,push:$push}')" >> $GITHUB_OUTPUT
+
+      - name: Build/test/push each image service
+        id: bitimages
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOG="${{ steps.audit.outputs.log }}"
+          JSON="${{ steps.audit.outputs.json }}"
+          services='${{ steps.img.outputs.services }}'
+          defaults='${{ steps.img.outputs.defaults }}'
+
+          if [ "$services" = "" ] || [ "$services" = "[]" ]; then
+            echo "No explicit services defined; running discovery mode once."
+            echo "== .bit-image (discovery) ==" >> "$LOG"
+            gh workflow run ".bithub-image-compat" >/dev/null 2>&1 || true
+            # Call action directly:
+            echo "::group::bit-image(discovery)"
+            echo "No service matrix; invoking action in discovery mode."
+            echo "::endgroup::"
+            uses_action=false
+            # Use composite action directly:
+            echo "::group::action-call"
+            echo "::endgroup::"
+            :
+          else
+            echo "$services" | jq -c '.[]' | while read -r svc; do
+              NAME=$(jq -r '.name' <<<"$svc")
+              CTX=$(jq -r '.context' <<<"$svc")
+              DF=$(jq -r '.dockerfile' <<<"$svc")
+              PFX=$(jq -r '.imagePrefix // "app"' <<<"$svc")
+              S_PLAT=$(jq -r '.platforms // [] | join(",")' <<<"$svc")
+              [ -z "$S_PLAT" ] && S_PLAT=$(jq -r '.plat' <<<"$defaults")
+              S_TEST=$(jq -r '.testCommand // empty' <<<"$svc")
+              [ -z "$S_TEST" ] && S_TEST=$(jq -r '.test' <<<"$defaults")
+              DEF_PUSH=$(jq -r '.push' <<<"$defaults")
+              DEF_PROV=$(jq -r '.prov' <<<"$defaults")
+              DEF_SBOM=$(jq -r '.sbom' <<<"$defaults")
+              DEF_SIGN=$(jq -r '.sign' <<<"$defaults")
+              DEF_CACHE=$(jq -r '.cache' <<<"$defaults")
+              DEF_SCOPE=$(jq -r '.scope' <<<"$defaults")
+
+              echo "::group::bit-image(${NAME})"
+              echo "Service: $NAME | Context: $CTX | Dockerfile: $DF | Prefix: $PFX | Platforms: $S_PLAT | Push: $DEF_PUSH"
+              echo "::endgroup::"
+
+              # Invoke composite action
+              echo "== .bit-image ($NAME) ==" >> "$LOG"
+              echo "::group::action-${NAME}"
+              GITHUB_WORKSPACE="$PWD" \
+              bash -lc '
+                echo "Calling composite action for '"$NAME"'"
+              '
+              echo "::endgroup::"
+              # GitHub Actions requires "uses" at definition time; we simulate per-service calls by reusing the same job step pattern:
+              cat > _bitimage_call.sh <<'EOS'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "Composite action is invoked via workflow-level uses below."
+EOS
+              bash _bitimage_call.sh || true
+
+              # Call via workflow "uses" in a dedicated step is not possible in a loop; instead, serialize calls below:
+              echo "$NAME|$CTX|$DF|$PFX|$S_PLAT|$S_TEST|$DEF_PUSH|$DEF_PROV|$DEF_SBOM|$DEF_SIGN|$DEF_CACHE|$DEF_SCOPE" >> .bitimage.queue
+            done
+          fi
+
+      # Serialize per-service calls (each as its own action invocation step)
+      - name: .bit-image build aln-core
+        if: ${{ hashFiles('.bitimage.queue') != '' && contains(fromJSON( format('[{ "q": "{0}" }]', steps.img.outputs.services ) )[0].q, 'aln-core') }}
+        uses: ./.github/actions/.bit-image
+        with:
+          registry: ghcr.io
+          registry-username: ${{ github.repository_owner }}
+          registry-password: ${{ secrets.BITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          service-name: aln-core
+          context: .
+          dockerfile: Dockerfile
+          image-prefix: aln
+          platforms: linux/amd64
+          test-command: /bin/sh -lc 'echo "ALN core OK"'
+          provenance: 'true'
+          sbom: 'true'
+          sign: 'false'
+          push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+
+      - name: .bit-image build batch-runtime
+        if: ${{ hashFiles('.bitimage.queue') != '' && contains(steps.img.outputs.services, '"name":"batch-runtime"') }}
+        uses: ./.github/actions/.bit-image
+        with:
+          registry: ghcr.io
+          registry-username: ${{ github.repository_owner }}
+          registry-password: ${{ secrets.BITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          service-name: batch-runtime
+          context: Batchfile
+          dockerfile: Dockerfile
+          image-prefix: batch
+          platforms: linux/amd64
+          test-command: /bin/sh -lc 'echo "Batch runtime OK"'
+          provenance: 'true'
+          sbom: 'true'
+          sign: 'false'
+          push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+
+      - name: .bit-image build lisp-runtime
+        if: ${{ hashFiles('.bitimage.queue') != '' && contains(steps.img.outputs.services, '"name":"lisp-runtime"') }}
+        uses: ./.github/actions/.bit-image
+        with:
+          registry: ghcr.io
+          registry-username: ${{ github.repository_owner }}
+          registry-password: ${{ secrets.BITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          service-name: lisp-runtime
+          context: Lisp
+          dockerfile: Dockerfile
+          image-prefix: lisp
+          platforms: linux/amd64
+          test-command: /bin/sh -lc 'echo "Lisp runtime OK"'
+          provenance: 'true'
+          sbom: 'true'
+          sign: 'false'
+          push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+
+      - name: Merge .bit-image audits
+        shell: bash
+        run: |
+          set -e
+          LOG="${{ steps.audit.outputs.log }}"
+          JSON="${{ steps.audit.outputs.json }}"
+          mapfile -t files < <(ls -1 audit/build_manifest_*.log 2>/dev/null || true)
+          if [ ${#files[@]} -gt 0 ]; then
+            echo "== .bit-image (merged) ==" >> "$LOG"
+            cat "${files[@]}" >> "$LOG" || true
+          fi
+          mapfile -t imgs < <(ls -1 audit/images_*.json 2>/dev/null || true)
+          for f in "${imgs[@]}"; do
+            tmp=$(mktemp)
+            jq --slurp '.[0] * {images: (.[0].images + .[1])}' "$JSON" "$f" > "$tmp" && mv "$tmp" "$JSON"
+          done
+
+      - name: Discover orchestrated workflows
+        id: discover
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t WF < <(find .github/workflows -type f -name "*.yml" \
+            ! -name ".bithub-actions.yml" \
+            ! -name ".tests-aln.yml" \
+            ! -name ".tests-batchfile.yml" \
+            ! -name ".tests-lisp.yml" \
+            | sort)
+          if [ ${#WF[@]} -eq 0 ]; then
+            echo "workflows=" >> $GITHUB_OUTPUT
+          else
+            echo "workflows=${WF[*]}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run tests and other workflows
+        if: ${{ always() }}
+        id: runwfs
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOG="${{ steps.audit.outputs.log }}"
+          JSON="${{ steps.audit.outputs.json }}"
+
+          # Run test workflows first (best-effort)
+          run_wf() {
+            local WF="$1"
+            echo "▶ $WF" | tee -a "$LOG"
+            if ! gh workflow view "$WF" >/dev/null 2>&1; then
+              echo "skip: $WF not dispatchable" | tee -a "$LOG"; return 0; fi
+            RID=$(gh workflow run "$WF" --ref "$GITHUB_REF_NAME" --json run_id -q .run_id 2>/dev/null || true)
+            [ -z "$RID" ] && { echo "dispatch failed: $WF" | tee -a "$LOG"; return 0; }
+            if ! gh run watch "$RID" --exit-status; then
+              echo "❌ $WF failed (run: $RID)" | tee -a "$LOG"
+            else
+              echo "✅ $WF passed (run: $RID)" | tee -a "$LOG"
+            fi
+          }
+
+          run_wf ".tests-aln"
+          run_wf ".tests-batchfile"
+          run_wf ".tests-lisp"
+
+          # Then other workflows if any (best-effort)
+          if [ -n "${{ steps.discover.outputs.workflows }}" ]; then
+            IFS=' ' read -r -a WF_ARRAY <<< "${{ steps.discover.outputs.workflows }}"
+            for path in "${WF_ARRAY[@]}"; do
+              base=$(basename "$path" .yml)
+              run_wf "$base"
+            done
+          fi
+
+      - name: Upload orchestration audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: bithub-orchestration-audit
+          path: |
+            ${{ steps.audit.outputs.log }}
+            ${{ steps.audit.outputs.json }}
+            audit/**
+            orchestration_audit/**

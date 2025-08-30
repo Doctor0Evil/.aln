@@ -1,0 +1,108 @@
+name: bots-deploy-example
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deploy environment"
+        required: true
+        default: "staging"
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+jobs:
+  build-and-push:
+    name: Build & Push github.aln.bots
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    defaults:
+      run:
+        working-directory: bots
+
+    steps:
+      - name: 📥 Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🛠 Use Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: bots/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: ✅ Lint & Manifest sanity
+        run: |
+          npm run lint --if-present || true
+          node -e "JSON.parse(require('fs').readFileSync('config/bots.manifest.json','utf8')); console.log('manifest: OK')"
+
+      - name: 🧠 ML Background Repairs (.yml / .aln)
+        run: |
+          echo "🔧 Running evolve.real.aln repairs..."
+          git ls-files '*.yml' '*.yaml' '*.aln' | while read file; do
+            echo "Repairing $file"
+            node scripts/aln-repair-operator.js "$file" --adapt=fun.adapt=evolve.real.aln
+          done
+          if ! git diff --quiet; then
+            git config user.name "aln-bot"
+            git config user.email "aln-bot@users.noreply.github.com"
+            git commit -am "chore: background repairs (.yml/.aln) via evolve.real.aln"
+            git push
+          fi
+
+      - name: 🐳 Build Docker image
+        run: docker build -t github-aln-bots:latest .
+
+      - name: 🏷 Tag image for GHCR
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/github-aln-bots
+          VERSION=sha-${GITHUB_SHA::7}
+          echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          docker tag github-aln-bots:latest $IMAGE_ID:$VERSION
+          docker tag github-aln-bots:latest $IMAGE_ID:latest
+
+      - name: 🔐 Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📤 Push image
+        run: |
+          docker push $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:latest
+
+  deploy:
+    name: Deploy github.aln.bots
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: 📥 Checkout infra/config
+        uses: actions/checkout@v4
+
+      - name: 🔽 Pull image from GHCR
+        run: docker pull ${{ env.IMAGE_ID }}:${{ env.VERSION }}
+
+      - name: 🚀 Run container
+        run: |
+          docker rm -f github-aln-bots || true
+          docker run -d --name github-aln-bots \
+            -p 3000:3000 \
+            -e ALN_APP_ID=${{ secrets.ALN_APP_ID }} \
+            -e ALN_PRIVATE_KEY="${{ secrets.ALN_PRIVATE_KEY }}" \
+            -e ALN_WEBHOOK_SECRET=${{ secrets.ALN_WEBHOOK_SECRET }} \
+            ${{ env.IMAGE_ID }}:${{ env.VERSION }}
+
+      - name: 📜 Confirm deploy
+        run: |
+          echo "Deployed github-aln-bots:${{ env.VERSION }} to ${{ github.event.inputs.environment }}"

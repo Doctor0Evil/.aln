@@ -1,0 +1,281 @@
+name: Meta Orchestrator ALN Bot-Swarm
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/**"
+      - "schemas/**"
+      - "docs/**"
+      - "**/*.aln"
+  schedule:
+    - cron: "0 */6 * * *"   # every 6 hours
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: orchestrator-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  LOG_DIR: logs
+  FIX_LOG: logs/fixer.log
+  ALN_LOG: logs/aln-fixes.log
+  RECOVERY_LOG: logs/recovery.log
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # for gh CLI workflow triggers
+
+jobs:
+  orchestrate:
+    name: Orchestrate, Fix, Parse ALN, Recover
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Init logs and environment
+        run: |
+          mkdir -p "${LOG_DIR}"
+          : > "${FIX_LOG}"
+          : > "${ALN_LOG}"
+          : > "${RECOVERY_LOG}"
+          echo "=== Orchestrator start: sha=${GITHUB_SHA} run=${GITHUB_RUN_ID} ref=${GITHUB_REF} ===" | tee -a "${FIX_LOG}"
+
+      - name: Determine default branch
+        id: branch
+        run: |
+          default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@')"
+          [ -z "${default_branch}" ] && default_branch="main"
+          echo "default_branch=${default_branch}" | tee -a "${FIX_LOG}"
+          echo "default_branch=${default_branch}" >> "$GITHUB_OUTPUT"
+
+      - name: Normalize .gitattributes (fix invalid attribute names)
+        run: |
+          if [ -f .gitattributes ]; then
+            cp .gitattributes .gitattributes.bak
+            # Ensure comment marker at column 1 and remove CRLF
+            sed -i 's/^[[:space:]]*#/#/' .gitattributes
+            sed -i 's/\r$//' .gitattributes
+            if ! diff -q .gitattributes.bak .gitattributes >/dev/null; then
+              echo "Normalized .gitattributes" | tee -a "${FIX_LOG}"
+              git add .gitattributes
+            else
+              echo "No .gitattributes changes needed" | tee -a "${FIX_LOG}"
+            fi
+          else
+            echo ".gitattributes not present; skipping" | tee -a "${FIX_LOG}"
+          fi
+
+      - name: Ensure secondary recovery script exists
+        run: |
+          if [ ! -f "./secondary-recovery.sh" ]; then
+            cat > ./secondary-recovery.sh <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+LOG="${RECOVERY_LOG:-logs/recovery.log}"
+mkdir -p "$(dirname "$LOG")"
+echo "[RECOVERY] $(date -u +"%F %T") Secondary recovery invoked." | tee -a "$LOG"
+# add lightweight probes or cache cleanups here
+echo "[RECOVERY] No custom steps found; stub completed." | tee -a "$LOG"
+SH
+            chmod +x ./secondary-recovery.sh
+            echo "Created default secondary-recovery.sh" | tee -a "${FIX_LOG}"
+            git add ./secondary-recovery.sh
+          else
+            chmod +x ./secondary-recovery.sh
+            echo "secondary-recovery.sh present" | tee -a "${FIX_LOG}"
+          fi
+
+      - name: Ensure aln-analyze CLI (pip first, then binary fallback)
+        run: |
+          if command -v aln-analyze >/dev/null 2>&1; then
+            echo "aln-analyze already available" | tee -a "${FIX_LOG}"
+          else
+            echo "Attempting pip install of aln-analyze..." | tee -a "${FIX_LOG}"
+            set +e
+            python3 -m pip install --upgrade pip && pip install aln-analyze
+            if ! command -v aln-analyze >/dev/null 2>&1; then
+              echo "::warning::pip install failed; attempting binary fetch" | tee -a "${FIX_LOG}"
+              curl -sL -o aln-analyze https://github.com/Doctor0Evil/ALN_Programming_Language/releases/latest/download/aln-analyze-linux-x64 \
+                && chmod +x aln-analyze && sudo mv aln-analyze /usr/local/bin/ || true
+            fi
+            set -e
+          fi
+
+      - name: ALN parser-input fixes and validation
+        run: |
+          echo "=== ALN normalization start ===" | tee -a "${ALN_LOG}"
+          python3 - << 'PY' | tee -a "${ALN_LOG}"
+import os, sys, io, re
+root="."
+changed=False
+def process(path):
+    global changed
+    try:
+        with open(path, "rb") as f: data=f.read()
+        # Remove UTF-8 BOM if present
+        if data.startswith(b"\xef\xbb\xbf"):
+            data=data[3:]
+        # Normalize newlines to LF
+        data=data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+        text=data.decode("utf-8", errors="replace")
+        # Trim trailing whitespace
+        lines=[re.sub(r"[ \t]+$", "", L) for L in text.split("\n")]
+        norm="\n".join(lines)
+        # Final newline
+        if not norm.endswith("\n"): norm += "\n"
+        if norm != text:
+            with open(path, "w", encoding="utf-8", newline="\n") as f: f.write(norm)
+            print(f"[FIX] normalized {path}")
+            changed=True
+        # lightweight sanity: warn if unbalanced braces/parens
+        opens = norm.count("(") - norm.count(")")
+        braces = norm.count("{") - norm.count("}")
+        if opens != 0:
+            print(f"[WARN] possible unbalanced parentheses in {path} (delta {opens})")
+        if braces != 0:
+            print(f"[WARN] possible unbalanced braces in {path} (delta {braces})")
+    except Exception as e:
+        print(f"[ERR] {path}: {e}")
+for dirpath,_,files in os.walk(root):
+    for fn in files:
+        if fn.lower().endswith(".aln"):
+            process(os.path.join(dirpath, fn))
+print("[DONE] normalization pass complete")
+print("CHANGED=" + ("1" if changed else "0"))
+PY
+          CHANGED=$(tail -n 1 "${ALN_LOG}" | sed -n 's/^CHANGED=\(.*\)$/\1/p')
+          if [ "${CHANGED}" = "1" ]; then
+            git add -A
+          fi
+          echo "=== ALN normalization end ===" | tee -a "${ALN_LOG}"
+
+          # Optional: run repo-provided validator if present
+          if [ -x "./scripts/aln/validate.sh" ]; then
+            echo "Running scripts/aln/validate.sh ..." | tee -a "${ALN_LOG}"
+            ./scripts/aln/validate.sh 2>&1 | tee -a "${ALN_LOG}" || echo "::warning::ALN validator returned non-zero"
+          elif command -v aln-analyze >/dev/null 2>&1; then
+            echo "Running aln-analyze in safe mode ..." | tee -a "${ALN_LOG}"
+            aln-analyze --input /github/logs --output /tmp/failure.lst --profane-allow 'fuck,shit,bitch,asshole,cunt' \
+              || echo "::warning::aln-analyze exited non-zero"
+          else
+            echo "::notice::No ALN validator available; skipped" | tee -a "${ALN_LOG}"
+          fi
+
+      - name: Stage unstaged changes (safety net)
+        run: |
+          if ! git diff --quiet; then
+            echo "Staging unstaged changes..." | tee -a "${FIX_LOG}"
+            git add -A
+          else
+            echo "No unstaged changes" | tee -a "${FIX_LOG}"
+          fi
+
+      - name: Select bot identity (rotation)
+        id: bot
+        run: |
+          idx=$(( GITHUB_RUN_ID % 3 ))
+          case "${idx}" in
+            0)
+              BOT_NAME="github-actions[bot]"
+              BOT_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
+              ;;
+            1)
+              BOT_NAME="actions-user"
+              BOT_EMAIL="actions-user@users.noreply.github.com"
+              ;;
+            *)
+              # Optional custom bot via secrets; fallback to 'aln-bot'
+              BOT_NAME="${BOT_NAME_3:-aln-bot}"
+              BOT_EMAIL="${BOT_EMAIL_3:-aln-bot@users.noreply.github.com}"
+              ;;
+          esac
+          echo "name=${BOT_NAME}"  >> "$GITHUB_OUTPUT"
+          echo "email=${BOT_EMAIL}" >> "$GITHUB_OUTPUT"
+        env:
+          BOT_NAME_3: ${{ secrets.BOT_NAME_3 }}
+          BOT_EMAIL_3: ${{ secrets.BOT_EMAIL_3 }}
+
+      - name: Commit if staged
+        id: commit
+        run: |
+          if git diff --cached --quiet; then
+            echo "nothing_to_commit=true" >> "$GITHUB_OUTPUT"
+            echo "No staged changes to commit" | tee -a "${FIX_LOG}"
+            exit 0
+          fi
+          git config --global user.name  "${{ steps.bot.outputs.name }}"
+          git config --global user.email "${{ steps.bot.outputs.email }}"
+          git commit -m "ci(orchestrator): ALN normalization, recovery stub, attrs fix [skip ci]" | tee -a "${FIX_LOG}"
+          echo "nothing_to_commit=false" >> "$GITHUB_OUTPUT"
+
+      - name: Rebase and push (PR fallback on protection)
+        id: push
+        continue-on-error: true
+        run: |
+          target="${{ steps.branch.outputs.default_branch }}"
+          git fetch origin "${target}" | tee -a "${FIX_LOG}"
+          # handle detached HEAD by creating temp branch
+          if ! git rev-parse --abbrev-ref HEAD | grep -qv '^HEAD$'; then
+            git checkout -b "orchestrator/${GITHUB_RUN_ID}" | tee -a "${FIX_LOG}"
+          fi
+          git pull --rebase origin "${target}" || true
+          git push origin HEAD:"${target}" | tee -a "${FIX_LOG}"
+
+      - name: PR fallback if push blocked or nothing to commit
+        if: steps.push.outcome == 'failure' || steps.commit.outputs.nothing_to_commit == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "Orchestrator PR: ALN fixes & recovery (run ${{ github.run_id }})"
+          commit-message: "ci(orchestrator): ALN normalization, recovery stub, attrs fix"
+          branch: "orchestrator/autofix-${{ github.run_id }}"
+          body: |
+            Automated fixes by Meta Orchestrator ALN Bot-Swarm.
+            - ALN normalization and validation
+            - Recovery stub ensured
+            - .gitattributes normalized
+          delete-branch: true
+
+      - name: Trigger generated workflows if present (safe)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if command -v gh >/dev/null 2>&1; then
+            for wf in ".github/workflows/generated_autofix.yml" ".github/workflows/generated_tests.yml"; do
+              if [ -f "$wf" ]; then
+                echo "Triggering $(basename "$wf") ..."
+                gh workflow run "$(basename "$wf")" || echo "::warning::Failed to trigger $(basename "$wf")"
+              fi
+            done
+          else
+            echo "::notice::gh CLI not present; skipping workflow triggers"
+          fi
+
+      - name: Run secondary recovery (always)
+        if: always()
+        run: |
+          if [ -x "./secondary-recovery.sh" ]; then
+            ./secondary-recovery.sh || echo "::warning::Secondary recovery exited non-zero"
+          else
+            echo "::warning::secondary-recovery.sh not executable — skipping"
+            echo "[RECOVERY] Missing script" >> "${RECOVERY_LOG}"
+          fi
+
+      - name: Upload orchestrator artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orchestrator-logs-${{ github.run_id }}
+          path: |
+            ${LOG_DIR}/
+            ${FIX_LOG}
+            ${ALN_LOG}
+            ${RECOVERY_LOG}
+          if-no-files-found: warn
+          retention-days: 7

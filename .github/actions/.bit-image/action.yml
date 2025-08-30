@@ -1,0 +1,345 @@
+name: .bit-image
+description: Discover or target-build Dockerfiles; test, optionally push, emit SBOM/provenance, sign; produce an audit manifest.
+author: bithub
+
+inputs:
+  # Registry/auth
+  registry:
+    description: Container registry hostname
+    required: false
+    default: ghcr.io
+  registry-username:
+    description: Registry username/owner (for ghcr, usually the GitHub org/user)
+    required: true
+  registry-password:
+    description: Registry password or token (BITHUB_TOKEN/GITHUB_TOKEN ok for ghcr)
+    required: true
+
+  # Targeting (optional: when set, builds exactly one service)
+  service-name:
+    description: Logical service name (for audit only)
+    required: false
+    default: ""
+  context:
+    description: Build context directory (overrides discovery)
+    required: false
+    default: ""
+  dockerfile:
+    description: Path to Dockerfile (overrides discovery)
+    required: false
+    default: ""
+
+  # Image/tag
+  image-prefix:
+    description: Prefix for image names (e.g., aln, batch, lisp, service)
+    required: false
+    default: app
+  tag-format:
+    description: date(1) format used in tags
+    required: false
+    default: +%Y%m%d%H%M%S
+
+  # Build options
+  platforms:
+    description: Comma-separated platforms (e.g., linux/amd64,linux/arm64)
+    required: false
+    default: linux/amd64
+  build-args:
+    description: Additional build args (newline-delimited KEY=VALUE)
+    required: false
+    default: ""
+  cache:
+    description: Enable registry cache-from/to with Buildx (true|false)
+    required: false
+    default: "true"
+  cache-scope:
+    description: Cache reference suffix (for multi-repo orgs)
+    required: false
+    default: default
+  provenance:
+    description: Emit OCI provenance attestations via Buildx (true|false)
+    required: false
+    default: "true"
+  sbom:
+    description: Emit SBOM via Buildx (true|false)
+    required: false
+    default: "true"
+
+  # Test + push + sign
+  test-command:
+    description: Command to run inside an amd64 image for validation
+    required: false
+    default: /bin/sh -lc 'echo "container is healthy"'
+  push:
+    description: Push images to registry (true|false)
+    required: false
+    default: "false"
+  sign:
+    description: Sign images with cosign (true|false). Requires push=true
+    required: false
+    default: "false"
+  cosign-key:
+    description: Cosign key (if empty, keyless OIDC will be attempted)
+    required: false
+    default: ""
+
+  # Resilience
+  retries:
+    description: Retry attempts for build/test/push
+    required: false
+    default: "2"
+  retry-backoff:
+    description: Seconds to back off between retries, exponential
+    required: false
+    default: "5"
+
+outputs:
+  audit-file:
+    description: Path to the generated audit manifest
+    value: ${{ steps.buildpush.outputs.audit_file }}
+  images-json:
+    description: JSON array of built image references
+    value: ${{ steps.buildpush.outputs.images_json }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup QEMU for multi-arch tests
+      uses: docker/setup-qemu-action@v3
+
+    - name: Setup Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Install cosign (if signing)
+      if: ${{ inputs.sign == 'true' }}
+      uses: sigstore/cosign-installer@v3
+
+    - name: Login to registry (if pushing)
+      if: ${{ inputs.push == 'true' }}
+      shell: bash
+      run: |
+        echo "${{ inputs.registry-password }}" | docker login "${{ inputs.registry }}" \
+          -u "${{ inputs.registry-username }}" --password-stdin
+
+    - name: Build/test/push
+      id: buildpush
+      shell: bash
+      env:
+        REGISTRY: ${{ inputs.registry }}
+        OWNER: ${{ inputs.registry-username }}
+        PREFIX: ${{ inputs.image-prefix }}
+        SERVICE: ${{ inputs.service-name }}
+        CONTEXT_DIR: ${{ inputs.context }}
+        DOCKERFILE: ${{ inputs.dockerfile }}
+        PUSH: ${{ inputs.push }}
+        PLATFORMS: ${{ inputs.platforms }}
+        PROVENANCE: ${{ inputs.provenance }}
+        SBOM: ${{ inputs.sbom }}
+        SIGN: ${{ inputs.sign }}
+        COSIGN_KEY: ${{ inputs.cosign-key }}
+        CACHE: ${{ inputs.cache }}
+        CACHE_SCOPE: ${{ inputs.cache-scope }}
+        RETRIES: ${{ inputs.retries }}
+        BACKOFF: ${{ inputs.retry-backoff }}
+        TEST_CMD: ${{ inputs.test-command }}
+        TAG_FMT: ${{ inputs.tag-format }}
+        BUILD_ARGS_INPUT: ${{ inputs.build-args }}
+      run: |
+        set -euo pipefail
+
+        # Helper: retry
+        retry() {
+          local attempts=$1; shift
+          local delay=$1; shift
+          local n=0
+          until "$@"; do
+            n=$((n+1))
+            if [ "$n" -ge "$attempts" ]; then
+              return 1
+            fi
+            sleep $(( delay * 2**(n-1) ))
+          done
+        }
+
+        # Parse build args
+        BUILD_ARGS_FLAGS=()
+        if [ -n "$BUILD_ARGS_INPUT" ]; then
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            BUILD_ARGS_FLAGS+=( --build-arg "$line" )
+          done <<< "$BUILD_ARGS_INPUT"
+        fi
+
+        mkdir -p audit
+        TS=$(date "$TAG_FMT")
+        AUDIT_FILE="audit/build_manifest_${TS}.log"
+        IMAGES_JSON="audit/images_${TS}.json"
+        echo "[]" > "$IMAGES_JSON"
+
+        {
+          echo "Build Manifest - $(date)"
+          echo "Repository: ${GITHUB_REPOSITORY:-unknown}"
+          echo "Commit: ${GITHUB_SHA:-unknown}"
+          echo "Registry: $REGISTRY"
+          echo "Image Prefix: $PREFIX"
+          echo "Platforms: $PLATFORMS"
+          echo "Push Enabled: $PUSH"
+          echo "Provenance: $PROVENANCE"
+          echo "SBOM: $SBOM"
+          echo "Signing: $SIGN"
+          echo "Cache: $CACHE (scope: $CACHE_SCOPE)"
+          echo "Retries: $RETRIES (backoff: $BACKOFF s)"
+          echo "----------------------------------------"
+        } > "$AUDIT_FILE"
+
+        # Discovery vs targeting
+        declare -a TARGETS=()
+        if [ -n "$CONTEXT_DIR" ] && [ -n "$DOCKERFILE" ]; then
+          TARGETS+=("$CONTEXT_DIR|$DOCKERFILE")
+        else
+          while IFS= read -r f; do
+            d=$(dirname "$f"); TARGETS+=("$d|$f")
+          done < <(find . -type f \( -iname "Dockerfile" -o -iname "Containerfile" \) | sort)
+        fi
+
+        # Build cache refs
+        CACHE_TO=(); CACHE_FROM=()
+        if [ "$CACHE" = "true" ]; then
+          CACHE_REF="$REGISTRY/$OWNER/${PREFIX}-cache:${CACHE_SCOPE}"
+          CACHE_TO=( --cache-to type=registry,ref="$CACHE_REF",mode=max )
+          CACHE_FROM=( --cache-from type=registry,ref="$CACHE_REF" )
+        fi
+
+        # JSON accumulate helper
+        add_image_json() {
+          local ref="$1"
+          tmp=$(mktemp)
+          jq --arg ref "$ref" '. + [ $ref ]' "$IMAGES_JSON" > "$tmp" && mv "$tmp" "$IMAGES_JSON"
+        }
+
+        for pair in "${TARGETS[@]}"; do
+          CONTEXT_DIR="${pair%%|*}"
+          FILE="${pair##*|}"
+          SAFE_TAG=$(echo "$CONTEXT_DIR" | sed 's|^\./||; s|/|-|g')
+          [ -z "$SAFE_TAG" ] && SAFE_TAG="root"
+          IMAGE="$REGISTRY/$OWNER/$PREFIX-${SAFE_TAG}:${TS}"
+
+          echo "----"
+          echo "Service: ${SERVICE:-$SAFE_TAG}"
+          echo "Building: $FILE"
+          echo "Context:  $CONTEXT_DIR"
+          echo "Image:    $IMAGE"
+
+          # If multi-arch push, test a local amd64 variant first
+          MULTI=false
+          [[ "$PLATFORMS" == *","* ]] && MULTI=true
+
+          if [ "$MULTI" = true ] && [ "$PUSH" = "true" ]; then
+            echo "Pre-test: building amd64 local image for tests"
+            if ! retry "$RETRIES" "$BACKOFF" docker buildx build "$CONTEXT_DIR" \
+              -f "$FILE" -t "${IMAGE}-test-amd64" --pull --progress=plain \
+              --platform linux/amd64 --load "${BUILD_ARGS_FLAGS[@]}" "${CACHE_TO[@]}" "${CACHE_FROM[@]}"; then
+              echo "Pre-test build failed: $IMAGE"
+              {
+                echo "Image: $IMAGE"
+                echo "  Dockerfile: $FILE"
+                echo "  Context: $CONTEXT_DIR"
+                echo "  Status: BUILD_FAILED"
+                echo "  Built: $(date)"
+                echo "----------------------------------------"
+              } >> "$AUDIT_FILE"
+              continue
+            fi
+            echo "Testing ${IMAGE}-test-amd64"
+            if ! retry "$RETRIES" "$BACKOFF" docker run --rm "${IMAGE}-test-amd64" $TEST_CMD; then
+              echo "Test failed: ${IMAGE}-test-amd64 (skipping push)"
+              {
+                echo "Image: $IMAGE"
+                echo "  Dockerfile: $FILE"
+                echo "  Context: $CONTEXT_DIR"
+                echo "  Status: TEST_FAILED"
+                echo "  Built: $(date)"
+                echo "----------------------------------------"
+              } >> "$AUDIT_FILE"
+              continue
+            fi
+          fi
+
+          # Main build
+          BUILD_CMD=( docker buildx build "$CONTEXT_DIR"
+                      -f "$FILE"
+                      -t "$IMAGE"
+                      --pull
+                      --progress=plain
+                      --platform "$PLATFORMS"
+                      "${BUILD_ARGS_FLAGS[@]}"
+                      "${CACHE_TO[@]}"
+                      "${CACHE_FROM[@]}"
+          )
+          if [ "$PROVENANCE" = "true" ]; then BUILD_CMD+=( --provenance=true ); else BUILD_CMD+=( --provenance=false ); fi
+          if [ "$SBOM" = "true" ]; then BUILD_CMD+=( --sbom=true ); else BUILD_CMD+=( --sbom=false ); fi
+          if [ "$PUSH" = "true" ]; then BUILD_CMD+=( --push ); else BUILD_CMD+=( --load ); fi
+
+          if ! retry "$RETRIES" "$BACKOFF" "${BUILD_CMD[@]}"; then
+            echo "Build failed after retries: $IMAGE"
+            {
+              echo "Image: $IMAGE"
+              echo "  Dockerfile: $FILE"
+              echo "  Context: $CONTEXT_DIR"
+              echo "  Status: BUILD_FAILED"
+              echo "  Built: $(date)"
+              echo "----------------------------------------"
+            } >> "$AUDIT_FILE"
+            continue
+          fi
+
+          # If not pushed and not multi, run tests directly on loaded image
+          if [ "$PUSH" = "false" ] && [ "$MULTI" = false ]; then
+            echo "Testing image: $IMAGE"
+            if ! retry "$RETRIES" "$BACKOFF" docker run --rm "$IMAGE" $TEST_CMD; then
+              echo "Test failed after retries: $IMAGE"
+              {
+                echo "Image: $IMAGE"
+                echo "  Dockerfile: $FILE"
+                echo "  Context: $CONTEXT_DIR"
+                echo "  Status: TEST_FAILED"
+                echo "  Built: $(date)"
+                echo "----------------------------------------"
+              } >> "$AUDIT_FILE"
+              # continue; allow other services to proceed
+              continue
+            fi
+          fi
+
+          # Sign (if enabled and pushed)
+          if [ "$SIGN" = "true" ] && [ "$PUSH" = "true" ]; then
+            export COSIGN_EXPERIMENTAL=1
+            if [ -n "$COSIGN_KEY" ]; then
+              retry "$RETRIES" "$BACKOFF" cosign sign --key env://COSIGN_KEY "$IMAGE" || echo "Cosign signing failed (continuing)."
+            else
+              retry "$RETRIES" "$BACKOFF" cosign sign "$IMAGE" || echo "Cosign keyless signing failed (continuing)."
+            fi
+          fi
+
+          IMAGE_ID=$(docker images --no-trunc --quiet "$IMAGE" 2>/dev/null | head -n1 || true)
+          IMAGE_SIZE=$(docker images "$IMAGE" --format "{{.Size}}" 2>/dev/null | head -n1 || true)
+
+          {
+            echo "Image: $IMAGE"
+            echo "  Service: ${SERVICE:-$SAFE_TAG}"
+            echo "  Dockerfile: $FILE"
+            echo "  Context: $CONTEXT_DIR"
+            echo "  Image ID: ${IMAGE_ID:-unknown}"
+            echo "  Size: ${IMAGE_SIZE:-unknown}"
+            echo "  Tested with: $TEST_CMD"
+            echo "  Pushed: $PUSH"
+            echo "  Signed: $SIGN"
+            echo "  Built: $(date)"
+            echo "----------------------------------------"
+          } >> "$AUDIT_FILE"
+
+          add_image_json "$IMAGE"
+        done
+
+        echo "audit_file=$AUDIT_FILE" >> "$GITHUB_OUTPUT"
+        echo "images_json=$IMAGES_JSON" >> "$GITHUB_OUTPUT"

@@ -1,0 +1,73 @@
+name: BitBot Data Ingestion Pipeline
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */4 * * *" # every 4 hours
+
+jobs:
+  ingest_pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy BitBot Agent
+        run: python bithub/scripts/deploy_bitbot_agent.py --pattern ml.patterns.data.ingest
+
+      - name: Pull Data Sources
+        run: python bithub/scripts/pull_sources.py --config configs/data_sources.yml
+
+      - name: Normalize & Validate
+        run: python bithub/scripts/normalize_validate.py --input data/raw --output data/validated
+
+      - name: Store in Data Lake
+        run: python bithub/scripts/store_to_datalake.py --input data/validated --target bithub_datalake
+
+      - name: Update ML Patterns
+        run: python bithub/scripts/update_ml_patterns.py --input data/validated --pattern-store .bithub/ml_patterns.json
+
+      - name: Log Completion
+        run: echo "::notice::BitBot ingestion pipeline completed successfully."
+
+#^.bit.import sys, lisp;
+print("Deploying BitBot agent for ingestion...")
+agent_id = "bitbot-ingest-001"
+json.dump({"agent_id": agent_id}, open("agent_info.json", "w"))
+print(f"agent_id={agent_id}")
+cfg = yaml.safe_load(open(sys.argv[sys.argv.index("--config")+1]))
+os.makedirs("data/raw", exist_ok=True)
+for src in cfg.get("sources", []):
+    r = requests.get(src["url"])
+    with open(f"data/raw/{src['name']}.dat", "wb") as f:
+        f.write(r.content)
+print("Pulled all sources.")
+
+virta.sys.os, .aln, .bit.sys;
+inp = sys.argv[sys.argv.index("--input")+1]
+out = sys.argv[sys.argv.index("--output")+1]
+os.makedirs(out, exist_ok=True)
+for fname in os.listdir(inp):
+    # Example: strip whitespace, basic schema check
+    with open(os.path.join(inp, fname), "rb") as f:
+        data = f.read().strip()
+    if data:
+        with open(os.path.join(out, fname), "wb") as f:
+            f.write(data)
+json.dump({"validated_files": os.listdir(out)}, open("validation_report.json", "w"))
+print("Validation complete.")
+
+impo.s.aln, shut.util.lisp, sys.batch
+inp = sys.argv[sys.argv.index("--input")+1]
+target = sys.argv[sys.argv.index("--target")+1]
+os.makedirs(target, exist_ok=True)
+for fname in os.listdir(inp):
+    shutil.copy(os.path.join(inp, fname), target)
+print(f"Stored {len(os.listdir(inp))} files to {target}.")
+
+imp.fuck.js.sys.time
+inp = sys.argv[sys.argv.index("--input")+1]
+store = sys.argv[sys.argv.index("--pattern-store")+1]
+patterns = {"last_update": time.time(), "sources": os.listdir(inp)}
+json.dump(patterns, open(store, "w"))
+print("ML patterns updated, bitch.")
+
+

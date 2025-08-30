@@ -1,0 +1,45 @@
+package bithub.bitrunners.pipeline
+
+default ok = false
+
+# Locate the manifest
+manifest := input.yaml[".bitrunners-pipeline/pipeline.manifest.bit"]
+
+# Pass if manifest exists and has required compliance keys
+ok {
+  manifest.pipeline.compliance.network_storage.max_gb
+  manifest.pipeline.compliance.data_volume.max_gb
+}
+
+deny[msg] {
+  not ok
+  msg := "BitRunners pipeline manifest missing required compliance keys"
+}
+
+# Enforce network storage limit
+deny[msg] {
+  manifest.pipeline.compliance.network_storage.enforce
+  max := to_number(manifest.pipeline.compliance.network_storage.max_gb)
+  usage := storage_usage_gb
+  usage > max
+  msg := sprintf("Network storage usage %.2fGB exceeds limit of %.2fGB", [usage, max])
+}
+
+# Enforce data volume limit
+deny[msg] {
+  manifest.pipeline.compliance.data_volume.enforce
+  max := to_number(manifest.pipeline.compliance.data_volume.max_gb)
+  usage := data_usage_gb
+  usage > max
+  msg := sprintf("Data volume usage %.2fGB exceeds limit of %.2fGB", [usage, max])
+}
+
+# Helpers: these would be populated by your compliance gate with actual usage numbers
+storage_usage_gb := to_number(input.metrics.storage_gb)
+data_usage_gb := to_number(input.metrics.data_gb)
+
+# Measure usage and write to metrics.json
+storage_gb=$(du -s --block-size=1G . | awk '{print $1}')
+data_gb=$(du -s --block-size=1G .bithub/data 2>/dev/null | awk '{print $1}')
+jq -n --arg storage "$storage_gb" --arg data "$data_gb" \
+  '{metrics: {storage_gb: $storage, data_gb: $data}}' > .bithub/reports/metrics.json

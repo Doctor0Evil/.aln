@@ -1,0 +1,45 @@
+CONTRACT: bit.hub_integration_v1
+TITLE: Unified Git-Style Command Support for ALN, Lisp, Batch (Blueprint)
+VERSION: 1.0.0
+AUTHORS: ALN Core Council, bit.hub Foundation
+SECTION 1: PURPOSE
+- Enable `.aln`, `.lisp`, and `.batch` files to invoke and operate with `.git`-style commands natively inside ALN, Batchfile, and Lisp runtimes.
+- Allow GitHub workflows, CI, and API to recognize and act on these commands as first-class citizens.
+- Provide the contract/rego scaffold for future ".bit.hub" evolutions and platform expansion.
+SECTION 2: SCOPE
+- Applies to any repository, workflow, or pipeline integrating ALN, Lisp, Batchfile-based command logic with GitHub or equivalent VCS.
+- Governs CI workflows, direct shell, or interpreted runtime execution.
+SECTION 3: AUTHORIZED COMMAND EXTENSIONS
+COMMANDS git-PRIMITIVES:
+    - clone, init, status, add, commit, diff, push, pull, fetch, branch, merge, rebase, log, tag, remote, config
+COMMANDS .aln/.lisp/.batch NATIVE:
+    - aln-git-clone, lisp-git-init, batch-git-add, aln-git-status, lisp-git-commit, etc.
+    - Custom extension pattern: <runtime>-git-<primitive>
+    - MUST map 1:1 to `.git` primitive function (canonical operation, audit-logged)
+ALLOWED_EXTENSIONS:
+    - All above are allowed under explicit mapping and audit.
+SECTION 4: INVOCATION POLICY & NAMESPACING
+- All git-style commands in non-shell files (e.g., `.aln`, `.lisp`, `.batch`) MUST:
+    * Be called via the sanctioned namespace (e.g., `aln.git.clone`, `lisp.git.commit`).
+    * Write transaction logs to `.bit/git-log/` for full traceability.
+    * Respect environment-permissions (CI tokens, GitHub Actions/Workflows, OAuth).
+- GitHub workflows MUST recognize and accept jobs with these extensions if the repo contains this contract and policy present.
+SECTION 5: SAFETY, AUDIT, & COMPLIANCE
+- Every native command call is subjected to:
+    * Audit log write (`.bit/audit.log`).
+    * Permission check: user must have rights for corresponding `.git` command.
+    * Command input/output sanitized (to prevent injection/corruption).
+    * Replay/recoverable (for CI/CD rollback).
+- Extension registration (for new primitives) requires:
+    * PR review, contract update, and policy recompile in `.bit.hub` registry.
+SECTION 6: AUTO-DETECTION & GITHUB COMPATIBILITY
+- Any file matching pattern: `aln-*.aln`, `*.lisp`, `*.batch`
+    * If it imports `aln.git`, `lisp.git`, or `batch.git` namespace, CI MUST run the equivalent GitHub CLI framework.
+    * Output, diffs, and results are directly parseable and displayed in GitHub’s UI as if native `.git` commands were used.
+- Custom commands may be aliased in GitHub Actions with:
+    `gh extension create --precompiled=other bit-hub-aln-lisp-batch`
+    and installed as GH CLI extensions for local or CI/CD use.
+SECTION 7: COMPLIANCE POLICY HOOK (Rego Integration Reference)
+- References strict OPA integration for command permissioning, logging, rollback, and conflict resolution.
+- Every git-style command issued via a non-shell runtime must yield a compliance "allow" from `.bit/rego/command_policy.rego`.
+ENDCONTRACT

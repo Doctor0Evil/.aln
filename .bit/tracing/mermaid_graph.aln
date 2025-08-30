@@ -1,0 +1,10 @@
+(defmodule trace-to-mermaid
+  (defun make-edges (traces)
+    (reduce #'(lambda (acc t)
+        (let ((parent (get-parent-node t)) (child (get-node t)))
+          (if parent (adjoin (list parent child (get-duration t)) acc))))
+    traces nil)
+  (defun render (edges)
+    (format t "flowchart TD~%")
+    (dolist (e edges)
+      (format t "  \"~a\" -->|~ams| \"~a\"~%" (car e) (caddr e) (cadr e)))))

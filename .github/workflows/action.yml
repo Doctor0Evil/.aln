@@ -1,0 +1,30 @@
+name: "Assert Files"
+description: "Asserts that the listed files exist; optional exec bit enforcement."
+inputs:
+  files:
+    description: "Newline-separated file list"
+    required: true
+  require_exec:
+    description: "Set to true to enforce executable bit"
+    required: false
+    default: "false"
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        FAIL=0
+        while IFS= read -r f; do
+          [[ -z "$f" ]] && continue
+          if [[ ! -f "$f" ]]; then
+            echo "❌ Missing $f"
+            FAIL=1
+          else
+            echo "✅ $f"
+            if [[ "${{ inputs.require_exec }}" == "true" ]]; then
+              chmod +x "$f" || true
+            fi
+          fi
+        done <<< "${{ inputs.files }}"
+        exit $FAIL

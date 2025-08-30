@@ -1,0 +1,53 @@
+name: .bit-image CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  bit-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: Doctor0Evil/ALN_Programming_Language
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh-strict: true
+          ssh-user: git
+          persist-credentials: true
+          clean: true
+          sparse-checkout-cone-mode: true
+          fetch-depth: 1
+          fetch-tags: false
+          show-progress: true
+          lfs: false
+          submodules: false
+          set-safe-directory: true
+
+      - name: Build, test, and push via .bit-image
+        id: bitimage
+        uses: ./.github/actions/.bit-image
+        with:
+          registry: ghcr.io
+          registry-username: ${{ github.repository_owner }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          image-prefix: my-image
+          # Push only on direct pushes (not pull requests)
+          push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+          # Replace with your real smoke test; must exist in image
+          test-command: /bin/sh -lc 'echo "ALN image OK: $HOSTNAME"'
+          tag-format: +%Y%m%d%H%M%S
+
+      - name: Upload audit manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: bit-image-build-manifest
+          path: ${{ steps.bitimage.outputs.audit-file }}

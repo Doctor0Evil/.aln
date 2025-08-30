@@ -1,0 +1,131 @@
+name: Workflow Generator
+
+on:
+  workflow_call:
+    inputs:
+      create_samples:
+        description: "Generate sample workflows"
+        required: false
+        type: boolean
+        default: true
+      bot_name:
+        required: false
+        type: string
+        default: "actions-user"
+      bot_email:
+        required: false
+        type: string
+        default: "actions-user@users.noreply.github.com"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    env:
+      LOG_DIR: logs
+      GEN_LOG: logs/generator.log
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Init logs
+        run: mkdir -p "$LOG_DIR" && echo "=== Generator start ===" | tee -a "$GEN_LOG"
+
+      - name: Ensure workflows directory
+        run: mkdir -p .github/workflows
+
+      - name: Generate sample workflow A (Tests)
+        if: ${{ inputs.create_samples }}
+        run: |
+          cat > .github/workflows/generated_tests.yml <<'YML'
+          name: Generated Tests
+          on:
+            workflow_dispatch:
+            push:
+              branches: [ "main" ]
+          jobs:
+            tests:
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v4
+                - uses: actions/setup-python@v5
+                  with:
+                    python-version: '3.12'
+                - name: Install test deps
+                  run: pip install pytest
+                - name: Run tests
+                  run: pytest -q || true
+          YML
+          echo "Wrote generated_tests.yml" | tee -a "$GEN_LOG"
+
+      - name: Generate sample workflow B (Calls Fixer)
+        if: ${{ inputs.create_samples }}
+        run: |
+          cat > .github/workflows/generated_autofix.yml <<'YML'
+          name: Generated Autofix
+          on:
+            workflow_dispatch:
+            push:
+              branches: [ "main" ]
+          jobs:
+            fix:
+              uses: ./.github/workflows/workflow_fixer.yml
+              with:
+                caller: generated_autofix
+                depth: 1
+          YML
+          echo "Wrote generated_autofix.yml" | tee -a "$GEN_LOG"
+
+      - name: Stage and commit
+        id: commit
+        run: |
+          git add .github/workflows/generated_*.yml || true
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit." | tee -a "$GEN_LOG"
+            echo "did_commit=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config --global user.name  "${{ inputs.bot_name }}"
+          git config --global user.email "${{ inputs.bot_email }}"
+          git commit -m "ci(generator): add/update generated workflows" | tee -a "$GEN_LOG"
+          echo "did_commit=true" >> "$GITHUB_OUTPUT"
+
+      - name: Push or PR
+        if: steps.commit.outputs.did_commit == 'true'
+        id: push_try
+        continue-on-error: true
+        run: |
+          set -e
+          default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@')"
+          [ -z "$default_branch" ] && default_branch="main"
+          if ! git rev-parse --abbrev-ref HEAD | grep -qv '^HEAD$'; then
+            git checkout -b "generator/${GITHUB_RUN_ID}"
+          fi
+          git pull --rebase origin "$default_branch" || true
+          git push origin HEAD:"$default_branch"
+
+      - name: PR fallback
+        if: steps.commit.outputs.did_commit == 'true' && steps.push_try.outcome == 'failure'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "Generator PR: add/update workflows (run ${{ github.run_id }})"
+          commit-message: "ci(generator): add/update generated workflows"
+          branch: "generator/autogen-${{ github.run_id }}"
+          body: |
+            Generated/updated workflows by Workflow Generator.
+          delete-branch: true
+
+      - name: Upload generator logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generator-logs-${{ github.run_id }}
+          path: ${{ env.GEN_LOG }}
+          if-no-files-found: warn

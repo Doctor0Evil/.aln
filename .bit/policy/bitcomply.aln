@@ -1,0 +1,7 @@
+package bithub
+
+default allow = false
+denies[msg] { msg := data.bithub.security.permissions_violation[_] }
+denies[msg] { msg := data.bithub.security.action_pinning_violation[_] }
+denies[msg] { msg := data.bithub.humor.moderation_violation[_] }
+allow { count(denies) == 0 }

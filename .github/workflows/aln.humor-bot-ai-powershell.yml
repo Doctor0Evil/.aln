@@ -1,0 +1,165 @@
+# Humor Bot AI PowerShell Workflow (Advanced + Secure + Bit.Hub/ALN)
+name: Humor Bot - AI PS Workflow
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Least-privilege; grant only what we truly need.
+permissions:
+  contents: write      # needed for repository_dispatch API
+  id-token: write      # to mint short-lived BitBot tokens via OIDC
+  actions: read
+
+concurrency:
+  group: humor-bot-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BITHUB_TRACE_FILE: trace.jsonl
+  BITHUB_AUDIT_DIR: .bit/audit
+  HUMOR_LOG: humor_bot_laugh.log
+  OIDC_AUDIENCE: bithub    # set to the configured audience on your Bit.Hub OIDC trust
+  BITHUB_TOKEN_ENDPOINT: https://bithub.example.com/oidc/exchange
+  BITBOT_INSTALL_PS1: https://bithub.example.com/install-bitbot.ps1
+
+jobs:
+  humor-bot-check:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository (pin this to a commit SHA)
+        uses: actions/checkout@v4
+        # uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # example pinned SHA
+
+      - name: Set up PowerShell (pin this to a commit SHA)
+        uses: actions/setup-powershell@v2
+        with:
+          pwsh-version: '7.4.0'
+        # uses: actions/setup-powershell@<COMMIT_SHA>
+
+      - name: Install Humor Bot module
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module -Name Posh-Humor -Force
+
+      - name: Run Humor Bot AI script
+        shell: pwsh
+        run: |
+          $joke = "Why did the neural net refuse to cross the road? Not enough data on the other side!"
+          Write-Host "🤖 $joke"
+          Add-Content -Path "${{ env.HUMOR_LOG }}" -Value "$(Get-Date -Format o) :: $joke"
+
+      - name: Prepare audit directory and write trace
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "${{ env.BITHUB_AUDIT_DIR }}" | Out-Null
+          $trace = @{
+            schema = "bithub.trace.v1"
+            component = "humor.bot"
+            run_id = "${{ github.run_id }}"
+            ref = "${{ github.ref }}"
+            sha = "${{ github.sha }}"
+            event = "${{ github.event_name }}"
+            timestamp = (Get-Date).ToUniversalTime().ToString("o")
+            status = "completed"
+          } | ConvertTo-Json -Depth 4
+          $trace | Out-File -FilePath "${{ env.BITHUB_TRACE_FILE }}" -Encoding utf8
+
+      - name: Install OPA
+        run: |
+          curl -L -o opa.exe https://openpolicyagent.org/downloads/latest/opa_windows_amd64.exe
+          powershell -Command "Rename-Item -Path .\opa.exe -NewName opa.exe"
+
+      - name: OPA gate (ALN + Bit.Hub policies)
+        shell: pwsh
+        run: |
+          # Generate a minimal input context for policy decisions
+          $ctx = @{
+            workflow = "humor-bot-ai-powershell.yml"
+            job = "humor-bot-check"
+            permissions = @{ contents = "write"; "id-token" = "write"; actions = "read" }
+            runs_on = "windows-latest"
+            event = "${{ github.event_name }}"
+            repo = "${{ github.repository }}"
+            fork = $false
+            humor = @{ type = "light"; mature = $false }
+          } | ConvertTo-Json -Depth 6
+          $ctx | Out-File -FilePath .bit\context.json -Encoding utf8
+
+          # Evaluate denies then allow; if denies not empty, fail
+          .\opa.exe eval -f pretty -d .bit\policy -i .bit\context.json "data.bithub.denies" | Tee-Object -FilePath $env:BITHUB_AUDIT_DIR\opa_denies.txt
+          .\opa.exe eval -f pretty -d .bit\policy -i .bit\context.json "data.bithub.allow"  | Tee-Object -FilePath $env:BITHUB_AUDIT_DIR\opa_allow.txt
+
+          # Fail if denies contains any rule messages
+          $denies = Get-Content $env:BITHUB_AUDIT_DIR\opa_denies.txt | Select-String -Pattern "\S"
+          if ($denies) { Write-Host "::error::Policy denies present"; exit 2 }
+
+      - name: Mint short-lived BitBot token via GitHub OIDC
+        shell: pwsh
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+          OIDC_AUDIENCE: ${{ env.OIDC_AUDIENCE }}
+          BITHUB_TOKEN_ENDPOINT: ${{ env.BITHUB_TOKEN_ENDPOINT }}
+        run: |
+          # Request OIDC token from GitHub
+          $url = "${env:ACTIONS_ID_TOKEN_REQUEST_URL}&audience=$($env:OIDC_AUDIENCE)"
+          $oidc = curl -sSL -H "Authorization: Bearer $env:ACTIONS_ID_TOKEN_REQUEST_TOKEN" $url | ConvertFrom-Json
+          if (-not $oidc.value) { Write-Host "::error::Failed to obtain OIDC token"; exit 1 }
+
+          # Exchange for BitBot token (Bit.Hub must validate iss/sub/aud/exp/binding)
+          $resp = curl -sS -X POST `
+            -H "Content-Type: application/json" `
+            -d (@{ oidc_token = $oidc.value; purpose = "humor-bot" } | ConvertTo-Json) `
+            $env:BITHUB_TOKEN_ENDPOINT | ConvertFrom-Json
+
+          if (-not $resp.token) { Write-Host "::error::Failed to mint BitBot token"; exit 1 }
+          "$($resp.token)" | Out-File -FilePath .bit\bitbot.token -Encoding ascii
+          Write-Host "::add-mask::$($resp.token)"
+
+      - name: Upload sticky trigger audit trail
+        uses: actions/upload-artifact@v4
+        with:
+          name: sticky.trigger.audit.trail
+          path: ${{ env.BITHUB_TRACE_FILE }}
+
+      - name: Upload humor audit bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: bithub-audit-${{ github.run_id }}
+          path: |
+            ${{ env.BITHUB_AUDIT_DIR }}/
+            ${{ env.BITHUB_TRACE_FILE }}
+            ${{ env.HUMOR_LOG }}
+
+      - name: Optional BitBot orchestration (Windows)
+        if: success()
+        shell: pwsh
+        env:
+          BITBOT_TOKEN: ${{ secrets.BITBOT_TOKEN }} # optional; if absent, use minted token file
+        run: |
+          Invoke-WebRequest -Uri "${{ env.BITBOT_INSTALL_PS1 }}" -OutFile install-bitbot.ps1
+          .\install-bitbot.ps1
+          $token = if ($env:BITBOT_TOKEN) { $env:BITBOT_TOKEN } else { Get-Content .bit\bitbot.token -Raw }
+          bitbot orchestrate `
+            --artifact "${{ env.HUMOR_LOG }}" `
+            --trace "${{ env.BITHUB_TRACE_FILE }}" `
+            --sticky-trigger "github:${{ github.run_id }}" `
+            --token "$token"
+
+      - name: Dispatch MegaStructure kickoff (dedupe by commit)
+        env:
+          GH_API: https://api.github.com
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          body=$(jq -n --arg rid "${GITHUB_RUN_ID}" --arg ref "${GITHUB_REF}" --arg sha "${GITHUB_SHA}" \
+            '{event_type:"MEGASTRUCTURE_KICKOFF", client_payload:{from:"humor-bot", run_id:$rid, ref:$ref, sha:$sha}}')
+          curl -sS -X POST \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "${GH_API}/repos/${OWNER}/${REPO}/dispatches" \
+            -d "${body}"
