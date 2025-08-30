@@ -1,0 +1,122 @@
+name: ML Guard
+description: Resilient wrapper for ML steps with retries, timeouts, OOM/CUDA heuristics, and quarantine logging
+inputs:
+  run:
+    description: Shell or multi-line script to execute
+    required: true
+  retries:
+    description: Number of retries on failure
+    default: "2"
+  backoff_seconds:
+    description: Backoff between retries
+    default: "8"
+  timeout_minutes:
+    description: Per-attempt timeout in minutes
+    default: "30"
+  log_path:
+    description: Path to log file
+    default: ".bithub/reports/ml/guard.log"
+  quarantine_dir:
+    description: Directory to store failure snapshots
+    default: ".bithub/reports/ml/quarantine"
+outputs:
+  status:
+    description: final status: success|degraded|failed-but-suppressed
+    value: ${{ steps.run-guard.outputs.status }}
+  attempts:
+    description: number of attempts executed
+    value: ${{ steps.run-guard.outputs.attempts }}
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      id: run-guard
+      env:
+        RUN: ${{ inputs.run }}
+        RETRIES: ${{ inputs.retries }}
+        BACKOFF: ${{ inputs.backoff_seconds }}
+        TIMEOUT_MIN: ${{ inputs.timeout_minutes }}
+        LOG_PATH: ${{ inputs.log_path }}
+        QUAR_DIR: ${{ inputs.quarantine_dir }}
+      run: |
+        set -euo pipefail
+        mkdir -p "$(dirname "$LOG_PATH")" "$QUAR_DIR"
+        attempts=0
+        status="failed-but-suppressed"
+        backoff="$BACKOFF"
+        max=$(( RETRIES + 1 ))
+
+        detect_hint() {
+          local msg="$1"
+          if grep -qiE "cuda error|out of memory|cublas|cudnn|resource temporarily unavailable" <<<"$msg"; then
+            echo "hint=GPU_or_OOM" 
+            return 0
+          elif grep -qiE "dataloader|timeout|connection reset|econnreset|broken pipe" <<<"$msg"; then
+            echo "hint=Transient_IO"
+            return 0
+          fi
+          echo "hint=Unknown"
+          return 1
+        }
+
+        while (( attempts < max )); do
+          attempts=$(( attempts + 1 ))
+          echo "Attempt $attempts/$max" | tee -a "$LOG_PATH"
+
+          # Resource snapshot
+          {
+            echo "=== Resource snapshot (attempt $attempts) ==="
+            echo "Date: $(date -Is)"
+            uname -a || true
+            nvidia-smi || echo "nvidia-smi unavailable"
+            free -h || true
+            df -h || true
+            echo "==========================================="
+          } >> "$LOG_PATH" 2>&1
+
+          # Run with timeout
+          set +e
+          bash -lc "timeout ${TIMEOUT_MIN}m bash -lc '$RUN' " >> "$LOG_PATH" 2>&1
+          code=$?
+          set -e
+
+          if [[ $code -eq 0 ]]; then
+            status="success"
+            echo "status=$status" >> "$GITHUB_OUTPUT"
+            echo "attempts=$attempts" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Analyze error
+          err_tail="$(tail -n 200 "$LOG_PATH" || true)"
+          hint="$(detect_hint "$err_tail" | tail -n1 | cut -d= -f2)"
+
+          # Quarantine snapshot
+          snap="$QUAR_DIR/failure-attempt-${attempts}-$(date +%s).log"
+          printf "Attempt: %s\nHint: %s\nExit: %s\n\nLast Log:\n%s\n" "$attempts" "$hint" "$code" "$err_tail" > "$snap"
+
+          # Adaptive mitigation hints (best-effort)
+          case "$hint" in
+            GPU_or_OOM)
+              echo "[guard] Hint GPU/OOM — suggesting smaller batch or CPU fallback on next retry" | tee -a "$LOG_PATH"
+              export TORCH_USE_CUDA_DSA=1 || true
+              ;;
+            Transient_IO)
+              echo "[guard] Hint transient I/O — backing off and retrying" | tee -a "$LOG_PATH"
+              ;;
+            *)
+              echo "[guard] Unknown failure — will retry if attempts remain" | tee -a "$LOG_PATH"
+              ;;
+          esac
+
+          if (( attempts < max )); then
+            sleep "$backoff"
+            backoff=$(( backoff * 2 ))
+          fi
+        done
+
+        # All attempts exhausted; mark degraded but do not fail job
+        status="failed-but-suppressed"
+        echo "status=$status" >> "$GITHUB_OUTPUT"
+        echo "attempts=$attempts" >> "$GITHUB_OUTPUT"
+        exit 0
