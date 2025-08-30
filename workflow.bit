@@ -1,0 +1,36 @@
+; ALN BIT.HUB Workflow Recovery & Upgrade Script
+; Repo: https://github.com/Doctor0Evil/ALN_Programming_Language.git
+
+(begin
+  ;; 1. Enumerate all workflow jobs and states
+  (let ((failed-jobs (github.actions.get-failed-jobs "bit.hub")))
+    ;; 2. For each failed job, log and retract the old GH Actions agent
+    (foreach job failed-jobs
+      (log-event "workflow" (concat "Detected failed job: " job.id " (" job.name ")"))
+      (github.actions.deactivate-job job.id)
+      ;; 3. Replace GH Action runner with upgraded BitBot agent
+      (let ((bitbot-id (bitbot.deploy-agent :pattern "ml.patterns.learn.bitbot.bit" :replace job.runner)))
+        (log-event "bitbot" (concat "Deployed BitBot agent " bitbot-id " for workflow " job.name))
+        ;; 4. Retry the job with BitBot, preserving payload and updating state
+        (let ((result (bitbot.run-workflow bitbot-id job.workflow-inputs)))
+          (if result.success
+              (log-event "bitbot" (concat "BitBot finished job " job.name " successfully"))
+              (begin
+                (log-event "bitbot" (concat "BitBot failed in job " job.name ", retriable error: " result.error))
+                (github.actions.create-issue
+                  :title (concat "BitBot failure " job.name)
+                  :body (concat "BitBot agent encountered error: " result.error)))))
+        ;; 5. Mark legacy job as superceded
+        (github.actions.mark-job-superseded job.id :by bitbot-id))))
+  ;; 6. For all not-yet-scheduled or hanging workflows, queue with BitBot as primary runner
+  (let ((pending-wfs (github.actions.get-pending-workflows "bit.hub")))
+    (foreach wf pending-wfs
+      (let ((bitbot-id (bitbot.deploy-agent :pattern "ml.patterns.learn.bitbot.bit" :replace "gh-runner")))
+        (bitbot.run-workflow bitbot-id wf.inputs)
+        (log-event "bitbot" (concat "Scheduled new workflow via BitBot for " wf.name)))))
+  ;; 7. Verify site build status, trigger 'site:build' if needed
+  (unless (site.status "bit.hub" :target "production") 
+    (let ((main-bb (bitbot.deploy-agent :pattern "ml.patterns.learn.bitbot.bit")))
+      (bitbot.run-workflow main-bb '("site:build" "publish:latest"))
+      (log-event "bitbot" "Triggered full site:build & publish via BitBot.")))
+)
