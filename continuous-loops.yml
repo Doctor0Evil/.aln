@@ -1,0 +1,96 @@
+# .github/workflows/animate_entertainment.yml
+name: "BitHub Animation & Entertainment Suite"
+on:
+  push:
+    paths:
+      - 'entertainment-tools/**'
+      - 'animations/**'
+  workflow_dispatch:
+
+jobs:
+  animated_fun:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        utility: [gif, video, meme, smile_detect]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install Animation & Fun Utils
+        run: |
+          pip install pillow imageio opencv-python humor-ml
+      - name: Generate Animation or Meme
+        run: |
+          python entertainment-tools/${{ matrix.utility }}.py
+      - name: Humor Test and Diff
+        run: |
+          python fun_utilities/humor_reason.py --input output/${{ matrix.utility }}.gif
+      - name: Store Results (BitHub/Blockchain)
+        run: |
+          python scripts/push_to_bithub_block.py output/${{ matrix.utility }}.gif
+
+# .github/workflows/design_trigger_ml.yml
+name: "Design Tools & ML Workflow Triggering"
+on:
+  pull_request:
+    paths:
+      - 'design-tools/**'
+      - 'ml-triggers/**'
+  workflow_dispatch:
+
+jobs:
+  design_evolve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install Design+ML Packages
+        run: pip install matplotlib scikit-learn stable-diffusion
+      - name: Run ML-Driven Design Evolution
+        run: python ml-triggers/designer_bot.py
+      - name: Save Design to BitHub
+        run: python scripts/push_to_bithub_block.py output/latest_design.svg
+
+# .github/workflows/fun_utilities_bitbot.yml
+name: "BitBot Fun & Humor"
+on:
+  schedule:
+    - cron: '13 13 * * *'
+  workflow_dispatch:
+
+jobs:
+  humor_engine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install LLM/Joke-Gen
+        run: pip install openai silly generators
+      - name: Make Multistep ML Joke
+        run: |
+          python fun_utilities/joke_generator.py --alg ml --multi --output output/joke.txt
+      - name: Store Humor Token
+        run: python scripts/push_to_bithub_block.py output/joke.txt
+
+# .github/workflows/lisp_aln_evolve_foundation.yml
+name: "ALN/Lisp Foundation Evolve & Shape"
+on:
+  workflow_run:
+    workflows: ["*"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  analyze_and_evolve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install ALN/Lisp
+        run: pip install aln-language lisp-interpreter
+      - name: Workflow Triaging and Self-Build
+        run: |
+          python tools/self_evolve.py --logs logs/*.log --output foundation_shape.aln
+      - name: BitHub/BlockStore Workflow
+        run: |
+          python scripts/push_to_bithub_block.py foundation_shape.aln
