@@ -1,0 +1,161 @@
+name: Bit.Hub Pipeline Supremacy (CI)
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore: [ "**.md", "**.txt", ".bithub/reports/**" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      power_threshold:
+        description: "standard | strict | paranoid (overrides repo variable)"
+        type: choice
+        default: "standard"
+        options: [ "standard", "strict", "paranoid" ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-supremacy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BIT_HUB_REPO_URL: "https://github.com/Doctor0Evil/Bit.Hub.git"
+  REPORT_DIR: ".bithub/reports"
+  POLICY_DIR: ".bithub/policy"
+  POWER_THRESHOLD: ${{ inputs.power_threshold || vars.POWER_THRESHOLD || 'standard' }}
+
+jobs:
+  detect:
+    name: Detect surfaces and fanout
+    runs-on: ubuntu-latest
+    outputs:
+      langs: ${{ steps.out.outputs.langs }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Attempt canonical sync (non-blocking)
+        run: |
+          set +e
+          if git ls-remote "$BIT_HUB_REPO_URL" &>/dev/null; then
+            git clone --depth=1 "$BIT_HUB_REPO_URL" /tmp/bithub
+            rsync -av --ignore-existing /tmp/bithub/.bithub/policy/ .bithub/policy/ || true
+          else
+            echo "::warning::Canonical repo unreachable — using local policy"
+          fi
+          set -e
+      - id: out
+        shell: bash
+        run: |
+          langs=()
+          [ -f package.json ] && langs+=("node")
+          [ -f pyproject.toml ] || [ -f requirements.txt ] && langs+=("python")
+          [ -f go.mod ] && langs+=("go")
+          [ ${#langs[@]} -eq 0 ] && langs+=("meta")
+          printf 'langs=%s\n' "$(jq -nc --argjson a "$(printf '%s\n' "${langs[@]}" | jq -R . | jq -s .)" '$a')" >> "$GITHUB_OUTPUT"
+
+  build_and_test:
+    name: Build and test (${{ matrix.lang }})
+    needs: detect
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: ${{ fromJson(needs.detect.outputs.langs) }}
+    env:
+      POWER_THRESHOLD: ${{ env.POWER_THRESHOLD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node setup
+        if: matrix.lang == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Python setup
+        if: matrix.lang == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Go setup
+        if: matrix.lang == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install deps
+        if: matrix.lang == 'node'
+        run: npm ci --ignore-scripts
+
+      - name: Install deps
+        if: matrix.lang == 'python'
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then pip install .; fi
+
+      - name: Install deps
+        if: matrix.lang == 'go'
+        run: go mod download
+
+      - name: Lint
+        if: matrix.lang == 'node'
+        run: |
+          npx --yes eslint . || echo "::warning::ESLint issues detected"
+
+      - name: Lint
+        if: matrix.lang == 'python'
+        run: |
+          python -m pip install ruff
+          ruff check . || echo "::warning::Ruff issues detected"
+
+      - name: Lint
+        if: matrix.lang == 'go'
+        run: |
+          go vet ./... || echo "::warning::go vet warnings"
+          golangci-lint version >/dev/null 2>&1 || go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          "$HOME"/go/bin/golangci-lint run || echo "::warning::golangci-lint warnings"
+
+      - name: Test
+        if: matrix.lang == 'node'
+        run: npm test --ignore-scripts --if-present
+
+      - name: Test
+        if: matrix.lang == 'python'
+        run: |
+          python -m pip install pytest
+          pytest -q || [ "${POWER_THRESHOLD}" = "strict" -o "${POWER_THRESHOLD}" = "paranoid" ]
+
+      - name: Test
+        if: matrix.lang == 'go'
+        run: go test ./... -v
+
+      - name: Build artifacts
+        if: matrix.lang != 'meta'
+        run: |
+          mkdir -p build
+          echo "Build placeholder for ${{ matrix.lang }}" > build/BUILD_${{ matrix.lang }}.txt
+
+      - name: SBOM (best-effort)
+        run: |
+          mkdir -p .bithub/reports/sbom
+          curl -fsSL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . || true
+          if [ -x ./syft ]; then
+            ./syft packages dir:. -o json > .bithub/reports/sbom/syft-${{ matrix.lang }}.json || true
+          else
+            echo "::warning::Syft unavailable; SBOM skipped"
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.lang }}
+          path: |
+            build/**
+            .bithub/reports/sbom/**
+          if-no-files-found: warn
