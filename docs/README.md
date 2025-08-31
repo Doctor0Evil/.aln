@@ -4,7 +4,7 @@ The README for the **ALN Programming Language** (ALN) repository should be updat
 
 # 🌌 ALN Fantasia — Universal Platform & Runtime
 
-*A Universal AI-Native Fantasy Language & Runtime, Born in Conversation — Built for Creation*  
+*A Universal AI-Native Fantasy Language & Runtime, Born in Conversation — Built for Creation*
 **MIT License | Open Source | Game, Lore, POS, and Virtual Hardware Modules**[1]
 
 ## 💡 Quick Summary
@@ -69,7 +69,7 @@ ALN_Programming_Language/
    # See /docs/PLAYBOOK.md for full menu
    ```
 
-4. **Contribute:**  
+4. **Contribute:**
    Fork → Feature branch → Commit & PR → Community Receipt Review → Merge[1]
 
 ***
