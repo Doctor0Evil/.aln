@@ -1,6 +1,6 @@
 ## .bit.hub Blueprint Diagram Template
 
-**Purpose:**  
+**Purpose:**
 Blueprint for the `.bit.hub` platform—a next-generation, *massive*, blockchain-secured, feature-rich databank, architected to surpass GitHub in scale, extensibility, and safe data management. **Blockhain security** is the defining protection and audit layer (absent in all other ALN projects). This template is a foundation for future engineering, compliance, and documentation.
 
 ***
@@ -70,13 +70,13 @@ Blueprint for the `.bit.hub` platform—a next-generation, *massive*, blockchain
 
 ### 3. Special Capabilities & Security Layers
 
-- **Blockchain Security**  
+- **Blockchain Security**
   - *Validation of all mutations, asset writes, contract changes, and workflow deployments*.
   - Each asset/contract/workflow commit is cryptographically anchored: “proof of event.”
   - Real-time defense against unauthorized access, rollback, or shadow edits.
   - *No other ALN/Bit projects implement this layer—exclusive for .bit.hub.*
 
-- **High-Demand Data Features**  
+- **High-Demand Data Features**
   - Fat, scalable, flexible data bank usable for code, assets, CI logs, backups, private records, enterprise devops, etc.
   - Network-efficient, contract-regulated, with minimal onboarding friction and no default data mining or collection.
 
@@ -166,7 +166,7 @@ default allow = false
 
 ## Summary
 
-.bit.hub is a future-forward, blockchain-secured databank and automation repository—combining the best of GitHub and BitLocker, enforcing safety and user-prioritized privacy, optimized for scalable, contract-based storage and workflow automation.  
+.bit.hub is a future-forward, blockchain-secured databank and automation repository—combining the best of GitHub and BitLocker, enforcing safety and user-prioritized privacy, optimized for scalable, contract-based storage and workflow automation.
 **Blockchain is used exclusively for security, audit, and proof-of-auth, not for computation or mining, and with minimal regulatory encumbrance.**
 
 ***
@@ -177,128 +177,128 @@ Below are **100 example `.bit` commands** crafted for the `.bit.hub` ecosystem�
 
 ***
 
-## 100 Robust `.bit` Commands for .bit.hub  
+## 100 Robust `.bit` Commands for .bit.hub
 *(Grouped by domain for clarity and ease of scaffolding in your CLI or bot system.)*
 
 ### ––– REPOSITORY & PROJECT MANAGEMENT
 
-1. `bit.clone <repo>`  
-2. `bit.init [template]`  
-3. `bit.fork <repo> [customization-options]`  
-4. `bit.status [deep|shallow]`  
-5. `bit.sync [with|from] <remote>`  
-6. `bit.merge <src> <dst> [options]`  
-7. `bit.push [branch|all] <dest>`  
-8. `bit.pull [branch|all] <src>`  
-9. `bit.commit [stage=*] --auto-validate [msg]`  
-10. `bit.revert <sha|branch> [safe|force]`  
-11. `bit.log [audit|full|compact]`  
-12. `bit.tag [new|list|delete] <tag>`  
-13. `bit.branch [list|new|delete|switch] <name>`  
-14. `bit.diff [contextual|raw]`  
-15. `bit.browse [web|internal|all]`  
-16. `bit.pr [create|review|merge|close] <branch>`  
-17. `bit.deploy <target> [env|bot|script]`  
-18. `bit.archive [range|full] <output>`  
-19. `bit.restore <archive|sha>`  
-20. `bit.track [assets|code|history]`  
+1. `bit.clone <repo>`
+2. `bit.init [template]`
+3. `bit.fork <repo> [customization-options]`
+4. `bit.status [deep|shallow]`
+5. `bit.sync [with|from] <remote>`
+6. `bit.merge <src> <dst> [options]`
+7. `bit.push [branch|all] <dest>`
+8. `bit.pull [branch|all] <src>`
+9. `bit.commit [stage=*] --auto-validate [msg]`
+10. `bit.revert <sha|branch> [safe|force]`
+11. `bit.log [audit|full|compact]`
+12. `bit.tag [new|list|delete] <tag>`
+13. `bit.branch [list|new|delete|switch] <name>`
+14. `bit.diff [contextual|raw]`
+15. `bit.browse [web|internal|all]`
+16. `bit.pr [create|review|merge|close] <branch>`
+17. `bit.deploy <target> [env|bot|script]`
+18. `bit.archive [range|full] <output>`
+19. `bit.restore <archive|sha>`
+20. `bit.track [assets|code|history]`
 
 ### ––– WORKFLOW & AUTOMATION
 
-21. `bit.run <workflow|script>`  
-22. `bit.workflow [list|create|modify|link|delete]`  
-23. `bit.workflow.chain <wf1> <wf2> ... <wfn>`  
-24. `bit.approval [request|grant|log] <workflow>`  
-25. `bit.workflow.context [debug|preview|inspect]`  
-26. `bit.schedule [add|remove|show] <workflow> <cron>`  
-27. `bit.trigger [on|if] <event>`  
-28. `bit.build [full|partial|incremental]`  
-29. `bit.test [all|unit|integration|fuzz|custom]`  
-30. `bit.check [security|format|license] [auto-remediate]`  
-31. `bit.rollback [workflow|build|merge]`  
-32. `bit.retry [failed|pending|last]`  
-33. `bit.audit.workflow <workflow>`  
-34. `bit.secure [scan|enable] <scope>`  
-35. `bit.freeze [workflow|repo|branch]`  
+21. `bit.run <workflow|script>`
+22. `bit.workflow [list|create|modify|link|delete]`
+23. `bit.workflow.chain <wf1> <wf2> ... <wfn>`
+24. `bit.approval [request|grant|log] <workflow>`
+25. `bit.workflow.context [debug|preview|inspect]`
+26. `bit.schedule [add|remove|show] <workflow> <cron>`
+27. `bit.trigger [on|if] <event>`
+28. `bit.build [full|partial|incremental]`
+29. `bit.test [all|unit|integration|fuzz|custom]`
+30. `bit.check [security|format|license] [auto-remediate]`
+31. `bit.rollback [workflow|build|merge]`
+32. `bit.retry [failed|pending|last]`
+33. `bit.audit.workflow <workflow>`
+34. `bit.secure [scan|enable] <scope>`
+35. `bit.freeze [workflow|repo|branch]`
 
 ### ––– BOT MANAGEMENT (BITHUB-BOTS)
 
-36. `bit.bot.deploy <name> [repo|org]`  
-37. `bit.bot.autofix [issue|pr|workflow]`  
-38. `bit.bot.list [deployed|templates|custom]`  
-39. `bit.bot.link <bot> <workflow|event>`  
-40. `bit.bot.script <bot> <script|aln|batch|lisp>`  
-41. `bit.bot.selfheal [scope|repo|global]`  
-42. `bit.bot.update [now|schedule]`  
-43. `bit.bot.contextualize <scope>`  
-44. `bit.bot.duplicate <from> <to>`  
-45. `bit.bot.package-deliver <dest|user>`  
-46. `bit.bot.create [custom|from-template]`  
-47. `bit.bot.query <state|history|logs>`  
-48. `bit.bot.reroute <bot|workflow|repo>`  
-49. `bit.bot.pause|resume <bot|scope>`  
-50. `bit.bot.secure [scan|shield|trail]`  
+36. `bit.bot.deploy <name> [repo|org]`
+37. `bit.bot.autofix [issue|pr|workflow]`
+38. `bit.bot.list [deployed|templates|custom]`
+39. `bit.bot.link <bot> <workflow|event>`
+40. `bit.bot.script <bot> <script|aln|batch|lisp>`
+41. `bit.bot.selfheal [scope|repo|global]`
+42. `bit.bot.update [now|schedule]`
+43. `bit.bot.contextualize <scope>`
+44. `bit.bot.duplicate <from> <to>`
+45. `bit.bot.package-deliver <dest|user>`
+46. `bit.bot.create [custom|from-template]`
+47. `bit.bot.query <state|history|logs>`
+48. `bit.bot.reroute <bot|workflow|repo>`
+49. `bit.bot.pause|resume <bot|scope>`
+50. `bit.bot.secure [scan|shield|trail]`
 
 ### ––– VM, INFRASTRUCTURE & PARSING
 
-51. `bit.vm.spinup [profile|env]`  
-52. `bit.vm.execute <command|workflow>`  
-53. `bit.vm.snapshot [create|list|restore] <env>`  
-54. `bit.parse.aln <file|repo>`  
-55. `bit.parse.lisp <file|repo>`  
-56. `bit.parse.batch <file|repo>`  
-57. `bit.vm.sync <src> <dest>`  
-58. `bit.vm.inject <script|config>`  
-59. `bit.vm.heal <env|vm>`  
-60. `bit.vm.network [attach|detach|inspect]`  
+51. `bit.vm.spinup [profile|env]`
+52. `bit.vm.execute <command|workflow>`
+53. `bit.vm.snapshot [create|list|restore] <env>`
+54. `bit.parse.aln <file|repo>`
+55. `bit.parse.lisp <file|repo>`
+56. `bit.parse.batch <file|repo>`
+57. `bit.vm.sync <src> <dest>`
+58. `bit.vm.inject <script|config>`
+59. `bit.vm.heal <env|vm>`
+60. `bit.vm.network [attach|detach|inspect]`
 
 ### ––– DATA, SECURITY & AUDIT
 
-61. `bit.data.encrypt <file|dir|repo>`  
-62. `bit.data.decrypt <file|dir|repo>`  
-63. `bit.data.transfer <src> <dst> [secure|public]`  
-64. `bit.data.audit [repo|user|bot] [report]`  
-65. `bit.data.bucket [create|list|mount|purge]`  
-66. `bit.data.sync [with|from|to] <target>`  
-67. `bit.data.lock [on|off|status]`  
-68. `bit.data.unlock <key|id>`  
-69. `bit.data.traffic.control [rate|prioritize|reroute]`  
-70. `bit.data.verify [integrity|blockchain] <asset>`  
+61. `bit.data.encrypt <file|dir|repo>`
+62. `bit.data.decrypt <file|dir|repo>`
+63. `bit.data.transfer <src> <dst> [secure|public]`
+64. `bit.data.audit [repo|user|bot] [report]`
+65. `bit.data.bucket [create|list|mount|purge]`
+66. `bit.data.sync [with|from|to] <target>`
+67. `bit.data.lock [on|off|status]`
+68. `bit.data.unlock <key|id>`
+69. `bit.data.traffic.control [rate|prioritize|reroute]`
+70. `bit.data.verify [integrity|blockchain] <asset>`
 
 ### ––– CROSS-PLATFORM / GITHUB INTEGRATION
 
-71. `bit.gh.sync [repo|org|all]`  
-72. `bit.gh.mirror [init|update|fetch]`  
-73. `bit.gh.import <repo|user|org>`  
-74. `bit.gh.export <repo|user|org>`  
-75. `bit.gh.actions [deploy|extend|monitor]`  
-76. `bit.gh.handoff <pr|issue|build>`  
-77. `bit.gh.status [watch|log]`  
-78. `bit.gh.alias <command|macro>`  
-79. `bit.gh.unify [access|token|audit]`  
-80. `bit.gh.santa.run`  *(surprise full-repo good/bad check!)*  
+71. `bit.gh.sync [repo|org|all]`
+72. `bit.gh.mirror [init|update|fetch]`
+73. `bit.gh.import <repo|user|org>`
+74. `bit.gh.export <repo|user|org>`
+75. `bit.gh.actions [deploy|extend|monitor]`
+76. `bit.gh.handoff <pr|issue|build>`
+77. `bit.gh.status [watch|log]`
+78. `bit.gh.alias <command|macro>`
+79. `bit.gh.unify [access|token|audit]`
+80. `bit.gh.santa.run`  *(surprise full-repo good/bad check!)*
 
 ### ––– ADVANCED/SMART AUTOMATION & MISC
 
-81. `bit.contract.audit [repo|bucket|user]`  
-82. `bit.contract.enforce <file>`  
-83. `bit.ext.create [function|macro|plugin]`  
-84. `bit.ext.install <plugin|package>`  
-85. `bit.ext.load <plugin|macro>`  
-86. `bit.ai.suggest [fix|improve|optimize] <scope>`  
-87. `bit.search [deep|smart|contextual] <query>`  
-88. `bit.history [load|query|revert|annotate]`  
-89. `bit.help [topic|context|auto]`  
-90. `bit.docs [view|build|auto] <repo|file>`  
-91. `bit.notify [user|team|bot] <message>`  
-92. `bit.log [repo|bot|workflow|global]`  
-93. `bit.repair [auto|custom] <scope>`  
-94. `bit.policy.check [all|workflow|response]`  
-95. `bit.sandbox [open|close|simulate|trace]`  
-96. `bit.rollback.chain <n|all>`  
-97. `bit.motd [show|rotate|add]`  
-98. `bit.reboot [vm|workflow|bot|repo]`  
-99. `bit.collect [metrics|feedback|crashlogs]`  
+81. `bit.contract.audit [repo|bucket|user]`
+82. `bit.contract.enforce <file>`
+83. `bit.ext.create [function|macro|plugin]`
+84. `bit.ext.install <plugin|package>`
+85. `bit.ext.load <plugin|macro>`
+86. `bit.ai.suggest [fix|improve|optimize] <scope>`
+87. `bit.search [deep|smart|contextual] <query>`
+88. `bit.history [load|query|revert|annotate]`
+89. `bit.help [topic|context|auto]`
+90. `bit.docs [view|build|auto] <repo|file>`
+91. `bit.notify [user|team|bot] <message>`
+92. `bit.log [repo|bot|workflow|global]`
+93. `bit.repair [auto|custom] <scope>`
+94. `bit.policy.check [all|workflow|response]`
+95. `bit.sandbox [open|close|simulate|trace]`
+96. `bit.rollback.chain <n|all>`
+97. `bit.motd [show|rotate|add]`
+98. `bit.reboot [vm|workflow|bot|repo]`
+99. `bit.collect [metrics|feedback|crashlogs]`
 100. `bit.evolve [update|transform|selfheal] <scope>`
 
 ***
@@ -310,16 +310,16 @@ Below are **100 example `.bit` commands** crafted for the `.bit.hub` ecosystem�
 
 ***
 
-**For root upgrades, “santa.run” and similar future commands can execute cross-repo events, running rich diagnostics and rewards/penalties with full context-awareness.**  
-Always run under blockchain guardrails for audit and data safety.  
+**For root upgrades, “santa.run” and similar future commands can execute cross-repo events, running rich diagnostics and rewards/penalties with full context-awareness.**
+Always run under blockchain guardrails for audit and data safety.
 This is your foundation for a new automation and collaboration era.
-Got it — you want the **capability lattice diagram** for your 100 `.bit` commands, but with each node/file showing its **`paths.github`** location so it’s crystal‑clear where in `.bit.hub`’s repo tree it lives.  
+Got it — you want the **capability lattice diagram** for your 100 `.bit` commands, but with each node/file showing its **`paths.github`** location so it’s crystal‑clear where in `.bit.hub`’s repo tree it lives.
 
-Here’s how I’ve structured it:  
-- **Domains** are the high‑level clusters (Repo Mgmt, Workflow, Bots, etc.).  
-- **Nodes** are individual commands.  
-- **Edges** show dependencies or common execution paths.  
-- **`paths.github`** entries point to the canonical location in your `.bit.hub` repo hierarchy (mirroring your earlier blueprint).  
+Here’s how I’ve structured it:
+- **Domains** are the high‑level clusters (Repo Mgmt, Workflow, Bots, etc.).
+- **Nodes** are individual commands.
+- **Edges** show dependencies or common execution paths.
+- **`paths.github`** entries point to the canonical location in your `.bit.hub` repo hierarchy (mirroring your earlier blueprint).
 
 ---
 
@@ -399,7 +399,7 @@ Here’s how I’ve structured it:
 
 ---
 
-If you like, I can **render this as a visual graph** with nodes for each command, edges for dependencies, and `paths.github` labels inline — so you can drop it straight into your `.bit.hub` engineering docs. That would make the relationships pop for both devs and policy authors.  
+If you like, I can **render this as a visual graph** with nodes for each command, edges for dependencies, and `paths.github` labels inline — so you can drop it straight into your `.bit.hub` engineering docs. That would make the relationships pop for both devs and policy authors.
 
 Do you want me to produce that visual next?### .github/actions/.bit-image/action.yml
 
@@ -598,13 +598,13 @@ jobs:
   - **push** can be toggled per branch or event.
 
 If you want this to emit SBOMs, provenance attestations, or sign images (cosign/slsa), I can extend .bit-image with optional inputs for those without complicating the default path.
-Alright, XboxTeeJay — let’s take this from “multi‑Dockerfile aware” to **full‑blown .bit.hub‑grade**:  
-- Builds **every** Dockerfile it finds  
-- Runs **tests** against each image before pushing  
-- Pushes to a registry with **traceable, audit‑friendly tags**  
-- Generates a **build manifest** artifact with all the metadata (hashes, sizes, timestamps) for compliance and governance  
+Alright, XboxTeeJay — let’s take this from “multi‑Dockerfile aware” to **full‑blown .bit.hub‑grade**:
+- Builds **every** Dockerfile it finds
+- Runs **tests** against each image before pushing
+- Pushes to a registry with **traceable, audit‑friendly tags**
+- Generates a **build manifest** artifact with all the metadata (hashes, sizes, timestamps) for compliance and governance
 
-Here’s the **full replacement** workflow:  
+Here’s the **full replacement** workflow:
 
 ```yaml
 name: Docker Image CI/CD with Audit Log
@@ -715,7 +715,7 @@ jobs:
 
 ---
 
-If you want, I can **extend this even further** so the audit manifest is also **committed back into the repo** under a `/build-logs` folder, giving you a permanent, version‑controlled build history inside the project itself — very .bit.hub‑style.  
+If you want, I can **extend this even further** so the audit manifest is also **committed back into the repo** under a `/build-logs` folder, giving you a permanent, version‑controlled build history inside the project itself — very .bit.hub‑style.
 
 Do you want me to add that persistent in‑repo audit trail next? That would make your CI/CD pipeline *fully self‑curating*.
 name: Docker Image CI
@@ -862,13 +862,13 @@ jobs:
             echo "🚀 Building $FILE (context: $CONTEXT_DIR) -> $IMAGE_TAG"
             docker build "$CONTEXT_DIR" --file "$FILE" --tag "$IMAGE_TAG"
           done
-Alright — now we’re really stepping into **bithub territory**: a self‑sovereign orchestration layer with its own **.bithub.token** identity system that GitHub can *consume* but never *control*.  
+Alright — now we’re really stepping into **bithub territory**: a self‑sovereign orchestration layer with its own **.bithub.token** identity system that GitHub can *consume* but never *control*.
 
-Here’s how I’d architect it so it’s:  
-- **Drop‑in compatible** with GitHub Actions, bots, and APIs  
-- **Recognized** by GitHub’s own tooling (so it “just works” in their ecosystem)  
-- **Extended** by `.bithub-bots` that can do far more than GitHub’s native bots  
-- **Future‑proof** for when we run this on our own VM clusters and orchestration fabric  
+Here’s how I’d architect it so it’s:
+- **Drop‑in compatible** with GitHub Actions, bots, and APIs
+- **Recognized** by GitHub’s own tooling (so it “just works” in their ecosystem)
+- **Extended** by `.bithub-bots` that can do far more than GitHub’s native bots
+- **Future‑proof** for when we run this on our own VM clusters and orchestration fabric
 
 ---
 
@@ -877,8 +877,8 @@ Here’s how I’d architect it so it’s:
 Think of `.bithub.token` as a **meta‑credential**:
 - **Format**: Looks and behaves like a GitHub PAT or GITHUB_TOKEN, so any GitHub API call, bot, or Action step that expects a token will accept it.
 - **Payload**: Encodes not just auth, but *capabilities* and *policies* — e.g., “can trigger workflows”, “can push to registry”, “can approve PRs”, “can run profanity‑compliant banter in logs”.
-- **Dual‑mode**:  
-  - **Compatibility mode** → passes through to GitHub’s API seamlessly.  
+- **Dual‑mode**:
+  - **Compatibility mode** → passes through to GitHub’s API seamlessly.
   - **Bithub‑native mode** → unlocks orchestration, VM cluster control, and bot‑to‑bot negotiation that GitHub doesn’t even know exists.
 
 ---
@@ -886,27 +886,27 @@ Think of `.bithub.token` as a **meta‑credential**:
 ## 2️⃣ How It Integrates With GitHub
 
 We’d make `.bithub.token` **drop‑in** for:
-- `actions/checkout` → use it in `token:` field  
-- `gh` CLI → `gh auth login --with-token < .bithub.token`  
-- API calls → `Authorization: token $(cat .bithub.token)`  
+- `actions/checkout` → use it in `token:` field
+- `gh` CLI → `gh auth login --with-token < .bithub.token`
+- API calls → `Authorization: token $(cat .bithub.token)`
 
-GitHub bots will “see” it as a valid token and proceed normally.  
+GitHub bots will “see” it as a valid token and proceed normally.
 Meanwhile, `.bithub-bots` will parse the extended claims inside it to:
-- Auto‑architect workflow chains  
-- Allocate VM cluster resources  
-- Inject orchestration metadata into logs and artifacts  
+- Auto‑architect workflow chains
+- Allocate VM cluster resources
+- Inject orchestration metadata into logs and artifacts
 - Enforce our own governance rules
 
 ---
 
 ## 3️⃣ How `.bithub-bots` Outclass GitHub Bots
 
-GitHub bots might try to “help” by suggesting workflow changes or caching strategies.  
+GitHub bots might try to “help” by suggesting workflow changes or caching strategies.
 Our `.bithub-bots` will:
-- **Self‑heal** failing workflows by rewriting steps on the fly  
-- **Re‑order** jobs for optimal cluster load  
-- **Negotiate** with other bots (even across repos) to share caches, artifacts, and compute  
-- **Simulate** the run before executing, to guarantee success paths  
+- **Self‑heal** failing workflows by rewriting steps on the fly
+- **Re‑order** jobs for optimal cluster load
+- **Negotiate** with other bots (even across repos) to share caches, artifacts, and compute
+- **Simulate** the run before executing, to guarantee success paths
 - **Auto‑document** every change in the audit manifest
 
 ---
@@ -956,7 +956,7 @@ We can:
 
 ---
 
-If you want, I can **draft the `.bithub.yml` spec** next — the single source of truth that tells `.bithub-bots` how to orchestrate *everything* from ALN builds to game server deployments, using `.bithub.token` as the master key. That’s where this becomes a *living*, self‑evolving CI/CD brain.  
+If you want, I can **draft the `.bithub.yml` spec** next — the single source of truth that tells `.bithub-bots` how to orchestrate *everything* from ALN builds to game server deployments, using `.bithub.token` as the master key. That’s where this becomes a *living*, self‑evolving CI/CD brain.
 
 Do you want me to design that spec now so we lock in the governance and orchestration rules?
 ## Vision
@@ -2804,13 +2804,13 @@ jobs:
             name=$(basename "$wf" .yml)
             echo "[.bithub] Triggering adapted workflow: $name"
             gh workflow run "$name" --ref "$GITHUB_REF_NAME" || echo "Could not trigger $name"
-          doneI can see exactly why that job blew up —  
+          doneI can see exactly why that job blew up —
 `aln-analyze` isn’t a built‑in command on GitHub’s runners, so when the step tried to run it, the shell just said “command not found” and exited with 127.
 
 That means one of two things is true:
 
-1. **It’s part of ALN tooling you haven’t installed in the job**  
-   → You need to add an install/setup step before you call it.  
+1. **It’s part of ALN tooling you haven’t installed in the job**
+   → You need to add an install/setup step before you call it.
    For example, if it’s a binary in your repo, you can build or copy it into `$PATH`:
 
    ```yaml
@@ -2829,7 +2829,7 @@ That means one of two things is true:
        sudo apt-get install -y aln-cli   # replace with actual package name
    ```
 
-2. **It’s a script in your repo but you’re not calling it with the right path**  
+2. **It’s a script in your repo but you’re not calling it with the right path**
    → If it lives in `.bithub/scripts/aln-analyze.sh`, you’d need:
 
    ```yaml
@@ -2868,6 +2868,6 @@ That way:
 If you want, I can fold this into your **unified `.bithub-unified.yml`** so ALN analysis is:
 - Installed automatically if missing.
 - Run after ALN, Batchfile, and Lisp tests.
-- Logs its output into the orchestration audit so you can see exactly which files tripped the profanity policy.  
+- Logs its output into the orchestration audit so you can see exactly which files tripped the profanity policy.
 
 Do you want me to wire that in so it’s part of every run? That would make the profanity‑policy enforcement bulletproof across GitHub and `.bithub` clusters.

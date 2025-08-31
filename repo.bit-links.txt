@@ -1075,7 +1075,7 @@ We’ll treat compliance as a **multi‑layered gate** that every workflow passe
 
 ## **2. Profanity Policy Integration**
 
-Your `.bithub` governance already allows expressive banter **within compliance**.  
+Your `.bithub` governance already allows expressive banter **within compliance**.
 We’ll codify that in the workflows so `"fuck"` and other approved terms are explicitly permitted in logs, analysis, and ALN commands — but **only** if they appear in the `.bithub-actions/profanity-allow.yml` manifest.
 
 Example manifest:
@@ -1188,6 +1188,6 @@ Deploy / Link‑Correct via .bitlinks
 
 ---
 
-If you want, I can now **extend this into a `.bitlinks` propagation spec** so that **every repo** in your network — Virta‑Sys, ALN_Programming_Language, Bit.Hub, etc. — automatically inherits these compliance workflows and profanity rules without manual syncing. That would make the *entire* .bithub ecosystem compliant in one shot.  
+If you want, I can now **extend this into a `.bitlinks` propagation spec** so that **every repo** in your network — Virta‑Sys, ALN_Programming_Language, Bit.Hub, etc. — automatically inherits these compliance workflows and profanity rules without manual syncing. That would make the *entire* .bithub ecosystem compliant in one shot.
 
 Do you want me to build that `.bitlinks` propagation layer next?

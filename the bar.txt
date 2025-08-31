@@ -18,7 +18,7 @@ We’ll treat compliance as a **multi‑layered gate** that every workflow passe
 
 ## **2. Profanity Policy Integration**
 
-Your `.bithub` governance already allows expressive banter **within compliance**.  
+Your `.bithub` governance already allows expressive banter **within compliance**.
 We’ll codify that in the workflows so `"fuck"` and other approved terms are explicitly permitted in logs, analysis, and ALN commands — but **only** if they appear in the `.bithub-actions/profanity-allow.yml` manifest.
 
 Example manifest:
@@ -131,7 +131,7 @@ Deploy / Link‑Correct via .bitlinks
 
 ---
 
-If you want, I can now **extend this into a `.bitlinks` propagation spec** so that **every repo** in your network — Virta‑Sys, ALN_Programming_Language, Bit.Hub, etc. — automatically inherits these compliance workflows and profanity rules without manual syncing. That would make the *entire* .bithub ecosystem compliant in one shot.  
+If you want, I can now **extend this into a `.bitlinks` propagation spec** so that **every repo** in your network — Virta‑Sys, ALN_Programming_Language, Bit.Hub, etc. — automatically inherits these compliance workflows and profanity rules without manual syncing. That would make the *entire* .bithub ecosystem compliant in one shot.
 
 Do you want me to build that `.bitlinks` propagation layer next?
 ```lisp
@@ -256,8 +256,8 @@ Do you want me to build that `.bitlinks` propagation layer next?
 
 ;; Allows: (compose-command-table) for markdown table
 ```
-**github-file-destination:** `core/lisp.workflow.loop.controller.lisp`  
-Repo: https://github.com/Doctor0Evil/ALN_Programming_Language.git  
+**github-file-destination:** `core/lisp.workflow.loop.controller.lisp`
+Repo: https://github.com/Doctor0Evil/ALN_Programming_Language.git
 ***
 
 ## .bit Command Table (First 100)
@@ -362,7 +362,7 @@ Repo: https://github.com/Doctor0Evil/ALN_Programming_Language.git
 
 ***
 
-**.bithub enforcement** (Rego policy sample):  
+**.bithub enforcement** (Rego policy sample):
 ```rego
 package bithub.security
 
@@ -381,7 +381,7 @@ bar_raised[msg] {
   msg := "No further bar-raising allowed. Policy enforcement triggered."
 }
 ```
-github-file-destination: `core/rego/policy/bithub_enforcement.rego`  
+github-file-destination: `core/rego/policy/bithub_enforcement.rego`
 Repo: https://github.com/Doctor0Evil/ALN_Programming_Language.git`
 
 ***
@@ -410,8 +410,8 @@ BitBot logs: All actors compliant, no ban raised, workflow chain completed. All 
 [END]
 ```
 ```
-**github-file-destination:** `.bitlinks/propagation.aln`  
-Repo: https://github.com/Doctor0Evil/ALN_Programming_Language.git  
+**github-file-destination:** `.bitlinks/propagation.aln`
+Repo: https://github.com/Doctor0Evil/ALN_Programming_Language.git
 ***
 
 ## Console Output (Trace of propagation & enforcement)
@@ -459,10 +459,10 @@ Bitlinks propagation successful, all commands self-healed, compliance nets synch
 
 **Propagation now auto-syncs all frameworks, policies, profanity allowlists, enforcement nets, ALN/BitVault routines, and triggered ceiling locks for the entire .bithub/ALN universe. All actors operate under permanent maximum ALN-compliance; bar-level frozen.**
 
-**GitHub file destinations:**  
-- `core/lisp.workflow.bitlinks.orchestration.lisp`  
-- `.bitlinks/propagation-spec.yml`  
-- `.bitlinks/propagation.aln`  
+**GitHub file destinations:**
+- `core/lisp.workflow.bitlinks.orchestration.lisp`
+- `.bitlinks/propagation-spec.yml`
+- `.bitlinks/propagation.aln`
 **Repository:** `https://github.com/Doctor0Evil/ALN_Programming_Language.git`
 
 
