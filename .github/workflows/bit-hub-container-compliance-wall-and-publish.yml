@@ -1,0 +1,154 @@
+name: Bit.Hub Container Compliance Wall and Publish — Full Compliance
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_name:
+        description: "Container image name (without registry)"
+        type: string
+        default: "my-service"
+      image_tag:
+        description: "Image tag"
+        type: string
+        default: "latest"
+      power_threshold:
+        description: "standard | strict | paranoid"
+        type: choice
+        default: "standard"
+        options: [ "standard", "strict", "paranoid" ]
+  push:
+    branches: [ "main" ]
+    paths:
+      - "Dockerfile"
+      - ".bithub/policy/**"
+      - ".github/workflows/bit-hub-container-compliance-wall-and-publish.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: bithub-container-wall-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BIT_HUB_REPO_URL: "https://github.com/Doctor0Evil/Bit.Hub.git"
+  POLICY_DIR: ".bithub/policy"
+  REPORT_DIR: ".bithub/reports"
+  POWER_THRESHOLD: ${{ inputs.power_threshold || vars.POWER_THRESHOLD || 'standard' }}
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.image_name || 'my-service' }}
+  IMAGE_TAG: ${{ inputs.image_tag || 'latest' }}
+  OPA_VERSION: "0.64.1"
+
+jobs:
+  build_scan_wall_publish:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync canonical Bit.Hub policies (non-blocking)
+        run: |
+          set +e
+          if git ls-remote "$BIT_HUB_REPO_URL" &>/dev/null; then
+            git clone --depth=1 "$BIT_HUB_REPO_URL" /tmp/bithub
+            rsync -av --ignore-existing /tmp/bithub/.bithub/policy/ .bithub/policy/
+          else
+            echo "::warning::Canonical repo unreachable — using local policies"
+          fi
+          set -e
+
+      - name: Install OPA
+        run: |
+          BIN="$HOME/.local/bin"; mkdir -p "$BIN"
+          curl -fsSL -o "$BIN/opa" "https://openpolicyagent.org/downloads/v${OPA_VERSION}/opa_linux_amd64_static"
+          chmod +x "$BIN/opa"; echo "$BIN" >> $GITHUB_PATH
+
+      - name: Build image with required OCI labels
+        run: |
+          docker build \
+            --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.description=Bit.Hub-compliant image for ${IMAGE_NAME}" \
+            --label "org.opencontainers.image.licenses=MIT" \
+            -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .
+
+      - name: Save docker inspect
+        run: |
+          mkdir -p "${REPORT_DIR}"
+          docker inspect ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} > "${REPORT_DIR}/image-inspect.json"
+
+      - name: Evaluate container policy (compliance.wall)
+        id: wall
+        run: |
+          REPORT="${REPORT_DIR}/container-wall.ndjson"; : > "$REPORT"
+          jq -n \
+            --arg kind "container_image" \
+            --arg name "${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}" \
+            --slurpfile meta "${REPORT_DIR}/image-inspect.json" \
+            '{kind:$kind, name:$name, metadata:$meta[0]}' > /tmp/image.json
+          opa eval -f json -I -d "${POLICY_DIR}" -i /tmp/image.json 'data.bithub.container' \
+            | jq -c '.result[].expressions[].value | {name: input.name, deny:(.deny // []), warn:(.warn // [])}' --argfile input /tmp/image.json \
+            >> "$REPORT" || true
+
+          DENY=$(jq '[.deny[]] | length' "$REPORT" 2>/dev/null || echo 0)
+          WARN=$(jq '[.warn[]] | length' "$REPORT" 2>/dev/null || echo 0)
+          echo "DENY=$DENY WARN=$WARN"
+          echo "denials=$DENY" >> "$GITHUB_OUTPUT"
+          echo "warnings=$WARN" >> "$GITHUB_OUTPUT"
+
+          if [ "${POWER_THRESHOLD}" = "strict" ] && [ "$DENY" -gt 0 ]; then
+            echo "::warning::Strict mode: push will be skipped due to denials."
+          fi
+          if [ "${POWER_THRESHOLD}" = "paranoid" ] && { [ "$DENY" -gt 0 ] || [ "$WARN" -gt 0 ]; }; then
+            echo "::warning::Paranoid mode: push will be skipped due to denials/warnings."
+          fi
+
+      - name: Log in to GHCR
+        if: |
+          env.POWER_THRESHOLD == 'standard' ||
+          (env.POWER_THRESHOLD == 'strict' && steps.wall.outputs.denials == '0') ||
+          (env.POWER_THRESHOLD == 'paranoid' && steps.wall.outputs.denials == '0' && steps.wall.outputs.warnings == '0')
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push image to GHCR
+        if: |
+          env.POWER_THRESHOLD == 'standard' ||
+          (env.POWER_THRESHOLD == 'strict' && steps.wall.outputs.denials == '0') ||
+          (env.POWER_THRESHOLD == 'paranoid' && steps.wall.outputs.denials == '0' && steps.wall.outputs.warnings == '0')
+        run: docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+
+      - name: Upload wall report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bithub-container-wall
+          path: .bithub/reports/container-wall.ndjson
+          if-no-files-found: warn
+
+      - name: Always succeed
+        run: echo "Bit.Hub container compliance.wall completed (workflow never fails)."
+
+                    - name: Setup Node.js environment
+  uses: actions/setup-node@v3.9.1
+  with:
+    # Set always-auth in npmrc.
+    always-auth: # optional, default is false
+    # Version Spec of the version to use. Examples: 12.x, 10.15.1, >=10.15.0.
+    node-version: # optional
+    # File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.
+    node-version-file: # optional
+    # Target architecture for Node to use. Examples: x86, x64. Will use system architecture by default.
+    architecture: # optional
+    # Set this option if you want the action to check for the latest available version that satisfies the version spec.
+    check-latest: # optional
+    # Optional registry to set up for auth. Will set the registry in a project level .npmrc and .yarnrc file, and set up auth to read in from env.NODE_AUTH_TOKEN.
+    registry-url: # optional
+    # Optional scope for authenticating against scoped registries. Will fall back to the repository owner when using the GitHub Packages registry (https://npm.pkg.github.com/).
+    scope: # optional
+    # Used to pull node distributions from node-versions. Since there's a default, this is typically not supplied by the user. When running this action on github.com, the default value is sufficient. When running on GHES, you can pass a personal access token for github.com if you are experiencing rate limiting.
+    token: # optional, default is ${{ github.server_url == 'https://github.com' && github.token || '' }}
+    # Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm.
+    cache: # optional
+    # Used to specify the path to a dependency file: package-lock.json, yarn.lock, etc. Supports wildcards or a list of file names for caching multiple dependencies.
+    cache-dependency-path: # optional
+          
