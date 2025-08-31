@@ -7,7 +7,7 @@ class ALNFantasiaUniverseExpansion {
     constructor(coreEngine) {
         this.core = coreEngine;
         this.worldSeed = 19384712;
-        
+
         // Advanced Systems
         this.factionSystem = new FactionSystem();
         this.questSystem = new QuestSystem();
@@ -19,17 +19,17 @@ class ALNFantasiaUniverseExpansion {
         this.timeSystem = new TimeSystem();
         this.territorySystem = new TerritorySystem();
         this.magicSystem = new MagicSystem();
-        
+
         // AI-Driven Systems
         this.behaviorAI = new BehaviorAI();
         this.storyAI = new StoryAI();
         this.eventPredictor = new EventPredictor();
-        
+
         // Universe State
         this.universeCycle = 0;
         this.apocalypseLevel = 0; // 0-100, how close to universe-ending events
         this.divineInfluence = 50; // Prayer system impact on world
-        
+
         this.initializeUniverse();
     }
 
@@ -39,7 +39,7 @@ class ALNFantasiaUniverseExpansion {
         this.establishFactions();
         this.seedArtifacts();
         this.initializeTimeFlow();
-        
+
         console.log("🌌 ALNFantasia Universe Expansion Initialized");
     }
 
@@ -242,25 +242,25 @@ class ALNFantasiaUniverseExpansion {
     // Advanced Event System with AI Prediction
     processUniverseTick() {
         this.universeCycle++;
-        
+
         // AI-driven behavior analysis
         const playerBehavior = this.behaviorAI.analyzePlayerBehavior(this.core.player);
         const predictedEvents = this.eventPredictor.predictEvents(playerBehavior, this.core.world);
-        
+
         // Dynamic story progression
         this.storyAI.progressNarrative(playerBehavior, this.core.world);
-        
+
         // System updates
         this.factionSystem.processTick();
         this.weatherSystem.processTick();
         this.timeSystem.processTick();
         this.questSystem.processTick();
-        
+
         // Universe-level events
         if (this.universeCycle % 100 === 0) {
             this.triggerUniverseEvent();
         }
-        
+
         return {
             cycle: this.universeCycle,
             predicted_events: predictedEvents,
@@ -397,30 +397,30 @@ class ALNFantasiaUniverseExpansion {
     processAdvancedContamination() {
         // Cross-contamination between systems
         this.processCrossContamination();
-        
+
         // Environmental contamination spread
         this.processEnvironmentalContamination();
-        
+
         // Beneficial mutations from controlled exposure
         this.processMutationChances();
     }
 
     processCrossContamination() {
         const player = this.core.player;
-        
+
         // Biological + Radioactive = Aggressive mutation
         if (player.contamination.biological && player.contamination.radioactive) {
             if (Math.random() < 0.05) {
                 this.mutationSystem.triggerMutation(player, "aggressive");
             }
         }
-        
+
         // Parasitic + Biological = Super infection
         if (player.contamination.parasitic && player.contamination.biological) {
             player.contamination.levels.biological *= 1.1;
             this.core.log("🦠 The parasites accelerate biological contamination!");
         }
-        
+
         // All three = Void corruption
         if (player.contamination.biological && player.contamination.parasitic && player.contamination.radioactive) {
             if (Math.random() < 0.01) {
@@ -433,14 +433,14 @@ class ALNFantasiaUniverseExpansion {
         this.core.log("🌑 The three contaminations merge... Something far worse emerges!");
         target.void_touched = true;
         target.sanity = Math.max(0, target.sanity - 30);
-        
+
         // Grant void powers but at great cost
         target.void_powers = {
             reality_sight: true,
             phase_walking: true,
             nightmare_summoning: true
         };
-        
+
         // Permanent sanity drain
         target.sanity_max = Math.max(50, target.sanity_max - 20);
     }
@@ -448,13 +448,13 @@ class ALNFantasiaUniverseExpansion {
     // Advanced Prayer System Extensions
     processAdvancedPrayer() {
         const player = this.core.player;
-        
+
         // Group prayer effects
         this.processGroupPrayer(player);
-        
+
         // Divine artifacts interaction
         this.processDivineArtifacts(player);
-        
+
         // Counter-corruption prayers
         this.processCounterCorruption(player);
     }
@@ -619,7 +619,7 @@ class EventPredictor {
 
     predictEvents(playerBehavior, world) {
         const predictions = [];
-        
+
         // Predict based on behavior patterns
         if (playerBehavior.exploration > 0.7) {
             predictions.push({
