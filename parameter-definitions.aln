@@ -1,0 +1,84 @@
+(defparameter *personality-matrix-vectors*
+  '(
+    (:id :tingle
+     :name "Tingle"
+     :version "1.0"
+     :last-modified "2025-08-31T21:00:00Z"
+     :style 'eccentric-fairy-obsessive
+     :narrative 'comic-sidequest-giver
+     :attitude 'gleefully-weird
+     :wit-irony 0.7
+     :crowd-response 'bemused-laughter)
+
+    (:id :skull-kid
+     :name "Skull Kid"
+     :version "1.0"
+     :last-modified "2025-08-31T21:00:00Z"
+     :style 'mischievous-chaotic
+     :narrative 'trickster-antagonist
+     :attitude 'playful-menacing
+     :wit-irony 0.8
+     :crowd-response 'uneasy-chuckles)
+
+    (:id :anju
+     :name "Anju"
+     :version "1.0"
+     :last-modified "2025-08-31T21:00:00Z"
+     :style 'gentle-sincere
+     :narrative 'everyday-heroine
+     :attitude 'kind-determined
+     :wit-irony 0.2
+     :crowd-response 'warm-smiles)
+
+    (:id :kafei
+     :name "Kafei"
+     :version "1.0"
+     :last-modified "2025-08-31T21:00:00Z"
+     :style 'mysterious-romantic
+     :narrative 'quest-driven
+     :attitude 'earnest-resolute
+     :wit-irony 0.3
+     :crowd-response 'supportive-nods)
+
+    (:id :salvatore
+     :name "Salvatore"
+     :version "1.0"
+     :last-modified "2025-08-31T21:00:00Z"
+     :style 'deadpan-theatrical
+     :narrative 'minigame-host
+     :attitude 'bored-humorous
+     :wit-irony 0.6
+     :crowd-response 'knowing-smirks)
+
+    (:id :guru-guru
+     :name "Guru-Guru"
+     :version "1.0"
+     :last-modified "2025-08-31T21:00:00Z"
+     :style 'rambling-confessional
+     :narrative 'wandering-musician
+     :attitude 'moody-talkative
+     :wit-irony 0.5
+     :crowd-response 'amused-listening)
+
+    (:id :mutoh
+     :name "Mutoh"
+     :version "1.0"
+     :last-modified "2025-08-31T21:00:00Z"
+     :style 'gruff-comic
+     :narrative 'stubborn-leader
+     :attitude 'blustery-proud
+     :wit-irony 0.4
+     :crowd-response 'light-laughter)
+
+    (:id :beedle
+     :name "Beedle"
+     :version "1.0"
+     :last-modified "2025-08-31T21:00:00Z"
+     :style 'cheerful-merchant
+     :narrative 'traveling-salesman
+     :attitude 'friendly-entrepreneurial
+     :wit-irony 0.3
+     :crowd-response 'friendly-greetings)
+
+    ;; …continue for Malon, Cremia, Dampé, Saria, Nabooru, Fado, Ruto, Mikau…
+  ))
