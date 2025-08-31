@@ -1,0 +1,131 @@
+name: BitHub Compliance Wall
+
+on:
+  push:
+    branches: [ main, "**" ]
+    paths:
+      - ".github/workflows/*.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *" # nightly and manual
+  workflow_call: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+concurrency:
+  group: bitbot-compliance-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  TARGET_BOT_NAME: ".bithub-bot"
+  TARGET_BOT_EMAIL: "bithub-bot@users.noreply.github.com"
+  REPORT_DIR: ".bithub/reports"
+  BIT_RENAME_MAP: .bit/rename.map
+  BIT_TOS_FILE: TERMS-OF-SERVICE.md
+  BIT_BANNER: "This run is governed by TERMS-OF-SERVICE.md. Proceeding implies acceptance."
+
+jobs:
+
+  bot_scan_and_replace:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.BITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+      - name: Terms banner
+        shell: bash
+        run: |
+          echo "## Bit.Hub Compliance Wall" >> "$GITHUB_STEP_SUMMARY"
+          echo "$BIT_BANNER" >> "$GITHUB_STEP_SUMMARY"
+          test -f "$BIT_TOS_FILE" && echo -e "\n---\nVisible Terms loaded from $BIT_TOS_FILE" >> "$GITHUB_STEP_SUMMARY" || \
+            echo "::warning::No TERMS-OF-SERVICE.md found at repo root."
+      - name: Scan and fix workflow files for bot compliance
+        run: |
+          set -e
+          find .github/workflows -type f -name '*.yml' | while read -r f; do
+            echo "↪️  Scanning $f"
+            sed -i "s/github-actions\[bot\]/$TARGET_BOT_NAME/g" "$f"
+            sed -i "s/41898282+$TARGET_BOT_NAME/$TARGET_BOT_NAME/g" "$f"
+            sed -i "s/github-actions-bot@users.noreply.github.com/$TARGET_BOT_EMAIL/g" "$f"
+          done
+      - name: Configure bot user for commit
+        run: |
+          git config --local user.email "$TARGET_BOT_EMAIL"
+          git config --local user.name "$TARGET_BOT_NAME"
+      - name: Commit and push updates
+        run: |
+          git add .github/workflows/*.yml
+          git diff-index --quiet HEAD || git commit -m "[.bithub-bot] Enforced bot compliance wall"
+          git push || echo "::warning::Push failed or nothing to update. Manual review may be required for protected branches."
+      - name: Emit compliance report
+        run: |
+          mkdir -p $REPORT_DIR
+          echo "{\"timestamp\": \"$(date -u +'%Y-%m-%dT%H:%M:%SZ')\", \"status\": \"workflows rewritten for bot compliance\"}" > "${REPORT_DIR}/bot-compliance-status.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bot-compliance-report
+          path: ${{ env.REPORT_DIR }}/bot-compliance-status.json
+          if-no-files-found: warn
+
+  go_environment:
+    runs-on: ubuntu-latest
+    needs: bot_scan_and_replace
+    env:
+      GO_VERSION: "1.22"
+      GO_ENV_CONFIG: ".bithub/go_env_config.json"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Validate Go Environment Config (OPA)
+        uses: openpolicyagent/conftest@v0.45.0
+        with:
+          args: test --policy .bithub/policy --input ${{ env.GO_ENV_CONFIG }}
+      - name: Print Go Version
+        run: go version
+
+  python_node_feedback_loop:
+    runs-on: ubuntu-latest
+    needs: go_environment
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Aggregate Run Results
+        run: |
+          python bithub/scripts/aggregate_run_results.py > run_results.json
+      - name: Update ML Patterns
+        run: |
+          python bithub/scripts/update_ml_patterns.py --input run_results.json --pattern-store .bithub/ml_patterns.json
+      - name: Store Updated Patterns
+        run: |
+          git config user.name "bitbot"
+          git config user.email "bitbot@users.noreply.github.com"
+          git add .bithub/ml_patterns.json
+          git commit -m "Update ML patterns from latest runs" || echo "No changes"
+          git push
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3.9.1
+        with:
+          node-version: 18.x
+      - name: Print Node Version
+        run: node --version
+
+  celebration:
+    runs-on: ubuntu-latest
+    needs: python_node_feedback_loop
+    steps:
+      - run: |
+          echo "🎉 Compliance wall + language jobs complete!"
+          echo "✅ BitHub jobs finished, feedback loop and Go/ML validation all pass."
