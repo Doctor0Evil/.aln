@@ -1,0 +1,189 @@
+;;; src/AI/profanity/seeds.masked.lisp
+;;; Masked roots (no raw profanity in repo). Underscore = vowel slot.
+(defparameter *seed-bases*
+  '("f_ck" "sh_t" "a_s" "d_ck" "b_ll" "w_nk" "p_ss" "c_ck" "t_wt" "n_mb" "g_bsh" "kn_b" "b_llck"))
+
+(defparameter *seed-joins*
+  '("weasel" "bucket" "nugget" "wizard" "goblin" "carousel" "sprinkler" "muffin" "socket" "gremlin" "trolley" "sprocket"))
+
+(defparameter *seed-boost*
+  '("mega" "ultra" "hyper" "turbo" "quantum" "glitch" "void" "feral" "neon" "holo"))
+
+(defparameter *templates*
+  '("<<B>>-<<J>>"
+    "<<BOOST>>-<<B>>-<<J>>"
+    "<<B>>-<<J>>-<<BOOST>>"
+    "<<B>>ing <<J>>"
+    "respawn, <<B>>-face"
+    "crawl back, <<B>>-<<J>>"))
+;;; src/AI/profanity/generator.lisp
+(defpackage :bit.banter
+  (:use :cl)
+  (:export :generate-banter :preview-banter :set-banter-mode :decide-banter-mode))
+(in-package :bit.banter)
+
+(defparameter *mode* :masked) ; :masked | :explicit | :mild
+
+(defun set-banter-mode (mode) (setf *mode* mode))
+
+(defun unmask (s &key (vowels "aeiou"))
+  ;; Deterministic underscore->vowel mapping; no raw words stored
+  (let* ((seed (sxhash s))
+         (vs (coerce vowels 'vector)))
+    (with-output-to-string (out)
+      (loop for ch across s
+            for i from 0
+            do (write-char (if (char= ch #\_) (aref vs (mod (+ seed i) (length vs))) ch) out)))))
+
+(defun mask-soft (s)
+  ;; For logs/UI: replace vowels with '*'
+  (with-output-to-string (out)
+    (loop for ch across s do (write-char (if (find ch "aeiouAEIOU") #\* ch) out))))
+
+(defun pick (xs) (elt xs (random (length xs))))
+
+(defun fill-template (tpl base join boost)
+  (let ((r tpl))
+    (setf r (cl-ppcre:regex-replace-all "<<B>>" r base))
+    (setf r (cl-ppcre:regex-replace-all "<<J>>" r join))
+    (cl-ppcre:regex-replace-all "<<BOOST>>" r boost)))
+
+(defun compose (base join boost)
+  (let* ((b (ecase *mode*
+              (:explicit (unmask base))
+              (:masked   base)
+              (:mild     (subseq (unmask base) 0 1))))
+         (j join)
+         (bt (if (eq *mode* :explicit) (string-downcase boost) boost))
+         (tpl (pick *templates*)))
+    (fill-template tpl b j bt)))
+
+(defun generate-banter (&key (n 10))
+  (loop repeat n collect
+        (compose (pick *seed-bases*) (pick *seed-joins*) (pick *seed-boost*))))
+
+(defun preview-banter (&key (n 5))
+  ;; Always safe for console/logs
+  (mapcar #'mask-soft (generate-banter :n n)))
+
+;; Persona/context gate: returns :explicit only when allowed by policy.
+(defun decide-banter-mode (persona upv scene-tags)
+  ;; persona: plist with flags; upv: plist with vectors; scene-tags: list of symbols
+  (let* ((agentic (getf upv :agentic7 #()))
+         (humor-on (and (arrayp agentic)
+                        (> (length agentic) 4) ; index 4 = :humor in your schema
+                        (> (aref agentic 4) 0)))
+         (explicit-scene (intersection scene-tags '(:adult :mature :sandbox-explicit)))
+         (fail-open (and (arrayp agentic)
+                         (> (length agentic) 5) ; index 5 = :failopen
+                         (> (aref agentic 5) 0)))
+         (policy (getf persona :banter-policy :masked)))
+    (cond
+      ((and humor-on explicit-scene (eq policy :explicit)) :explicit)
+      (fail-open :masked) ; visible but safe if scene not explicit
+      (t :masked))))
+# .bit/commands/profanity.gen.yaml
+name: profanity-generator
+description: Generate banter per policy/persona/context
+inputs:
+  context:
+    required: true
+    enum: [production-explicit, staging, ci, local-dev]
+  n:
+    required: false
+    default: "20"
+handlers:
+  - run: tools/handlers/profanity_runtime.sh "${{ inputs.context }}" "${{ inputs.n }}"
+    env:
+      BIT_POLICY_FILE: .bit/policy/banter.policy.json
+// .bit/policy/banter.policy.json
+{
+  "flag": "max.allowed.banter",
+  "default_mode": "masked",
+  "contexts": {
+    "production-explicit": "explicit",
+    "staging": "masked",
+    "ci": "masked",
+    "local-dev": "mild"
+  }
+}
+# tools/handlers/profanity_runtime.sh
+set -euo pipefail
+CTX="${1:-ci}"
+COUNT="${2:-20}"
+POLICY="${BIT_POLICY_FILE:-.bit/policy/banter.policy.json}"
+
+MODE=$(jq -r --arg c "$CTX" '.contexts[$c] // .default_mode' "$POLICY")
+
+cat > /tmp/banter_runner.lisp <<'LISP'
+(require :asdf)
+(asdf:load-system :cl-ppcre)
+(load "src/AI/profanity/seeds.masked.lisp")
+(load "src/AI/profanity/generator.lisp")
+(in-package :bit.banter)
+(let* ((mode (intern (string-upcase (uiop:getenv "BIT_BANTER_MODE")) :keyword))
+       (n (parse-integer (or (uiop:getenv "BIT_BANTER_COUNT") "20"))))
+  (set-banter-mode mode)
+  ;; Print only masked preview to console/logs
+  (dolist (p (preview-banter :n n)) (format t "~a~%" p))
+  ;; Write explicit payload to ephemeral runtime file only when allowed
+  (when (eq mode :explicit)
+    (ensure-directories-exist ".bit/runtime/")
+    (with-open-file (s ".bit/runtime/banter.explicit.txt"
+                       :direction :output :if-exists :supersede :if-does-not-exist :create)
+      (dolist (x (generate-banter :n n)) (format s "~a~%" x)))))
+LISP
+
+mkdir -p .bit/runtime .bit/audit
+BIT_BANTER_MODE="$MODE" BIT_BANTER_COUNT="$COUNT" sbcl --noinform --non-interactive --script /tmp/banter_runner.lisp
+echo "$(date -u +%FT%TZ) banter_generated mode=$MODE context=$CTX count=$COUNT" >> .bit/audit/banter.log
+# tools/guards/no-raw-profanity.sh
+set -euo pipefail
+# Reconstruct deny tokens from masked seeds at runtime and scan the staged diff.
+tmp=$(mktemp)
+cat > "$tmp" <<'LISP'
+(load "src/AI/profanity/seeds.masked.lisp")
+(load "src/AI/profanity/generator.lisp")
+(in-package :bit.banter)
+(dolist (b *seed-bases*)
+  (format t "~a~%" (unmask b)))
+LISP
+TOKENS=$(sbcl --noinform --non-interactive --script "$tmp" | tr 'A-Z' 'a-z' | sort -u)
+DIFF=$(git diff --cached -U0 | tr 'A-Z' 'a-z')
+while read -r t; do
+  [ -z "$t" ] && continue
+  if echo "$DIFF" | grep -Fq " $t"; then
+    echo "Blocked commit: raw explicit token detected. Use masked seeds + runtime generator."
+    exit 1
+  fi
+done <<< "$TOKENS"
+# .github/workflows/banter_enforce.yml
+name: Banter Policy
+on: [push, pull_request]
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: sudo apt-get update && sudo apt-get install -y sbcl jq
+      - name: Masked preview only (CI)
+        run: bash tools/handlers/profanity_runtime.sh ci 10
+      - name: Ensure no raw explicit strings committed
+        run: bash tools/guards/no-raw-profanity.sh
+      - name: Ensure explicit artifact not produced in CI
+        run: 'test ! -f .bit/runtime/banter.explicit.txt || { echo "Explicit artifact must not exist in CI"; exit 2; }'
+.bit/runtime/
+;;; src/AI/profanity/persona_gate.lisp
+(defun banter-mode-for-runner (persona upv scene-tags policy)
+  ;; persona: plist (e.g., :id, :banter-policy)
+  ;; upv: materialized UPV plist with :agentic7 etc.
+  ;; scene-tags: e.g., '(:adult :pvp)
+  ;; policy: parsed JSON from .bit/policy/banter.policy.json
+  (let* ((ctx-mode (getf policy (or (car (intersection scene-tags '(:production-explicit :staging :ci :local-dev)))
+                                    :default_mode)))
+         (decided (bit.banter:decide-banter-mode persona upv scene-tags)))
+    ;; Final mode is the stricter of context vs persona gate
+    (if (and (eql decided :explicit) (string= ctx-mode "explicit"))
+        :explicit
+        :masked)))
