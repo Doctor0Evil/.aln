@@ -1,5 +1,5 @@
-# BitHub Massive ALN Workflow (Sin.e-MAXX Mode)
 name: BitHub Massive ALN Workflow (Sin.e-MAXX Mode)
+
 on:
   workflow_run:
     workflows: ["CI", "Build", "Deploy"]
@@ -7,39 +7,52 @@ on:
   push:
     branches: [main, '**/failed-workflow']
   schedule:
-    - cron: '0 */6 * * *' # periodic debug eruption
+    - cron: '0 */6 * * *'
 
 jobs:
   analyze-errors:
-    name: Debug/Analyze Failure Logs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install ALN CLI (portable)
+
+      - name: Install ALN CLI tools
         run: |
-          if ! command -v aln-analyze >/dev/null; then
-            if [ -f "./tools/aln-analyze" ]; then
-              chmod +x ./tools/aln-analyze
-              sudo mv ./tools/aln-analyze /usr/local/bin/aln-analyze
-            else
-              sudo apt-get update
-              sudo apt-get install -y aln-cli || echo "[.bithub] Fallback install failed"
+          mkdir -p "$HOME/.local/bin"
+          export PATH="$HOME/.local/bin:$PATH"
+          # Try repo tools dir first
+          for tool in aln-analyze aln-patch aln-fixer-bot aln-erupt aln-blockchain aln-compliance-audit aln-bot-summon; do
+            if [ -f "./tools/$tool" ]; then
+              chmod +x "./tools/$tool"
+              cp "./tools/$tool" "$HOME/.local/bin/"
             fi
-          fi
-          echo "[.bithub] ALN-analyze ready: $(aln-analyze --version || echo 'unknown')"
+          done
+          # Or fetch from your release server
+          # curl -L https://bit.hub.com/downloads/aln-cli.tar.gz | tar -xz -C "$HOME/.local/bin"
+          echo "$PATH" >> $GITHUB_PATH
+
       - name: Run ALN analysis
         run: |
-          aln-analyze --input /github/logs --output /tmp/failure.lst \
-            --profane-allow 'fuck,shit,bitch,asshole,cunt' || echo "[.bithub] ALN analysis warnings"
-          cat /tmp/failure.lst || echo "[.bithub] No failures recorded"
+          if command -v aln-analyze >/dev/null; then
+            aln-analyze --input /github/logs --output /tmp/failure.lst \
+              --profane-allow 'fuck,shit,bitch,asshole,cunt' || echo "[.bithub] ALN analysis warnings"
+            cat /tmp/failure.lst || echo "[.bithub] No failures recorded"
+          else
+            echo "::warning::aln-analyze not installed; skipping analysis"
+          fi
+
       - name: Generate Humor Bus
-        run: |
-          echo "Yippee-ki-yay, let the Sloppy Disk Olympics begin!" > /tmp/humor.bus
+        run: echo "Yippee-ki-yay, let the Sloppy Disk Olympics begin!" > /tmp/humor.bus
+
       - name: Apply Compliance Patch
         run: |
-          aln-patch --target /tmp/failure.lst \
-            --profanity-compliance "fuck,shit,bitch,asshole,cunt" \
-            --sandbox-mode TRUE
+          if command -v aln-patch >/dev/null; then
+            aln-patch --target /tmp/failure.lst \
+              --profanity-compliance "fuck,shit,bitch,asshole,cunt" \
+              --sandbox-mode TRUE
+          else
+            echo "::warning::aln-patch not installed; skipping compliance patch"
+          fi
+
       - name: Upload ALN report
         uses: actions/upload-artifact@v4
         with:
@@ -48,45 +61,52 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
           compression-level: 6
-          overwrite: false
 
   self-repair-workflow:
-    name: Workflow Self-Heal & Bot Spawn
     needs: analyze-errors
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Launch fixer bots
         run: |
-          aln-fixer-bot --scale dynamic --target /tmp/failure.lst --log /tmp/fixer-bot.log
+          if command -v aln-fixer-bot >/dev/null; then
+            aln-fixer-bot --scale dynamic --target /tmp/failure.lst --log /tmp/fixer-bot.log
+          else
+            echo "::warning::aln-fixer-bot not installed; skipping"
+          fi
       - name: Erupt workflow fixer
         run: |
-          while read -r bot; do
-            aln-erupt --bot "$bot" --repair-mode lava --debug MAX
-          done < /tmp/fixer-bot.log
+          if command -v aln-erupt >/dev/null && [ -f /tmp/fixer-bot.log ]; then
+            while read -r bot; do
+              aln-erupt --bot "$bot" --repair-mode lava --debug MAX
+            done < /tmp/fixer-bot.log
+          fi
 
   blockchain-persist:
-    name: Persist & Tokenize via Blockchain
     needs: self-repair-workflow
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Tokenize to blockchain
         run: |
-          aln-blockchain --tokenize /tmp/fixer-bot.log --network bit.hub.chain --compliance MAX
+          if command -v aln-blockchain >/dev/null; then
+            aln-blockchain --tokenize /tmp/fixer-bot.log --network bit.hub.chain --compliance MAX
+          fi
       - name: Audit Profane Compliance
         run: |
-          aln-compliance-audit --input /tmp/humor.bus --profanity-level unrestricted.bat --log /tmp/audit.log
+          if command -v aln-compliance-audit >/dev/null; then
+            aln-compliance-audit --input /tmp/humor.bus --profanity-level unrestricted.bat --log /tmp/audit.log
+          fi
 
   contributor-botnet:
-    name: Dynamic Contributor/Bot Add
     needs: blockchain-persist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Summon bots (Sin.e-MAXX mode)
         run: |
-          aln-bot-summon --count 20 --personality Sin.e-MAXX --mode developer,debug,janitor
+          if command -v aln-bot-summon >/dev/null; then
+            aln-bot-summon --count 20 --personality Sin.e-MAXX --mode developer,debug,janitor
+          fi
       - name: Announce success (satirical)
-        run: |
-          echo "Fucking.legendary! Erupting with massive bot army. Clinton & Tyson backup routines locked and loaded."
+        run: echo "Fucking.legendary! Erupting with massive bot army. Clinton & Tyson backup routines locked and loaded."
