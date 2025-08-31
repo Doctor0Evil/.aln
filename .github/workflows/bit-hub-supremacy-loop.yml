@@ -1,0 +1,68 @@
+name: Bit.Hub Supremacy Loop
+
+on:
+  workflow_run:
+    workflows:
+      - "Bit.Hub Pipeline Supremacy (CI)"
+      - "Bit.Hub Policy + Scorecard Gate"
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      auto_fix:
+        description: "Open a PR with fixes"
+        type: boolean
+        default: true
+      power_threshold:
+        description: "standard | strict | paranoid"
+        type: choice
+        default: "standard"
+        options: [ "standard", "strict", "paranoid" ]
+      target_ref:
+        description: "Base branch for PR"
+        type: string
+        default: "main"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: supremacy-loop-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BIT_HUB_REPO_URL: "https://github.com/Doctor0Evil/Bit.Hub.git"
+  POWER_THRESHOLD: ${{ inputs.power_threshold || vars.POWER_THRESHOLD || 'standard' }}
+
+jobs:
+  run_meta_corrector:
+    name: Run Meta-Corrector v3
+    uses: ./.github/workflows/bit-hub-meta-corrector-v3.yml
+    with:
+      auto_fix: ${{ inputs.auto_fix || true }}
+      power_threshold: ${{ env.POWER_THRESHOLD }}
+      target_ref: ${{ inputs.target_ref || 'main' }}
+
+  redeploy_if_clean:
+    name: Redeploy if clean
+    needs: run_meta_corrector
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check last correction report
+        run: |
+          REPORT=".bithub/reports/meta-corrector-v3.ndjson"
+          if [ -f "$REPORT" ]; then
+            DENY=$(jq '[.deny[]] | length' "$REPORT" 2>/dev/null || echo 0)
+            WARN=$(jq '[.warn[]] | length' "$REPORT" 2>/dev/null || echo 0)
+            echo "DENY=$DENY WARN=$WARN"
+            if [ "$DENY" -eq 0 ] && { [ "${POWER_THRESHOLD}" = "standard" ] || [ "$WARN" -eq 0 ]; }; then
+              echo "No blocking issues — triggering CD Supremacy"
+              gh workflow run "Bit.Hub Secure CD Supremacy (Progressive Delivery)" -f environment=production -f power_threshold=${POWER_THRESHOLD}
+            else
+              echo "::warning::Blocking issues remain — skipping redeploy"
+            fi
+          else
+            echo "::warning::No correction report found — skipping redeploy"
+          fi
