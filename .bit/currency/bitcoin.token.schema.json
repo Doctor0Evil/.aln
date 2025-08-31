@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bithub.dev/schemas/bitcoin.token.schema.json",
+  "title": ".bit.coin Token Schema",
+  "type": "object",
+  "required": ["token_id", "issuer", "owner", "amount", "timestamp", "proof"],
+  "properties": {
+    "token_id": {
+      "type": "string",
+      "description": "Unique token identifier (UUID or hash)."
+    },
+    "issuer": {
+      "type": "string",
+      "description": "Entity issuing the token (e.g., Bit.Hub Orchestrator)."
+    },
+    "owner": {
+      "type": "string",
+      "description": "Current owner or runner address."
+    },
+    "amount": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Amount of .bit.coin tokens."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 timestamp of token issuance or transfer."
+    },
+    "proof": {
+      "type": "object",
+      "description": "Compliance proof data (policy passes, audit hashes).",
+      "properties": {
+        "policy_version": { "type": "string" },
+        "compliance_hash": { "type": "string" },
+        "workflow_run_id": { "type": "string" }
+      },
+      "required": ["policy_version", "compliance_hash"]
+    }
+  }
+}
