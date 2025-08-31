@@ -1,0 +1,141 @@
+name: Bit.Hub Workflow Governor and Auto-Fix — Full Compliance
+
+on:
+  push:
+    paths:
+      - ".github/workflows/**"
+      - ".bithub/policy/**"
+      - ".bit/schemas/**"
+  workflow_dispatch:
+    inputs:
+      auto_fix:
+        description: "Open a PR with fixes"
+        type: boolean
+        default: true
+      power_threshold:
+        description: "standard | strict | paranoid"
+        type: choice
+        default: "standard"
+        options: [ "standard", "strict", "paranoid" ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: bithub-workflow-governor-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BIT_HUB_REPO_URL: "https://github.com/Doctor0Evil/Bit.Hub.git"
+  REPORT_DIR: ".bithub/reports"
+  POLICY_DIR: ".bithub/policy"
+  POWER_THRESHOLD: ${{ inputs.power_threshold || vars.POWER_THRESHOLD || 'standard' }}
+  YQ_VERSION: "v4.44.3"
+  OPA_VERSION: "0.64.1"
+  PR_BRANCH_PREFIX: "bot/bithub-workflow-fixes"
+
+jobs:
+  audit_and_fix:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    outputs:
+      changes: ${{ steps.diff.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync canonical Bit.Hub policies (non-blocking)
+        run: |
+          set +e
+          if git ls-remote "$BIT_HUB_REPO_URL" &>/dev/null; then
+            git clone --depth=1 "$BIT_HUB_REPO_URL" /tmp/bithub
+            rsync -av --ignore-existing /tmp/bithub/.bithub/policy/ .bithub/policy/
+          else
+            echo "::warning::Canonical repo unreachable — using local policy"
+          fi
+          set -e
+
+      - name: Install yq + OPA
+        run: |
+          BIN="$HOME/.local/bin"; mkdir -p "$BIN"
+          curl -fsSL -o "$BIN/yq" "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          curl -fsSL -o "$BIN/opa" "https://openpolicyagent.org/downloads/v${OPA_VERSION}/opa_linux_amd64_static"
+          chmod +x "$BIN/yq" "$BIN/opa"; echo "$BIN" >> $GITHUB_PATH
+
+      - name: Normalize and auto-correct workflows
+        run: |
+          shopt -s nullglob
+          for y in .github/workflows/*.y*ml; do
+            yq -i 'if has("name") then . else .name = "Auto-Normalized Workflow" end' "$y"
+            yq -i '.permissions = (.permissions // {"contents":"read"})' "$y"
+            yq -i '.concurrency = (.concurrency // {"group": "wf-${{ github.ref }}", "cancel-in-progress": false})' "$y"
+            yq -i '.jobs |= with_entries(.value."timeout-minutes" = (.value."timeout-minutes" // 30 | tonumber))' "$y"
+            yq -i '.jobs |= with_entries(.value."runs-on" = (.value."runs-on" // ["self-hosted","bit.hub","linux"]))' "$y"
+            yq -i '.jobs |= with_entries(.value.runs_on_adaptive = true)' "$y"
+            yq -i '.. | select(tag == "!!str") |= sub("actions/checkout@v[12]"; "actions/checkout@v4")' "$y"
+          done
+
+      - name: Evaluate policy (advisory report)
+        run: |
+          mkdir -p "${REPORT_DIR}"
+          REPORT="${REPORT_DIR}/workflow-governor.ndjson"; : > "$REPORT"
+          shopt -s nullglob
+          for y in .github/workflows/*.y*ml; do
+            uses=$(yq '.. | select(tag == "!!str") | select(test("^[^ ]+@[^ ]+$"))' "$y" | tr '\n' ' ' || true)
+            jq -n --arg path "$y" --arg uses "$uses" --argjson wf "$(yq -o=json '.' "$y")" \
+              '{path:$path, uses:($uses|split(" ")|map(select(length>0))), workflow:$wf, repo_is_fork:false}' > /tmp/input.json
+            opa eval -f json -I -d "${POLICY_DIR}" -i /tmp/input.json 'data.bithub.workflow' \
+              | jq -c '.result[].expressions[].value | {path: input.path, deny:(.deny // []), warn:(.warn // [])}' --argfile input /tmp/input.json \
+              >> "$REPORT" || true
+          done
+          echo "Wrote $REPORT"
+
+      - name: Stage changes
+        id: diff
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+  propose_pr:
+    needs: audit_and_fix
+    if: needs.audit_and_fix.outputs.changes == 'true' && inputs.auto_fix == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: git add -A
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ env.PR_BRANCH_PREFIX }}/${{ github.run_id }}
+          base: ${{ github.ref_name }}
+          title: "Bit.Hub Auto-Fix: Workflow normalization and policy alignment"
+          commit-message: "chore(bit.hub): normalize workflows, inject permissions/concurrency, timeouts, adaptive runs-on, upgrade checkout"
+          body: |
+            Automated corrections to align workflows with Bit.Hub policy.
+            Report: .bithub/reports/workflow-governor.ndjson
+          labels: compliance, automation
+          delete-branch: true
+
+                      - name: Setup .NET Core SDK
+  uses: actions/setup-dotnet@v3.4.2
+  with:
+    # Optional SDK version(s) to use. If not provided, will install global.json version when available. Examples: 2.2.104, 3.1, 3.1.x, 3.x, 6.0.2xx
+    dotnet-version: # optional
+    # Optional quality of the build. The possible values are: daily, signed, validated, preview, ga.
+    dotnet-quality: # optional
+    # Optional global.json location, if your global.json isn't located in the root of the repo.
+    global-json-file: # optional
+    # Optional package source for which to set up authentication. Will consult any existing NuGet.config in the root of the repo and provide a temporary NuGet.config using the NUGET_AUTH_TOKEN environment variable as a ClearTextPassword
+    source-url: # optional
+    # Optional OWNER for using packages from GitHub Package Registry organizations/users other than the current repository's owner. Only used if a GPR URL is also provided in source-url
+    owner: # optional
+    # Optional NuGet.config location, if your NuGet.config isn't located in the root of the repo.
+    config-file: # optional
+    # Optional input to enable caching of the NuGet global-packages folder
+    cache: # optional
+    # Used to specify the path to a dependency file: packages.lock.json. Supports wildcards or a list of file names for caching multiple dependencies.
+    cache-dependency-path: # optional
+          
