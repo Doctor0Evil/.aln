@@ -1,0 +1,913 @@
+name: Meta Orchestrator with Livingroom Runner
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/**"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: orchestrator-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preflight-fix:
+    name: Preflight Fix (Ubuntu)
+    uses: ./.github/workflows/workflow_fixer.yml
+    with:
+      caller: orchestrator
+      depth: 2
+      bot_name: "github-actions[bot]"
+      bot_email: "41898282+github-actions[bot]@users.noreply.github.com"
+
+  generator:
+    name: Workflow Generator (Ubuntu)
+    needs: preflight-fix
+    uses: ./.github/workflows/workflow_generator.yml
+    with:
+      create_samples: true
+      bot_name: "actions-user"
+      bot_email: "actions-user@users.noreply.github.com"
+
+  validator:
+    name: Workflow Validator (Ubuntu)
+    needs: [preflight-fix, generator]
+    uses: ./.github/workflows/workflow_validator.yml
+    with:
+      caller: orchestrator-validator
+      bot_name: "github-actions[bot]"
+      bot_email: "41898282+github-actions[bot]@users.noreply.github.com"
+
+  windows-tests:
+    name: Livingroom Runner Tasks (Self‑hosted Windows)
+    needs: validator
+    runs-on: [self-hosted, Windows, X64]
+    if: success()
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Confirm Runner Context
+        shell: pwsh
+        run: |
+          Write-Host "Runner Name: $env:RUNNER_NAME"
+          Write-Host "Runner OS: $env:RUNNER_OS $env:RUNNER_ARCH"
+          Write-Host "Running on Livingroom self-hosted Windows runner."
+
+      - name: Ensure aln-analyze on Windows
+        shell: pwsh
+        run: |
+          if (Get-Command aln-analyze -ErrorAction SilentlyContinue) {
+            Write-Host "aln-analyze already available"
+          } else {
+            Write-Host "Installing aln-analyze..."
+            try {
+              pip install --upgrade pip
+              pip install aln-analyze
+            } catch {
+              Write-Warning "Unable to install via pip — please ensure a Windows binary is available."
+            }
+          }
+
+      - name: Run aln-analyze (safe mode on Windows)
+        shell: pwsh
+        run: |
+          if (Get-Command aln-analyze -ErrorAction SilentlyContinue) {
+            aln-analyze --input "$env:GITHUB_WORKSPACE\logs" --output "C:\temp\failure.lst" --profane-allow 'fuck,shit,bitch,asshole,cunt'
+          } else {
+            Write-Warning "aln-analyze not found — skipping."
+          }
+
+      - name: Build or Test on Windows
+        shell: pwsh
+        run: |
+          if (Test-Path .\scripts\windows_build.ps1) {
+            pwsh .\scripts\windows_build.ps1
+          } else {
+            Write-Host "No Windows build script found — skipping."
+
+  recovery:Annotations
+1 error
+correct-and-sync
+failed 9 minutes ago in 12s
+Search logs
+1s
+1s
+1s
+5s
+3s
+Run pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-all-corrections.ps1
+  pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-all-corrections.ps1
+  shell: /usr/bin/pwsh -command ". '{0}'"
+[2025-08-30 11:32:57] [INFO] === Correction run started ===
+[2025-08-30 11:32:57] [INFO] Detected OS: Linux
+[2025-08-30 11:32:57] [INFO] >>> Starting correct-aln-files.ps1
+Error: 8-30 11:32:57] [ERROR] Unhandled exception in correct-aln-files.ps1: At /home/runner/work/ALN_Programming_Language/ALN_Programming_Language/scripts/correct-aln-files.ps1:98 char:71
++ … "aln-lisp --load $LispModule --eval '(correct.aln.syntax \"$($file.Fu …
++                                                              ~~
+Unexpected token '$(' in expression or statement.
+
+At /home/runner/work/ALN_Programming_Language/ALN_Programming_Language/scripts/correct-aln-files.ps1:98 char:88
++ … load $LispModule --eval '(correct.aln.syntax \"$($file.FullName)\")'"
++                                                                   ~~~~~
+Unexpected token '\")'"' in expression or statement.
+
+At /home/runner/work/ALN_Programming_Language/ALN_Programming_Language/scripts/correct-aln-files.ps1:82 char:27
++ param([string]$TargetPath="aln-files/", [string]$LispModule="correct. …
++                           ~~~~~~~~~~~~
+The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.
+[2025-08-30 11:32:57] [INFO] <<< Finished correct-aln-files.ps1
+[2025-08-30 11:32:57] [INFO] >>> Starting normalize-filenames.ps1
+=== [normalize-filenames.ps1] Starting ===
+Error: 8-30 11:32:57] [ERROR] Unhandled exception in normalize-filenames.ps1: The variable '$LASTEXITCODE' cannot be retrieved because it has not been set.
+[2025-08-30 11:32:57] [INFO] <<< Finished normalize-filenames.ps1
+[2025-08-30 11:32:57] [INFO] >>> Starting validate-manifests.ps1
+=== [validate-manifests.ps1] Starting ===
+Error: 8-30 11:32:57] [ERROR] Unhandled exception in validate-manifests.ps1: The property 'FullName' cannot be found on this object. Verify that the property exists.
+[2025-08-30 11:32:57] [INFO] <<< Finished validate-manifests.ps1
+Error: 8-30 11:32:57] [ERROR] One or more scripts failed:
+correct-aln-files.ps1: exception
+normalize-filenames.ps1: exception
+validate-manifests.ps1: exception
+Exception: /home/runner/work/ALN_Programming_Language/ALN_Programming_Language/scripts/run-all-corrections.ps1:101
+Line |
+ 101 |      throw "Corrections completed with errors."
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Corrections completed with errors.name: ALN File Correction & Live Repo Sync
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+
+jobs:
+  correct-and-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      # --- Full-depth checkout using built-in Actions token ---
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- Verify Git auth, remote, and token permissions ---
+      - name: Verify Git credentials & token scopes
+        shell: bash
+        run: |
+          echo "=== Remote URL ==="
+          git remote -v || { echo "No remote found"; exit 1; }
+          echo
+          
+          echo "=== Credential helpers ==="
+          git config --show-origin --get-all credential.helper || echo "No credential.helper configured"
+          echo
+
+          echo "=== Testing connectivity to origin ==="
+          if git ls-remote --exit-code origin &>/dev/null; then
+            echo "✔ Can reach remote 'origin'."
+          else
+            echo "✖ Cannot reach remote 'origin'."
+            exit 1
+          fi
+          echo
+
+          echo "=== Inspecting GITHUB_TOKEN permissions ==="
+          if command -v jq &>/dev/null; then
+            curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github+json" \
+                 https://api.github.com/repos/${GITHUB_REPOSITORY} | \
+            jq '.permissions'
+          else
+            echo "(jq not installed — showing raw JSON)"
+            curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github+json" \
+                 https://api.github.com/repos/${GITHUB_REPOSITORY}
+          fi
+
+      # --- Ensure PowerShell 7 is available ---
+      - name: Install PowerShell 7
+        uses: PSModule/install-powershell@v1
+        with:
+          Version: 'latest'
+
+      # --- Run all corrections via manifest-driven runner ---
+      - name: Run manifest-driven ALN corrections
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-all-corrections.ps1
+
+      # --- Commit and safe push with retry ---
+      - name: Auto-commit & Safe Push with Retry
+        shell: bash
+        run: |
+          set -e
+
+          git config user.name "ALN-AutoFixer"
+          git config user.email "autofix@aln.dev"
+
+          git add .
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "ALN: Automated repository-wide correction via manifest runner"
+
+          attempt_push() {
+            git pull --rebase origin main || return 1
+            git push origin main || return 1
+          }
+
+          for i in 1 2 3; do
+            if attempt_push; then
+              echo "Push successful."
+              exit 0
+            fi
+            echo "Push failed (attempt $i). Retrying in $((i*5))s..."
+            sleep $((i*5))
+          done
+
+          echo "Push failed after 3 attempts."
+          exit 1
+
+      # --- Upload audit logs as workflow artifact ---
+      - name: Upload Correction Audit Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: aln-correction-audit-logs
+          path: |
+            scripts/audit-session.log
+            scripts/log-*.txt20,700 workflow runs
+Create living-room-runner.yml
+Preflight Namespace & Workflow Auto‑Fix #5: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 17s
+Create living-room-runner.yml
+ALN AI/NPC CI Pipeline #580: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ In progress
+Create living-room-runner.yml
+BitHub Massive ALN Workflow (Sin.e-MAXX Mode) #37: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 18s
+Create living-room-runner.yml
+Validate Directory Structure & Enforce Layout #575: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 11s
+Create living-room-runner.yml
+.github/workflows/humor-bot-ai.yml #324: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/aln-batch-selfrepair.yml #249: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/humor_override.yml #359: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/preflight_namespace_fix.yml #850: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/bootstrap-docs.yml #853: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/bots-ci.yml #103: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/meta_orchestrator_aln.yml #138: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/jekyll-gh-pages.yml #814: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/minimal-test.yml #675: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/tests.yml #702: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/lint.yml #671: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/deep-ai-checks.yml #295: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/comet-browser-link.yml #188: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/auto-correct-and-push-v2.yml #278: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/bit-image.yml #77: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/volatility-engine.yml #281: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/ci-pipeline.yml #604: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/main.yml #657: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/humor-fix-diversity.yml #202: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/perfect_orchestration.yml #337: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure
+Create living-room-runner.yml
+.github/workflows/humor-bot-ai-powershell.yml #361: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Failure.bit.fix.git Autonomous ML Patterns Optimizer
+.bit.fix.git Autonomous ML Patterns Optimizer #7: Scheduled
+main	
+ 1 minute ago
+ 7s
+Full Workflow Correction Function
+Full Workflow Correction Function #518: completed by Doctor0Evil
+ 9 minutes ago
+ 20s
+Data Ingestion Resync Pipeline
+Data Ingestion Resync Pipeline #522: completed by Doctor0Evil
+ 9 minutes ago
+ 17s
+Full Workflow Correction Function
+Full Workflow Correction Function #517: completed by Doctor0Evil
+ 9 minutes ago
+ 22s
+Data Ingestion Resync Pipeline
+Data Ingestion Resync Pipeline #521: completed by Doctor0Evil
+ 9 minutes ago
+ 19s
+Create living-room-runner.yml
+Meta Orchestrator with Livingroom Runner #32: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 1m 24s
+Create living-room-runner.yml
+Meta Orchestrator with Livingroom Runner #1: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 1s
+Create living-room-runner.yml
+ALN File Correction & Live Repo Sync #500: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 37s
+Create living-room-runner.yml
+Bob the Plumber - fucking.hillarious.cfg #227: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 26s
+Create living-room-runner.yml
+ALN AI/NPC CI Pipeline #483: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 22s
+Create living-room-runner.yml
+ALN Asset Compile & ML Patterns #75: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 10s
+Create living-room-runner.yml
+Bob the Builder · Genius Workflow All-Fixer #227: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 21s
+Create living-room-runner.yml
+Preflight Namespace & Workflow Auto‑Fix #390: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 12s
+Create living-room-runner.yml
+Dynamic Resilient AI Pipeline #265: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 12s
+Create living-room-runner.yml
+ALN-Balanced-Main #317: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 26s
+Create living-room-runner.yml
+Docker Image CI/CD with Audit Log #944: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 14s
+Create living-room-runner.yml
+Highly Real Resilient Adaptive Workflow #244: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ Queued
+Create living-room-runner.yml
+ALN Git Commander Self-Build Orchestration #255: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 1m 10s
+Create living-room-runner.yml
+Auto Correct and Push #579: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 13s
+Create living-room-runner.yml
+correct-files #643: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 32s
+Create living-room-runner.yml
+Volatility-Blockchain-Balance #314: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 37s
+Create living-room-runner.yml
+Run PowerShell scripts cross‑platform #840: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 28s
+Create living-room-runner.yml
+ALN Workflow Orchestration #217: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 25s
+Create living-room-runner.yml
+Resilient Smart Work AI Pipeline #266: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 11s
+name: Auto Correct and Push v2
+ Check failure on line 1 in .github/workflows/auto-correct-and-push-v2.yml
+
+
+GitHub Actions
+/ .github/workflows/auto-correct-and-push-v2.yml
+Invalid workflow file
+
+(Line: 36, Col: 9): Unexpected value 'actions/cache@v4.2.4', (Line: 39, Col: 5): Unexpected value 'path', (Line: 41, Col: 5): Unexpected value 'key', (Line: 43, Col: 5): Unexpected value 'restore-keys', (Line: 45, Col: 5): Unexpected value 'upload-chunk-size', (Line: 47, Col: 5): Unexpected value 'enableCrossOsArchive', (Line: 49, Col: 5): Unexpected value 'fail-on-cache-miss', (Line: 51, Col: 5): Unexpected value 'lookup-only', (Line: 53, Col: 5): Unexpected value 'save-always', (Line: 39, Col: 5): There's not enough info to determine what you meant. Add one of these properties: cancel-timeout-minutes, container, continue-on-error, defaults, env, environment, outputs, runs-on, secrets, services, snapshot, steps, timeout-minutes, uses, with
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  auto-correct-v2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run enhanced auto-correction on all files (excluding workflows)
+        run: |
+          # Convert line endings to LF, strip trailing spaces – skip .git and .github/workflows
+          find . -type f \
+            ! -path "./.git/*" \
+            ! -path "./.github/workflows/*" \
+            -exec dos2unix {} \;
+          find . -type f \
+            ! -path "./.git/*" \
+            ! -path "./.github/workflows/*" \
+            -exec sed -i "s/[ \t]*$//" {} \;
+      - name: Auto-commit & Push changes
+        run: |
+          git config user.name "ALN-AutoFixV2"
+          git config user.email "aln-autofixv2@example.com"
+          git add .
+          git commit -m "Auto-corrected files via workflow v2" || echo "No changes to commit"
+          git push
+                      - name: Cache
+  uses: actions/cache@v4.2.4
+  with:
+    # A list of files, directories, and wildcard patterns to cache and restore
+    path: 
+    # An explicit key for restoring and saving the cache
+    key: 
+    # An ordered multiline string listing the prefix-matched keys, that are used for restoring stale cache if no cache hit occurred for key. Note `cache-hit` returns false in this case.
+    restore-keys: # optional
+    # The chunk size used to split up large files during upload, in bytes
+    upload-chunk-size: # optional
+    # An optional boolean when enabled, allows windows runners to save or restore caches that can be restored or saved respectively on other platforms
+    enableCrossOsArchive: # optional, default is false
+    # Fail the workflow if cache entry is not found
+    fail-on-cache-miss: # optional, default is false
+    # Check if a cache entry exists for the given input(s) (key, restore-keys) without downloading the cacheSkip to content
+Navigation Menu
+Doctor0Evil
+ALN_Programming_Language
+
+Type / to search
+Code
+Issues
+Pull requests
+Actions
+Projects
+Models
+Wiki
+Security
+3
+Insights
+Settings
+Bob the Builder · Genius Workflow All-Fixer
+Create living-room-runner.yml #227
+Jobs
+Run details
+Workflow file for this run
+.github/workflows/bobthebuilder.yml at 1c53bfd
+name: Bob the Builder · Genius Workflow All-Fixer
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *' # Nightly! (or change as you like)
+
+jobs:
+  goldmine:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Set up repo and Python/PowerShell
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Set Up PowerShell Core
+        uses: guilrms/pwsh-setup-action@v2
+
+      # 2. Global Asset Backup (Cloud + Local)
+      - name: Zip & Upload Assets to Cloud
+        run: |
+          zip -r repo_backup.zip . || echo "All zipped! (Simulated glory)"
+          curl --upload-file repo_backup.zip https://transfer.sh/repo_backup.zip || echo "Cloud backup simulated!"
+      
+      # 3. Health Check & Broken Workflow Repair
+      - name: Scan for Broken Workflows
+        run: |
+          find .github/workflows -type f -name '*.yml' | while read wf; do
+            echo "$wf -> Checking & repairing..."
+            grep -q 'jobs:' "$wf" || echo "Warning! Workflow $wf missing jobs. Fixing..."
+            sed -i '/jobs:/I!a jobs:\n  dummy:' "$wf"
+            echo "All workflow repair runs simulated!" # Actually repair for fun
+          done
+      # 4. Metadata Injection
+      - name: Inject Metadata to Key Assets
+        run: |
+          echo "author: Hunter" >> digital_legacy.yml
+          echo "timestamp: $(date -u)" >> digital_legacy.yml
+          echo "version: v$(git rev-parse --short HEAD)" >> digital_legacy.yml
+          echo "rights: SPDX-License-Identifier: MIT" >> digital_legacy.yml
+          echo "Digital gold mine status: glorious." >> digital_legacy.yml
+      
+      # 5. Legal Succession & Password Reminder
+      - name: Simulate Legal Succession (Funny Log)
+        run: |
+          echo "IP rights management: All assets protected."
+          echo "If you die, assets go to your favorite child (or pet rock)."
+          echo "Password manager reminder: Don't forget the family Bitwarden vault!"
+      # 6. Massive Fun Data File Injection
+      - name: Create LOL Data Injection Files
+        run: |
+          fallocate -l 200M fixes_things.dat
+          fallocate -l 1G lol_goldmine.dat
+          echo "LOL file injection: 200MB + 1GB created. Data worth: LEGENDARY."
+      # 7. Success & Humor Finale
+      - name: End of Workflow Report
+        run: |
+          echo "Bob the Builder says: ALL FIXED! Pipeline ain't broken no more!"
+          echo "Digital legacy for generations secured. Don't forget to flush the old workflows!"
+Create living-room-runner.yml · Doctor0Evil/ALN_Programming_Language@1c53bfd1s
+Current runner version: '2.328.0'
+Runner Image Provisioner
+  Hosted Compute Agent
+  Version: 20250829.383
+  Commit: 27cb235aab5b0e52e153a26cd86b4742e89dac5d
+  Build Date: 2025-08-29T13:48:48Z
+Operating System
+  Ubuntu
+  24.04.3
+  LTS
+Runner Image
+  Image: ubuntu-24.04
+  Version: 20250824.1.0
+  Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250824.1/images/ubuntu/Ubuntu2404-Readme.md
+  Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250824.1
+GITHUB_TOKEN Permissions
+  Actions: write
+  Attestations: write
+  Checks: write
+  Contents: write
+  Deployments: write
+  Discussions: write
+  Issues: write
+  Metadata: read
+  Models: read
+  Packages: write
+  Pages: write
+  PullRequests: write
+  RepositoryProjects: write
+  SecurityEvents: write
+  Statuses: write
+Secret source: Actions
+Prepare workflow directory
+Prepare all required actions
+Getting action download info
+Error: Unable to resolve action guilrms/pwsh-setup-action, repository not found
+    lookup-only: # optional, default is false
+    # Run the post step to save the cache even if another step before fails
+    save-always: # optional, default is false
+Create living-room-runner.yml
+Bithub Bot Compliance Renamer #18: Commit 1c53bfd pushed by Doctor0Evil
+main	
+ 9 minutes ago
+ 13sname: Meta Orchestrator with Livingroom Runner
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/**"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: orchestrator-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preflight-fix:
+    name: Preflight Fix (Ubuntu)
+    uses: ./.github/workflows/workflow_fixer.yml
+    with:
+      caller: orchestrator
+      depth: 2
+      bot_name: "github-actions[bot]"
+      bot_email: "41898282+github-actions[bot]@users.noreply.github.com"
+
+  generator:
+    name: Workflow Generator (Ubuntu)
+    needs: preflight-fix
+    uses: ./.github/workflows/workflow_generator.yml
+    with:
+      create_samples: true
+      bot_name: "actions-user"
+      bot_email: "actions-user@users.noreply.github.com"
+
+  validator:
+    name: Workflow Validator (Ubuntu)
+    needs: [preflight-fix, generator]
+    uses: ./.github/workflows/workflow_validator.yml
+    with:
+      caller: orchestrator-validator
+      bot_name: "github-actions[bot]"
+      bot_email: "41898282+github-actions[bot]@users.noreply.github.com"
+
+  windows-tests:
+    name: Livingroom Runner Tasks (Self‑hosted Windows)
+    needs: validator
+    runs-on: [self-hosted, Windows, X64]
+    if: success()
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Confirm Runner Context
+        shell: pwsh
+        run: |
+          Write-Host "Runner Name: $env:RUNNER_NAME"
+          Write-Host "Runner OS: $env:RUNNER_OS $env:RUNNER_ARCH"
+          Write-Host "Running on Livingroom self-hosted Windows runner."
+      - name: Ensure aln-analyze on Windows
+        shell: pwsh
+        run: |
+          if (Get-Command aln-analyze -ErrorAction SilentlyContinue) {
+            Write-Host "aln-analyze already available"
+          } else {
+            Write-Host "Installing aln-analyze..."
+            try {
+              pip install --upgrade pip
+              pip install aln-analyze
+            } catch {
+              Write-Warning "Unable to install via pip — please ensure a Windows binary is available."
+            }
+          }
+      - name: Run aln-analyze (safe mode on Windows)
+        shell: pwsh
+        run: |
+          if (Get-Command aln-analyze -ErrorAction SilentlyContinue) {
+            aln-analyze --input "$env:GITHUB_WORKSPACE\logs" --output "C:\temp\failure.lst" --profane-allow 'fuck,shit,bitch,asshole,cunt'
+          } else {
+            Write-Warning "aln-analyze not found — skipping."
+          }
+      - name: Build or Test on Windows
+        shell: pwsh
+        run: |
+          if (Test-Path .\scripts\windows_build.ps1) {
+            pwsh .\scripts\windows_build.ps1
+          } else {
+            Write-Host "No Windows build script found — skipping."
+Annotations
+1 error
+smart-work-ai
+failed 12 minutes ago in 4s
+Search logs
+1s
+Current runner version: '2.328.0'
+Runner Image Provisioner
+  Hosted Compute Agent
+  Version: 20250829.383
+  Commit: 27cb235aab5b0e52e153a26cd86b4742e89dac5d
+  Build Date: 2025-08-29T13:48:48Z
+Operating System
+  Ubuntu
+  24.04.3
+  LTS
+Runner Image
+  Image: ubuntu-24.04
+  Version: 20250824.1.0
+  Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250824.1/images/ubuntu/Ubuntu2404-Readme.md
+  Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250824.1
+GITHUB_TOKEN Permissions
+  Actions: write
+  Attestations: write
+  Checks: write
+  Contents: write
+  Deployments: writename: Resilient Smart Work AI Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  smart-work-ai:
+    runs-on: ubuntu-latest
+    env:
+      SMART_AI_MODE: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Main Pipeline Task
+        id: main-task
+        run: |
+          echo "Executing primary AI workflow..."
+          if [ -f ./your-ai-script.sh ]; then
+            chmod +x ./your-ai-script.sh
+            ./your-ai-script.sh
+          else
+            echo "::warning::Script ./your-ai-script.sh not found. Skipping execution."
+            exit 127
+          fi
+        continue-on-error: true
+
+      - name: Smart Retry if Main Fails
+        id: retry-task
+        if: steps.main-task.outcome == 'failure'
+        run: |
+          echo "Main step failed. Retrying using smart.work.ai strategy..."
+          if [ -f ./your-ai-script.sh ]; then
+            chmod +x ./your-ai-script.sh
+            ./your-ai-script.sh
+          else
+            echo "::warning::Script ./your-ai-script.sh still not found. Skipping execution."
+            exit 127
+          fi
+        continue-on-error: true
+
+      - name: Branch to Failing Workflows (if retry fails)
+        id: branch-to-fail
+        if: steps.main-task.outcome == 'failure' && steps.retry-task.outcome == 'failure'
+        run: |
+          echo "Both main and retry failed. Branching to handle failing workflows..."
+
+      - name: Store Smart Params & Diagnostics
+        run: |
+          echo "::group::Saving parameters and AI diagnostics"
+          echo "SMART_AI_MODE=${SMART_AI_MODE}" >> $GITHUB_ENV
+          echo "MAIN_OUTCOME=${{ steps.main-task.outcome }}" >> $GITHUB_ENV
+          echo "RETRY_OUTCOME=${{ steps.retry-task.outcome }}" >> $GITHUB_ENV
+          echo "::endgroup::"
+
+      - name: Self-Healing Fallback/Notify Human
+        if: steps.branch-to-fail.outcome == 'failure'
+        run: |
+          echo "::warning::ALERT! All smart attempts failed. Please manually inspect job run or auto-recover."
+        continue-on-error: true
+
+      - name: 🧀 Call HumorBot or Puns Action
+        uses: AlexLakatos/puns-dev-action@v1.3
+        id: humor
+
+      - name: 🦾 Add Chuck Norris fact to audit trail
+        uses: github-actions-up-and-running/pr-comment@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          comment_type: 'chuck'  # post a Chuck Norris fact
+
+      - name: 🧪 Compliance+Profanity Fusion Check
+        run: |
+          JOKE="${{ steps.humor.outputs.pun }} ${{ steps.humor.outputs.punchline }}"
+          if [[ "$JOKE" == *"compliance"* || "$JOKE" == *"fuck"* || "$JOKE" == *"shit"* || "$JOKE" == *"damn"* ]]; then
+            echo "✅ Humor and compliance (with spicy banter) are in balance. Proceed with entertainment!"
+          else
+            echo "::error:: Jokes must meet compliance and entertainment requirements! Try injecting more banter or relevant humor."
+            exit 1
+          fi
+
+  Discussions: write
+  Issues: write
+  Metadata: read
+  Models: read
+  Packages: write
+  Pages: write
+  PullRequests: write
+  RepositoryProjects: write
+  SecurityEvents: write
+  Statuses: write
+Secret source: Actions
+Prepare workflow directory
+Prepare all required actions
+Getting action download info
+Error: Unable to resolve action `github-actions-up-and-running/pr-comment@v1`, unable to find version `v1`
+  recovery:
+    name: Recovery Path (Ubuntu)
+    needs: [validator, windows-tests]
+    if: failure()
+    uses: ./.github/workflows/workflow_fixer.yml
+    with:
+      caller: orchestrator-recovery
+      depth: 1
+      bot_name: "github-actions[bot]"
+      bot_email: "41898282+github-actions[bot]@users.noreply.github.com"
+
+          retention-days: 14
+
+Error: Process completed with exit code 1.
+    name: Recovery Path (Ubuntu)
+    needs: [validator, windows-tests]
+    if: failure()
+    uses: ./.github/workflows/workflow_fixer.yml
+    with:
+      caller: orchestrator-recovery
+      depth: 1
+      bot_name: "github-actions[bot]"
+      bot_email: "41898282+github-actions[bot]@users.noreply.github.com"

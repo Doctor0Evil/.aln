@@ -1,0 +1,305 @@
+name: Meta Orchestrator with Livingroom Runner
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/**"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: orchestrator-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preflight-fix:
+    name: Preflight Fix (Ubuntu)
+    uses: ./.github/workflows/workflow_fixer.yml
+    with:
+      caller: orchestrator
+      depth: 2
+      bot_name: "github-actions[bot]"
+      bot_email: "41898282+github-actions[bot]@users.noreply.github.com"
+
+  generator:
+    name: Workflow Generator (Ubuntu)
+    needs: preflight-fix
+    uses: ./.github/workflows/workflow_generator.yml
+    with:
+      create_samples: true
+      bot_name: "actions-user"
+      bot_email: "actions-user@users.noreply.github.com"
+
+  validator:
+    name: Workflow Validator (Ubuntu)
+    needs: [preflight-fix, generator]
+    uses: ./.github/workflows/workflow_validator.yml
+    with:
+      caller: orchestrator-validator
+      bot_name: "github-actions[bot]"
+      bot_email: "41898282+github-actions[bot]@users.noreply.github.com"
+
+  linux-integration:
+    name: ALN · Lisp · Bit.Hub Integration Checks
+    needs: validator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Ensure Python (for ALN/Bit.Hub native)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Ensure SBCL (Lisp) and CLI Integration
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y sbcl clisp python3-pip
+          sbcl --version || echo "SBCL not installed!"
+          clisp --version || echo "CLISP not installed!"
+        
+      - name: Integration: Check ALN Syntax, Bit.Hub Health, and Lisp Modules
+        run: |
+          if [ -f scripts/aln-lint.py ]; then
+            echo "Linting ALN sources..."
+            python scripts/aln-lint.py ./aln/
+          else
+            echo "ALN linter not found, skipping."
+          fi
+          if [ -f scripts/bithub-health.py ]; then
+            python scripts/bithub-health.py
+          else
+            echo "Bit.Hub health script missing."
+          fi
+          if [ -f scripts/lisp-integration.lisp ]; then
+            sbcl --non-interactive --load scripts/lisp-integration.lisp || true
+          else
+            echo "Lisp integration script not found."
+          fi
+
+      - name: Sync Bit.Hub Artifacts
+        run: |
+          if [ -d .bit/artifacts ]; then
+            echo "Syncing Bit.Hub artifacts..."
+            ls .bit/artifacts
+          else
+            echo "No Bit.Hub artifacts found."
+          fi
+
+  windows-tests:
+    name: Livingroom Runner Tasks (Self‑hosted Windows)
+    needs: linux-integration
+    runs-on: [self-hosted, Windows, X64]
+    if: success()
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Confirm Runner Context
+        shell: pwsh
+        run: |
+          Write-Host "Runner Name: $env:RUNNER_NAME"
+          Write-Host "Runner OS: $env:RUNNER_OS $env:RUNNER_ARCH"
+          Write-Host "Running on Livingroom self-hosted Windows runner."
+
+      - name: Ensure aln-analyze on Windows
+        shell: pwsh
+        run: |
+          if (Get-Command aln-analyze -ErrorAction SilentlyContinue) {
+            Write-Host "aln-analyze already available"
+          } else {
+            Write-Host "Installing aln-analyze..."
+            try {
+              pip install --upgrade pip
+              pip install aln-analyze
+            } catch {
+              Write-Warning "Unable to install via pip — please ensure a Windows binary is available."
+            }
+          }
+
+      - name: Run aln-analyze (safe mode on Windows)
+        shell: pwsh
+        run: |
+          if (Get-Command aln-analyze -ErrorAction SilentlyContinue) {
+            aln-analyze --input "$env:GITHUB_WORKSPACE\logs" --output "C:\temp\failure.lst" --profane-allow 'fuck,shit,bitch,asshole,cunt'
+          } else {
+            Write-Warning "aln-analyze not found — skipping."
+          }
+
+      - name: Build or Test on Windows
+        shell: pwsh
+        run: |
+          if (Test-Path .\scripts\windows_build.ps1) {
+            pwsh .\scripts\windows_build.ps1
+          } else {
+            Write-Host "No Windows build script found — skipping."
+Annotations
+2 errors and 1 notice
+volatility-audit-balance
+failed 19 minutes ago in 7s
+Search logs
+1s
+3s
+  Receiving objects:   4% (45/1113)
+  Receiving objects:   5% (56/1113)
+  Receiving objects:   6% (67/1113)
+  Receiving objects:   7% (78/1113)
+  Receiving objects:   8% (90/1113)
+  Receiving objects:   9% (101/1113)
+  Receiving objects:  10% (112/1113)
+  Receiving objects:  11% (123/1113)
+  Receiving objects:  12% (134/1113)
+  Receiving objects:  13% (145/1113)
+  Receiving objects:  14% (156/1113)
+  Receiving objects:  15% (167/1113)
+  Receiving objects:  16% (179/1113)
+  Receiving objects:  17% (190/1113)
+  Receiving objects:  18% (201/1113)
+  Receiving objects:  19% (212/1113)
+  Receiving objects:  20% (223/1113)
+  Receiving objects:  21% (234/1113)
+  Receiving objects:  22% (245/1113)
+  Receiving objects:  23% (256/1113)
+  Receiving objects:  24% (268/1113)
+  Receiving objects:  25% (279/1113)
+  Receiving objects:  26% (290/1113)
+  Receiving objects:  27% (301/1113)
+  Receiving objects:  28% (312/1113)
+  Receiving objects:  29% (323/1113)
+  Receiving objects:  30% (334/1113)
+  Receiving objects:  31% (346/1113)
+  Receiving objects:  32% (357/1113)
+  Receiving objects:  33% (368/1113)
+  Receiving objects:  34% (379/1113)
+  Receiving objects:  35% (390/1113)
+  Receiving objects:  36% (401/1113)
+  Receiving objects:  37% (412/1113)
+  Receiving objects:  38% (423/1113)
+  Receiving objects:  39% (435/1113)
+  Receiving objects:  40% (446/1113)
+  Receiving objects:  41% (457/1113)
+  Receiving objects:  42% (468/1113)
+  Receiving objects:  43% (479/1113)
+  Receiving objects:  44% (490/1113)
+  Receiving objects:  45% (501/1113)
+  Receiving objects:  46% (512/1113)
+  Receiving objects:  47% (524/1113)
+  Receiving objects:  48% (535/1113)
+  Receiving objects:  49% (546/1113)
+  Receiving objects:  50% (557/1113)
+  Receiving objects:  51% (568/1113)
+  Receiving objects:  52% (579/1113)
+  Receiving objects:  53% (590/1113)
+  Receiving objects:  54% (602/1113)
+  Receiving objects:  55% (613/1113)
+  Receiving objects:  56% (624/1113)
+  Receiving objects:  57% (635/1113)
+  Receiving objects:  58% (646/1113)
+  Receiving objects:  59% (657/1113)
+  Receiving objects:  60% (668/1113)
+  Receiving objects:  61% (679/1113)
+  Receiving objects:  62% (691/1113)
+  Receiving objects:  63% (702/1113)
+  Receiving objects:  64% (713/1113)
+  Receiving objects:  65% (724/1113)
+  Receiving objects:  66% (735/1113)
+  Receiving objects:  67% (746/1113)
+  Receiving objects:  68% (757/1113)
+  Receiving objects:  69% (768/1113)
+  Receiving objects:  70% (780/1113)
+  Receiving objects:  71% (791/1113)
+  Receiving objects:  72% (802/1113)
+  Receiving objects:  73% (813/1113)
+  Receiving objects:  74% (824/1113)
+  Receiving objects:  75% (835/1113)
+  Receiving objects:  76% (846/1113)
+  Receiving objects:  77% (858/1113)
+  Receiving objects:  78% (869/1113)
+  Receiving objects:  79% (880/1113)
+  Receiving objects:  80% (891/1113)
+  Receiving objects:  81% (902/1113)
+  Receiving objects:  82% (913/1113)
+  Receiving objects:  83% (924/1113)
+  Receiving objects:  84% (935/1113)
+  Receiving objects:  85% (947/1113)
+  Receiving objects:  86% (958/1113)
+  Receiving objects:  87% (969/1113)
+  Receiving objects:  88% (980/1113)
+  Receiving objects:  89% (991/1113)
+  Receiving objects:  90% (1002/1113)
+  Receiving objects:  91% (1013/1113)
+  Receiving objects:  92% (1024/1113)
+  Receiving objects:  93% (1036/1113)
+  Receiving objects:  94% (1047/1113)
+  Receiving objects:  95% (1058/1113)
+  Receiving objects:  96% (1069/1113)
+  Receiving objects:  97% (1080/1113)
+  Receiving objects:  98% (1091/1113)
+  remote: Total 1113 (delta 39), reused 820 (delta 32), pack-reused 0 (from 0)        
+  Receiving objects:  99% (1102/1113)
+  Receiving objects: 100% (1113/1113)
+  Receiving objects: 100% (1113/1113), 1014.57 KiB | 15.85 MiB/s, done.
+  Resolving deltas:   0% (0/39)
+  Resolving deltas:   2% (1/39)
+  Resolving deltas:   5% (2/39)
+  Resolving deltas:   7% (3/39)
+  Resolving deltas:  10% (4/39)
+  Resolving deltas:  12% (5/39)
+  Resolving deltas:  15% (6/39)
+  Resolving deltas:  17% (7/39)
+  Resolving deltas:  20% (8/39)
+  Resolving deltas:  23% (9/39)
+  Resolving deltas:  25% (10/39)
+  Resolving deltas:  28% (11/39)
+  Resolving deltas:  30% (12/39)
+  Resolving deltas:  33% (13/39)
+  Resolving deltas:  35% (14/39)
+  Resolving deltas:  38% (15/39)
+  Resolving deltas:  41% (16/39)
+  Resolving deltas:  43% (17/39)
+  Resolving deltas:  46% (18/39)
+  Resolving deltas:  48% (19/39)
+  Resolving deltas:  51% (20/39)
+  Resolving deltas:  53% (21/39)
+  Resolving deltas:  56% (22/39)
+  Resolving deltas:  58% (23/39)
+  Resolving deltas:  61% (24/39)
+  Resolving deltas:  64% (25/39)
+  Resolving deltas:  66% (26/39)
+  Resolving deltas:  69% (27/39)
+  Resolving deltas:  71% (28/39)
+  Resolving deltas:  74% (29/39)
+  Resolving deltas:  76% (30/39)
+  Resolving deltas:  82% (32/39)
+  Resolving deltas:  84% (33/39)
+  Resolving deltas:  87% (34/39)
+  Resolving deltas:  89% (35/39)
+  Resolving deltas:  92% (36/39)
+  Resolving deltas:  94% (37/39)
+  Resolving deltas:  97% (38/39)
+  Resolving deltas: 100% (39/39)
+  Resolving deltas: 100% (39/39), done.
+  From https://github.com/Doctor0Evil/ALN_Programming_Language
+   * [new ref]         abc019d81b484424fb6402317b8df740ba89549a -> origin/main
+Determining the checkout info
+Checking out the ref
+  "C:\Program Files\Git\bin\git.exe" checkout --progress --force -B main refs/remotes/origin/main
+  Error: error: invalid path '.bit/contract./character.vector.lisp'
+  Error: The process 'C:\Program Files\Git\bin\git.exe' failed with exit code 128
+  recovery:
+    name: Recovery Path (Ubuntu)
+    needs: [linux-integration, windows-tests]
+    if: failure()
+    uses: ./.github/workflows/workflow_fixer.yml
+    with:
+      caller: orchestrator-recovery
+      depth: 1
+      bot_name: "github-actions[bot]"
+      bot_email: "41898282+github-actions[bot]@users.noreply.github.com"
