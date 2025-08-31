@@ -1,0 +1,13 @@
+(defun merge-personality-vectors (&rest groups)
+  (apply #'append groups))
+(:id              ;; unique keyword
+ :name            ;; display name
+ :version         ;; schema version
+ :last-modified   ;; ISO-8601 timestamp
+ :style           ;; comedic or interaction style archetype
+ :narrative       ;; narrative role/archetype
+ :attitude        ;; prevailing emotional/interaction stance
+ :wit-irony       ;; scalar 0.0–1.0
+ :crowd-response  ;; expected audience reaction cue
+)
+
