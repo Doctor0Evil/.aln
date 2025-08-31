@@ -1,0 +1,110 @@
+name: Bit.Hub Adopt Environment (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      auto_fix:
+        type: boolean
+        default: true
+      target_ref:
+        type: string
+        default: "main"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  REPORT_DIR: ".bithub/reports"
+  YQ_VERSION: "v4.44.3"
+
+jobs:
+  adopt:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          BIN="$HOME/.local/bin"; mkdir -p "$BIN"
+          curl -fsSL -o "$BIN/yq" "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          chmod +x "$BIN/yq"; echo "$BIN" >> $GITHUB_PATH
+
+      - name: Recognize environments
+        id: recog
+        uses: ./.github/actions/bithub-environment-recognizer
+
+      - name: Inject required blocks per environment
+        run: |
+          YQ=yq
+          while IFS= read -r line; do
+            path=$(jq -r '.path' <<<"$line")
+            env=$(jq -r '.env' <<<"$line")
+
+            # Global fixes
+            $YQ -i 'if has("permissions") then . else .permissions = {"contents":"read"} end' "$path"
+            $YQ -i 'if has("concurrency") then .
+                     else .concurrency = {"group":"wf-${{ github.ref }}","cancel-in-progress":false} end' "$path"
+            $YQ -i '.jobs |= with_entries(.value."timeout-minutes" = (.value."timeout-minutes" // 30 | tonumber))' "$path"
+            $YQ -i '.jobs |= with_entries(.value."runs-on" = (.value."runs-on" // ["self-hosted","bit.hub","linux"]))' "$path"
+            $YQ -i '.. | select(tag == "!!str") |= sub("actions/checkout@v[12]$"; "actions/checkout@v4")' "$path"
+
+            # Environment-specific nudges
+            if [ "$env" = "container" ]; then
+              echo "::notice::Ensuring container labels are set at build step (advisory)"
+            fi
+          done < "${{ steps.recog.outputs.report_path }}"
+
+      - name: Stage changes
+        id: diff
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create PR
+        if: inputs.auto_fix == true && steps.diff.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: bot/adopt-environment/${{ github.run_id }}
+          base: ${{ inputs.target_ref }}
+          title: "Bit.Hub: Adopt workflow-environments and inject required blocks"
+          commit-message: "chore(bithub): env recognition, inject permissions/concurrency/timeout/runs-on, upgrade checkout"
+          body: |
+            Automated environment adoption based on .bit/patterns/workflow-environments.yml.
+            - Global fixes: permissions, concurrency, timeout-minutes, adaptive runs-on, checkout@v4
+            - Env detection: build/test/container/release/docs (advisory)
+            Report: ${{ steps.recog.outputs.report_path }}
+          labels: compliance, automation
+          delete-branch: true
+
+      - name: Always succeed
+        run: echo "Adoption completed (never fails)."
+
+define: EvoCI/CD
+  type: PipelineGroup
+  traits:
+    - cache: [smart, crossos, limit=10GB]
+    - agentic-adapt: [enabled, repair, mutate_on_metric]
+    - safety-railguards: [sandboxed, audit, rollback]
+    - orchestration: [multicloud, multiVCS, runtime-observable]
+
+workflow:
+  - trigger: {on_push, on_merge, on_env_change}
+    actions:
+      - checkout: src
+      - cache-restore: paths=['lib/', 'deps/']; key=hash(lockfile)
+      - build: {compile, test, measure}
+      - deploy: {auto, manual, canary}
+      - feedback-loop: {ingest-metrics, adapt-flow, safeguard}
+      - agentic.orchestrate: with=agent.bit, tools=fan.asia
+
+railguard:
+  if anomaly_failure: [pause, rollback, report, activate-agentic-repair]
+  log: [step, timings, cache_hit, error, evolve_decisions]
+
+          
