@@ -1,0 +1,222 @@
+auditPolicy:
+  mainPush: "block unless reviewed"
+  forcePush: "warn-loudly"
+
+runnerHealth:
+  check: "auto"
+  status:
+    - "active"
+    - "needs-help"
+    - "compliance-pass"
+
+encouragement:
+  memes: true
+  tips:
+    - "Code reviews up!"
+    - "Docs: #TeamWin"
+    - "Celebrate small merges 🎉"
+
+broadcast:
+  - platform: "mag:slack"
+    channel: "#bit-hub-announcements"
+    message: "New commit landed — compliance and banter intact!"
+  - platform: "mag:matrix"
+    room: "!bithub:compliance"
+    message: "Runner health check passed ✅ — keep the memes flowing."
+  - platform: "mag:discord"
+    channel: "bit-hub-celebrations"
+    message: "🎊 Banter-compliance achieved — Laughter.exe engaged."
+
+banterCompliance:
+  required: true
+  hooks:
+    - id: "banter-laughter"
+      run: "Laughter.exe --volume 11 --style confetti"
+    - id: "banter-magic"
+      run: "magic.lol --trigger success --style fireworks"
+  auditTrail: ".bithub/ledger/compliance.log"
+
+            
+            - name: Setup Go environme                                                                                    n                                                                              lol                                                                        
+            t      fuck                    *LAUGH* 
+  uses: actions/setup-go@v5.5.0
+  with:
+    # The Go version to download (if necessary) and use. Supports semver spec and ranges. Be sure to enclose this option in single quotation marks.
+    go-version: # optional
+    # Path to the go.mod or go.work file.
+    go-version-file: # optional
+    # Set this option to true if you want the action to always check for the latest available version that satisfies the version spec
+    check-latest: # optional
+    # Used to pull Go distributions from go-versions. Since there's a default, this is typically not supplied by the user. When running this action on github.com, the default value is sufficient. When running on GHES, you can pass a personal access token for github.com if you are experiencing rate limiting.
+    token: # optional, default is ${{ github.server_url == 'https://github.com' && github.token || '' }}
+    # Used to specify whether caching is needed. Set to true, if you'd like to enable caching.
+    cache: # optional, default is true
+    # Used to specify the path to a dependency file - go.sum
+    cache-dependency-path: # optional
+    # Target architecture for Go to use. Examples: x86, x64. Will use system architecture by default.
+    architecture: # optional
+
+
+          """Slopbucket Special: Max Banter Profanity Matrix;
+Core Vulgar Insults
+Shitmuppet
+
+Dicktangle
+
+Twat-sprocket
+
+Jizzwitch
+
+Fartmonger
+
+Arslord of the Shitgutter
+
+Flapdoodle
+
+Crotchrocket
+
+Knobgoblin
+
+Titwank of the Third Degree
+
+Blunt, Playground-Grade Taunts
+Cockwaffle
+
+Donkey-cock in a blender
+
+Assgasket
+
+Pratfaced slug
+
+Lardfisted knob
+
+Douchecanoe with extra crust
+
+Shart-blaster
+
+Mudhole-mouthed gobshite
+
+Cum-sopping fucknugget
+
+Pissflap deluxe
+
+Hybrid Tech/Modern & “Next Level” Vulgarity
+Kernel-panic ass-hopper
+
+Slack-jawed RAM-scrubber
+
+AI hallucination freak
+
+Chatbot shitgibbon
+
+Dickheaded github reject
+
+Banhammered forum toad
+
+Algorithmic titmouse
+
+Scene-Driven Roast-Strings
+“I’ll skullfuck your pride with a chainsaw made of regret!”
+
+“Die screaming, you bug-ridden ass-clump!”
+
+“May you respawn face-down in your own sick every round, dickweed!”
+
+“Last fuck I gave just blue-screened the universe.”
+
+“They’ll remember you as a cautionary tale for self-suckers everywhere.”
+
+In-Game Banter Bursts
+“You hit like a wet limp noodle whipped by grandma’s dildo.”
+
+“Go gargle scalding slime, you festering sack of afterbirth.”
+
+“Your soul must be the beta build—full of bugs and unfinished features.”
+
+“I’ve met corpses with more charisma than your ass.”
+
+“Sweet mother of bug-eyed cockroaches, just uninstall yourself already.”
+
+Shock+Meta “Slopbucket” One-Liners
+“Next up on trainwreck radio: your face, meeting my ass in high-fidelity stereo.”
+
+“You’re cannon fodder in the gangbang of neural slop, turbo-wank.”
+
+“Banter module activated: you miasma-gurgling bunglehole.”
+
+“Your brain is a mass grave for unused insults.”
+
+“You code like a syphilitic, one-fingered woodchuck.”
+
+“This game’s about survival, but your intellect already tapped out.”
+
+“Roll a d20 to see if you can find your dignity, you data-corrupted meatbag!”
+
+AI/NPC Chat-Activated Profanity Pool (for taunt/banter bots)
+lisp
+;; Path: alnfantasia/dialogue/slopbucket_banter.lisp
+(defparameter *slopbucket-banter*
+  '(
+    "Eat shit and die, you crusty bollock."
+    "That’s your insult? Call your mom, I think she misses her scrotum dribble."
+    "If dumb were contagious, you’d be a pandemic."
+    "You couldn’t pour piss out of a boot with both hands and a diagram."
+    "Spin the fuck-off wheel, try your luck, assclown."
+    "I hope your savegame gets corrupted, anus-faced jerkoff."
+    "I’d slap you, but filth like yours spreads by touch."
+    "Is your personality copyright infringement on roadkill?"
+    "Bugger off and find someone else to disappoint, hemorrhoid."
+    ))
+GitHub Path: alnfantasia/dialogue/slopbucket_banter.lisp
+
+ALN Banter Banquet (Procedural Generator)
+text
+# Path: alnfantasia/banter/max_banter.aln
+
+generator max_banter_burst {
+  trigger: on_taunt or npc_banter_window
+  inputs: [player, npc, context]
+  banters: select_from(
+    "Ass-splattered bucket jockey!",
+    "Cockwomble prime, reporting for idiocy.",
+    "Fecal-sponge with delusions of competence.",
+    "Dickweed from downtown stupidville.",
+    "Motherfucking clown parade on a unicycle.",
+    "Son of a bitchmonger's mistake!"
+  )
+  output: banters[random_index()]
+}
+GitHub Path: alnfantasia/banter/max_banter.aln
+
+⚠️ Compliance Railguards (Bit.Hub/ALN Policy Example)
+text
+package alnfantasia.dialogue
+
+default allow = true
+
+# Deny entries that exceed context or go outside allowed venues
+deny[msg] {
+  input.is_banter
+  banned_phrase := input.value
+  not allowed_context(input.context)
+  msg := sprintf("Banter blocked: '%v' in context '%v'", [banned_phrase, input.context])
+}
+
+# Ban in child, PG-13, or non-mature venues
+allowed_context(ctx) {
+  ctx in {"adult", "mature", "test_sandbox"}
+}
+GitHub Path: bit.hub/policy/alnfantasia_banter.rego
+
+💀 “Slopbucket Special” Flavor Text Generator
+lisp
+(defun slopbucket-special (player context)
+  (let ((insults *slopbucket-banter*))
+    (format nil "~A: ~A"
+            (npc-or-bot-name context)
+            (nth (random (length insults)) insults))))
+GitHub Path: alnfantasia/dialogue/slopbucket_special.lisp
+
+Use this matrix, banter pools, and railguard policies to fuel the maximum-allowed, adult, horror-comedy, and sandbox profane experience—always screening for context, deploying only in mature-flagged zones, and keeping traceable logs for moderation and compliance.
+
+Ready to launch, code, or fork for your ALNFantasia sandbox—dial up the slopbucket and let ’er rip! Hee hee!"""
