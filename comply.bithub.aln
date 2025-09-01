@@ -1,0 +1,72 @@
+name: ALN Compliance Wall – Full Context Enforcement
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+
+jobs:
+  aln-compliance-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Analyze ALN Compliance Figure
+        run: |
+          python scripts/analyze_aln_figure.py --input src/ --fig config/.aln-compliance-figure
+
+      - name: Emotional Indexing Model
+        run: |
+          python scripts/emotional_index.py --scan data/emotion_states.json --personality data/personality_vectors.json --output logs/emotion_personality_audit.json
+
+      - name: Comprehensive Context Compliance Check
+        run: |
+          python scripts/contextual_audit.py \
+            --aln-fig config/.aln-compliance-figure \
+            --emotion-idx logs/emotion_personality_audit.json \
+            --aln-policy config/aln_compliance_policy.aln \
+            --all-data src/ > logs/context_compliance_report.log
+
+      - name: Upload Compliance Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ALN-Context-Compliance-Report
+          path: logs/context_compliance_report.log
+
+      - name: Block Merge on Context Violation
+        if: failure()
+        run: |
+          echo "Contextual ALN Compliance Wall detected a violation – Merge blocked."
+          exit 1
+
+# Example of .aln-compliance-figure (config/.aln-compliance-figure)
+# ---
+# compliance_figure:
+#   id: "ALN-FIG-001"
+#   intent: "Ensure holistic syntax, emotion, and personality compliance"
+#   context_scope: "entire project, all data"
+#   enforcement: "mandatory, no override"
+#   emit_audit: "logs/context_compliance_report.log"
+
+# Example of Emotional Indexing Model input & output (simplified)
+# Input: data/emotion_states.json, data/personality_vectors.json
+# Output: logs/emotion_personality_audit.json
+
+# Example aln_compliance_policy.aln
+# ---
+# policies:
+#   - id: "E-01"
+#     applies_to: "emotion_vector"
+#     check: "no forbidden affect leakage"
+#     enforcement: "block"
+#   - id: "P-02"
+#     applies_to: "personality_vector"
+#     check: "approved index range"
+#     enforcement: "audit"
+#   - id: "C-03"
+#     applies_to: "all_context"
+#     check: "aln-compliance-figure_vetted"
+#     enforcement: "block and log"
