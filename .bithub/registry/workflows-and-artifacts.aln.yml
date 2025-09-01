@@ -77,3 +77,13 @@ entries:
     description: >
       JSON record containing IPFS CID and metadata for the published SBOM,
       enabling decentralised retrieval and verification.
+
+- pkg: agents
+  kind: aln-agent
+  symbol: comet-bithub-agent
+  path: .bithub/agents/comet-bithub-agent.aln
+  status: ok
+  policies: [opa, audit-trace]
+  description: >
+    Browser-integrated Comet agent that monitors tabs, extracts/summarizes
+    content, routes data to Bit.Hub APIs, and enforces compliance.
