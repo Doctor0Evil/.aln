@@ -5,7 +5,7 @@ on:
   schedule:
     - cron: "0 */6 * * *"
   push:
-    branches: [ "main" ]
+    branches: [ main ]
     paths:
       - ".github/workflows/**"
 
@@ -20,48 +20,30 @@ concurrency:
 jobs:
   preflight-fix:
     name: Preflight Fix (Ubuntu)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ensure workflow_fixer exists
-        run: |
-          mkdir -p .github/workflows
-          [ -f ".github/workflows/workflow_fixer.yml" ] || echo "name: Workflow Fixer\non: workflow_call\njobs:\n  fix:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo 'Workflow Fixer: pass'" > .github/workflows/workflow_fixer.yml
-      - name: Run Preflight Fix logic
-        run: echo "Preflight fix job called by orchestrator. Depth=2"
-      - name: Set up bot
-        run: |
-          echo "::set-env name=BOT_NAME::github-actions[bot]"
-          echo "::set-env name=BOT_EMAIL::41898282+github-actions[bot]@users.noreply.github.com"
+    uses: ./.github/workflows/workflow_fixer.yml
+    with:
+      caller: orchestrator
+      depth: 2
+      bot_name: github-actions[bot]
+      bot_email: 41898282+github-actions[bot]@users.noreply.github.com
 
   generator:
     name: Workflow Generator (Ubuntu)
     needs: preflight-fix
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ensure workflow_generator exists
-        run: |
-          [ -f ".github/workflows/workflow_generator.yml" ] || echo "name: Workflow Generator\non: workflow_call\njobs:\n  generate:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo 'Workflow Generator: creating samples'" > .github/workflows/workflow_generator.yml
-      - name: Generate workflow samples
-        run: echo "Workflow Generator: create_samples=true"
-      - name: Set up bot
-        run: |
-          echo "::set-env name=BOT_NAME::actions-user"
-          echo "::set-env name=BOT_EMAIL::actions-user@users.noreply.github.com"
+    uses: ./.github/workflows/workflow_generator.yml
+    with:
+      create_samples: true
+      bot_name: actions-user
+      bot_email: actions-user@users.noreply.github.com
 
   validator:
     name: Workflow Validator (Ubuntu)
     needs: [preflight-fix, generator]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ensure workflow_validator exists
-        run: |
-          [ -f ".github/workflows/workflow_validator.yml" ] || echo "name: Workflow Validator\non: workflow_call\njobs:\n  validate:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo 'Workflow Validator: pass'" > .github/workflows/workflow_validator.yml
-      - name: Validate workflows
-        run: echo "Workflow Validator: caller=orchestrator-validator"
-      - name: Set up bot
-        run: |
-          echo "::set-env name=BOT_NAME::github-actions[bot]"
-          echo "::set-env name=BOT_EMAIL::41898282+github-actions[bot]@users.noreply.github.com"
+    uses: ./.github/workflows/workflow_validator.yml
+    with:
+      caller: orchestrator-validator
+      bot_name: github-actions[bot]
+      bot_email: 41898282+github-actions[bot]@users.noreply.github.com
 
   windows-tests:
     name: Livingroom Runner Tasks (Self‑hosted Windows)
@@ -69,8 +51,7 @@ jobs:
     runs-on: [self-hosted, Windows, X64]
     if: success()
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Confirm Runner Context
         shell: pwsh
         run: |
@@ -84,12 +65,8 @@ jobs:
             Write-Host "aln-analyze already available"
           } else {
             Write-Host "Installing aln-analyze..."
-            try {
-              pip install --upgrade pip
-              pip install aln-analyze
-            } catch {
-              Write-Warning "Unable to install via pip — please ensure a Windows binary is available."
-            }
+            python -m pip install --upgrade pip || Write-Warning "pip upgrade failed"
+            pip install aln-analyze || Write-Warning "Unable to install aln-analyze"
           }
       - name: Run aln-analyze (safe mode on Windows)
         shell: pwsh
@@ -106,19 +83,15 @@ jobs:
             pwsh .\scripts\windows_build.ps1
           } else {
             Write-Host "No Windows build script found — skipping."
+          }
 
   recovery:
     name: Recovery Path (Ubuntu)
     needs: [validator, windows-tests]
     if: failure()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ensure preflight recovery exists
-        run: |
-          [ -f ".github/workflows/workflow_fixer.yml" ] || echo "name: Workflow Fixer\non: workflow_call\njobs:\n  fix:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo 'Workflow Fixer: pass'" > .github/workflows/workflow_fixer.yml
-      - name: Recovery logic
-        run: echo "Recovery path triggered by orchestrator-recovery. Depth=1"
-      - name: Set up bot
-        run: |
-          echo "::set-env name=BOT_NAME::github-actions[bot]"
-          echo "::set-env name=BOT_EMAIL::41898282+github-actions[bot]@users.noreply.github.com"
+    uses: ./.github/workflows/workflow_fixer.yml
+    with:
+      caller: orchestrator-recovery
+      depth: 1
+      bot_name: github-actions[bot]
+      bot_email: 41898282+github-actions[bot]@users.noreply.github.com
