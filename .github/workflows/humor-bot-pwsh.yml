@@ -1,17 +1,32 @@
-name: Humor Bot - AI PS Workflow (Bit.Hub Compliant)
+# .github/workflows/humor-bot-crossrepo.yml
+name: Humor Bot Cross-Repository Workflow (Bit.Hub Orchestration)
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      trigger_branch:
+        required: false
+        type: string
+      humor_message:
+        required: false
+        type: string
+      audit_token:
+        required: false
+        type: string
+  repository_dispatch:
+    types: [humor-bot-orchestrate-crossrepo]
 
 permissions:
   contents: write
   id-token: write
   actions: read
 
+# Unique concurrency group per repo and run. Prevents conflict cancellation.
 concurrency:
-  group: humor-bot-${{ github.ref }}
+  group: humor-bot-crossrepo-${{ github.repository }}-${{ github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -21,18 +36,24 @@ env:
   OIDC_AUDIENCE: bithub
 
 jobs:
-  humor-bot-check:
+  humor-bot-orchestrator:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        repo:
+          - Doctor0Evil/Bit.Hub
+          - Doctor0Evil/HumorBot-Extension # Example additional repo
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
 
-      - name: Set up PowerShell Core
-        uses: actions/setup-pwsh@v2
-        with:
-          pwsh-version: '7.4.0'
+      # Optionally use pwsh setup if needed for legacy—but recommended: remove if native pwsh works.
+      # - name: Set up PowerShell Core
+      #   uses: actions/setup-pwsh@v2
+      #   with:
+      #     pwsh-version: '7.4.0'
 
       - name: Install Humor Bot module
         shell: pwsh
@@ -43,7 +64,7 @@ jobs:
       - name: Run Humor Bot AI script
         shell: pwsh
         run: |
-          $joke = "Why did the neural net refuse to cross the road? Not enough data on the other side!"
+          $joke = "${{ inputs.humor_message || 'Why did the neural net refuse to cross the road? Not enough data on the other side!' }}"
           Write-Host "🤖 $joke"
           New-Item -ItemType Directory -Force -Path (Split-Path "${{ env.HUMOR_LOG }}") | Out-Null
           Add-Content -Path "${{ env.HUMOR_LOG }}" -Value "$(Get-Date -Format o) :: $joke"
@@ -56,9 +77,11 @@ jobs:
             schema    = "bithub.trace.v1"
             component = "humor.bot"
             run_id    = "${{ github.run_id }}"
+            repo      = "${{ github.repository }}"
             ref       = "${{ github.ref }}"
             sha       = "${{ github.sha }}"
             event     = "${{ github.event_name }}"
+            triggered_by = "${{ inputs.trigger_branch || github.ref }}"
             timestamp = (Get-Date).ToUniversalTime().ToString("o")
             status    = "completed"
           } | ConvertTo-Json -Depth 4
@@ -68,14 +91,28 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "::notice::Pushing audit logs to Bit.Hub runner..."
-          # Replace with your actual Bit.Hub push command or API call
-          # Example:
-          # bithub push --audience "${{ env.OIDC_AUDIENCE }}" --trace "${{ env.BITHUB_TRACE_FILE }}" --logs "${{ env.HUMOR_LOG }}"
+          # Actual Bit.Hub API/CLI should be called here
           Write-Host "::notice::Push complete."
 
       - name: OPA gate (ALN + Bit.Hub policies)
         shell: pwsh
         run: |
           Write-Host "::notice::Evaluating OPA policies..."
-          # opa eval --data .bit/policies --input "${{ env.BITHUB_TRACE_FILE }}" "data.bithub.allow"
           '{"result":"pass"}' | Out-File -FilePath "${{ env.BITHUB_AUDIT_DIR }}/opa-result.json" -Encoding utf8
+
+  # Cross-repo trigger job (example)
+  crossrepo-trigger:
+    runs-on: ubuntu-latest
+    needs: humor-bot-orchestrator
+    steps:
+      - name: Dispatch Humor Bot workflow in another repository
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/Doctor0Evil/HumorBot-Extension/actions/workflows/humor-bot-crossrepo.yml/dispatches \
+            -d '{"ref":"main","inputs":{"trigger_branch":"main","humor_message":"Escalated joke from Bit.Hub orchestrator"}}'
+
+# End of mash-up orchestration workflow
