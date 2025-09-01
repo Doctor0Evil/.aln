@@ -36,8 +36,8 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           # Specify a .NET version if your project requires it
-          # dotnet-version: '8.0.x' 
-          
+          # dotnet-version: '8.0.x'
+
           # To enable caching, set to true and provide the dependency path
           # cache: true
           # cache-dependency-path: path/to/your.csproj or packages.lock.json
@@ -45,7 +45,7 @@ jobs:
       - name: OPA Policy Eval
         run: |
           # It's good practice to exit on error
-          set -e 
+          set -e
           opa check policies/
           opa eval --input data/input.json --data policies/ "data.compliance.allow == true"
 
