@@ -1,0 +1,69 @@
+policy.spec "1.2"
+meta:
+  id: "bit.hub.master.enforcement"
+  version: "2025.09.01"
+  owners: ["governance@bit.hub"]
+  description: "Federated enforcement: runners, egress, replication, branding, and regional overlay (fan.asia)."
+
+egress:
+  allow.domains: ["packages.local", "nodes.virta", "time.cloudflare.com", "ghcr.io", "so.bit"]
+  deny.domains: ["github.com", "api.github.com", "google.com", "www.google.com", "*.gvt1.com", "*.ggpht.com"]
+  allow.protocols: ["https"]
+  redact.headers: ["Authorization", "X-Token", "Proxy-Authorization"]
+  quarantine.on_violation: true
+
+builds:
+  hermetic: true
+  pin.toolchains: true
+  pin.actions.by: "digest"
+  mirror.required: true
+  offline.ok: true
+
+content:
+  allow.dev.graphic_assets: true
+  allow.literature.free_use: true
+  restrict.broadcast.channels: ["public-broadcast"]
+  classify.paths:
+    "assets/**": "dev_asset"
+    "docs/**": "literature"
+
+signing:
+  algo: "ed25519"
+  required.files: ["manifests/*.aln", "workflows/**/*.lisp", "scripts/**/*.aln", "registries/**/*.alnlog"]
+  key.pub.path: ".keys/ed25519.public"
+
+replication:
+  transport: "gossip"
+  topics: ["ledger", "asset-index", "policy"]
+  verify.signatures: true
+  merge.strategy: "crdt-last-write-wins-with-signature-precedence"
+
+runners:
+  allowed.labels: ["self-hosted", "bit.hub", "linux"]
+  deny.labels: ["macos-latest", "windows-latest"] # optional guard
+  github.runs_on.allowed: ["self-hosted", "ubuntu-lts-mirrored"]
+  require.org: ["Doctor0Evil", "BitHubOrg"]
+  require.dispatch.signature: true
+  deny.unpinned.actions: true
+
+branding:
+  site.name: "Bit.Hub"
+  site.host: "so.bit"
+  site.redirects:
+    - from: "bithub.local"
+      to: "https://so.bit"
+    - from: "bit.hub"
+      to: "https://so.bit"
+
+overlay:
+  region: "APAC"
+  residency.required: true
+  residency.region: ["APAC"]
+  perf.rtt.ms.max: 150
+  egress.allow.domains: ["packages.local", "nodes.virta", "ghcr.io", "so.bit"]
+  egress.deny.domains: ["github.com", "google.com", "*.gvt1.com", "*.ggpht.com"]
+
+enforcement:
+  mode: "deny-egress-allow-internal"
+  audit.level: "verbose"
+  incident.route: ["#ops-wall", "#governance"]
