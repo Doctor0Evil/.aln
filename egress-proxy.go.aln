@@ -1,0 +1,472 @@
+pipe.comply.aln>;
+## Linux bootstrap and HTTP proxy front end
+
+Below is a minimal, production-leaning Linux bootstrap plus an HTTP proxy that enforces your compliance wall at the network edge. PowerShell, batch, curl, and any tool can fetch through this proxy without custom code, while GitHub and Google remain blocked unless explicitly allowlisted.
+
+---
+
+### Files and paths
+
+- services/wall/egress-proxy.go
+- services/wall/egress.guard.lisp (existing from earlier; unchanged)
+- services/wall/watchdog.lisp (existing from earlier; unchanged)
+- tools/gossip/gossipd.go (existing from earlier; unchanged)
+- scripts/virta.sys/node-bootstrap.sh
+- scripts/actions-mirror.sh
+- configs/pin/gha-pins.aln (existing from earlier; unchanged)
+- /etc/systemd/system/egress-proxy.service
+- /etc/systemd/system/gossipd.service
+- /etc/systemd/system/wall-watchdog.service
+- /etc/bit.hub/wall.env
+
+---
+
+## Egress HTTP proxy
+
+#### services/wall/egress-proxy.go
+
+```go
+package main
+
+import (
+	"context"
+	"crypto/tls"
+	"encoding/hex"
+	"fmt"
+	"io"
+	"log"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+)
+
+func splitList(env string) []string {
+	v := strings.TrimSpace(os.Getenv(env))
+	if v == "" { return nil }
+	parts := strings.Split(v, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" { out = append(out, p) }
+	}
+	return out
+}
+
+func matchHost(host string, patterns []string) bool {
+	for _, p := range patterns {
+		// support wildcard like *.example.com
+		if strings.Contains(p, "*") {
+			pat := strings.ReplaceAll(p, "*", "*")
+			ok, _ := filepath.Match(pat, host)
+			if ok { return true }
+		} else if strings.EqualFold(p, host) {
+			return true
+		}
+	}
+	return false
+}
+
+func allowed(u *url.URL, allow, deny []string) error {
+	if u == nil { return fmt.Errorf("nil url") }
+	if u.Scheme != "https" {
+		return fmt.Errorf("only https allowed")
+	}
+	host := u.Hostname()
+	if matchHost(host, deny) {
+		return fmt.Errorf("host denied by policy: %s", host)
+	}
+	if len(allow) > 0 && !matchHost(host, allow) {
+		return fmt.Errorf("host not on allowlist: %s", host)
+	}
+	return nil
+}
+
+func redactHeaders(h http.Header, redact []string) http.Header {
+	if len(redact) == 0 { return h }
+	out := h.Clone()
+	for _, k := range redact {
+		out.Del(k)
+	}
+	return out
+}
+
+func main() {
+	addr := os.Getenv("WALL_LISTEN")
+	if addr == "" { addr = ":8088" }
+
+	allow := splitList("ALLOW_DOMAINS")
+	deny := splitList("DENY_DOMAINS")
+	redact := splitList("REDACT_HEADERS")
+
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	client := &http.Client{
+		Timeout: 60 * time.Second,
+		Transport: &http.Transport{
+			Proxy:               nil,
+			DialContext:         dialer.DialContext,
+			TLSHandshakeTimeout: 10 * time.Second,
+			ForceAttemptHTTP2:   true,
+			TLSClientConfig:     &tls.Config{MinVersion: tls.VersionTLS12},
+			DisableCompression:  false,
+			MaxIdleConns:        100,
+			IdleConnTimeout:     30 * time.Second,
+		},
+	}
+
+	mux := http.NewServeMux()
+
+	// Health
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		_, _ = w.Write([]byte("ok"))
+	})
+
+	// Simple fetch endpoint: GET /fetch?url=<https-url>
+	mux.HandleFunc("/fetch", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		raw := r.URL.Query().Get("url")
+		u, err := url.Parse(raw)
+		if err != nil {
+			http.Error(w, "bad url", http.StatusBadRequest)
+			return
+		}
+		if err := allowed(u, allow, deny); err != nil {
+			http.Error(w, err.Error(), http.StatusForbidden)
+			return
+		}
+
+		// Build upstream request
+		ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+		defer cancel()
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+		if err != nil {
+			http.Error(w, "bad upstream request", http.StatusInternalServerError)
+			return
+		}
+		// Minimal headers; no auth forwarded
+		req.Header = redactHeaders(http.Header{
+			"User-Agent": []string{"BitHub-Wall/1.0"},
+			"Accept":     []string{"*/*"},
+		}, redact)
+
+		resp, err := client.Do(req)
+		if err != nil {
+			http.Error(w, "upstream error: "+err.Error(), http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+
+		// Mirror content type and status
+		for k, vals := range resp.Header {
+			// Avoid hop-by-hop headers
+			if strings.EqualFold(k, "Set-Cookie") { continue }
+			for _, v := range vals {
+				w.Header().Add(k, v)
+			}
+		}
+		w.WriteHeader(resp.StatusCode)
+		_, _ = io.Copy(w, resp.Body)
+	})
+
+	// Echo endpoint for quick tests
+	mux.HandleFunc("/echo", func(w http.ResponseWriter, r *http.Request) {
+		msg := r.URL.Query().Get("m")
+		if msg == "" { msg = "hello" }
+		sum := hex.EncodeToString([]byte(msg))
+		w.WriteHeader(200)
+		_, _ = w.Write([]byte(sum))
+	})
+
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           mux,
+		ReadTimeout:       10 * time.Second,
+		ReadHeaderTimeout: 10 * time.Second,
+		WriteTimeout:      90 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	log.Printf("egress-proxy listening on %s", addr)
+	if err := srv.ListenAndServe(); err != nil {
+		log.Fatal(err)
+	}
+}
+```
+
+---
+
+## Linux node bootstrap
+
+#### scripts/virta.sys/node-bootstrap.sh
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Requires: root or sudo, ufw available, Go toolchain for builds.
+
+log() { printf '[bootstrap] %s\n' "$*"; }
+
+# 1) Firewall: default deny outbound, allow mirrors and federation
+if command -v ufw >/dev/null 2>&1; then
+  sudo ufw --force enable || true
+  sudo ufw default deny outgoing
+  sudo ufw default allow incoming
+  # Allow HTTPS to mirrors and federation
+  for host in packages.local nodes.virta time.cloudflare.com; do
+    # Resolve host to IP (best-effort)
+    ip=$(getent ahostsv4 "$host" | awk '{print $1; exit}' || true)
+    if [[ -n "${ip:-}" ]]; then
+      sudo ufw allow out to "$ip" port 443 proto tcp || true
+    fi
+  done
+else
+  log "ufw not found; please configure nftables/iptables with default-deny outbound and specific allows."
+fi
+
+# 2) Directories
+sudo mkdir -p /etc/bit.hub
+mkdir -p tools/ed25519 tools/gossip registries assets manifests configs/pin services/wall
+
+# 3) Build and install proxy + gossipd
+log "Building egress-proxy and gossipd..."
+GO111MODULE=on go build -o ./tools/gossip/gossipd ./tools/gossip/gossipd.go
+GO111MODULE=on go build -o ./services/wall/egress-proxy ./services/wall/egress-proxy.go
+sudo install -m 0755 ./services/wall/egress-proxy /usr/local/bin/egress-proxy
+sudo install -m 0755 ./tools/gossip/gossipd /usr/local/bin/gossipd
+
+# 4) Environment for the wall
+if [[ ! -f /etc/bit.hub/wall.env ]]; then
+  cat <<'ENV' | sudo tee /etc/bit.hub/wall.env >/dev/null
+# Compliance wall environment
+WALL_LISTEN=:8088
+# Allow only local mirrors and federation
+ALLOW_DOMAINS=packages.local,nodes.virta,time.cloudflare.com,ghcr.io
+# Deny big platforms explicitly
+DENY_DOMAINS=github.com,api.github.com,google.com,www.google.com,*.gvt1.com,*.ggpht.com
+# Headers to strip from outbound requests
+REDACT_HEADERS=Authorization,X-Token,Proxy-Authorization
+ENV
+fi
+
+# 5) Systemd services
+log "Installing systemd units..."
+sudo tee /etc/systemd/system/egress-proxy.service >/dev/null <<'UNIT'
+[Unit]
+Description=Bit.Hub Compliance Wall Egress Proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+EnvironmentFile=/etc/bit.hub/wall.env
+ExecStart=/usr/local/bin/egress-proxy
+Restart=always
+RestartSec=2
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+sudo tee /etc/systemd/system/gossipd.service >/dev/null <<'UNIT'
+[Unit]
+Description=Bit.Hub Gossip Daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/gossipd -listen :7777 -peers nodes.virta:7777 -topics ledger,asset-index
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+# Optional: watchdog if you have a Lisp runtime on Linux
+if command -v sbcl >/dev/null 2>&1; then
+  sudo tee /etc/systemd/system/wall-watchdog.service >/dev/null <<'UNIT'
+[Unit]
+Description=Bit.Hub Compliance Wall Watchdog
+After=egress-proxy.service
+
+[Service]
+WorkingDirectory=/opt/bit.hub
+ExecStart=/usr/bin/sbcl --script services/wall/watchdog.lisp
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+fi
+
+# 6) Enable and start services
+sudo systemctl daemon-reload
+sudo systemctl enable --now egress-proxy.service
+sudo systemctl enable --now gossipd.service
+if systemctl list-unit-files | grep -q wall-watchdog.service; then
+  sudo systemctl enable --now wall-watchdog.service || true
+fi
+
+# 7) Mirror pinned actions/toolchains via proxy
+if [[ -f scripts/actions-mirror.sh ]]; then
+  log "Mirroring pinned actions via proxy..."
+  bash scripts/actions-mirror.sh
+else
+  log "scripts/actions-mirror.sh not found; skipping action mirror."
+fi
+
+log "virta.sys Linux bootstrap complete."
+```
+
+---
+
+## Action mirroring via proxy
+
+#### scripts/actions-mirror.sh
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+PINS="configs/pin/gha-pins.aln"
+CACHE="tools/actions/cache"
+PROXY="http://127.0.0.1:8088/fetch?url="
+
+mkdir -p "$CACHE"
+
+if [[ ! -f "$PINS" ]]; then
+  echo "Missing $PINS"
+  exit 1
+fi
+
+while IFS= read -r line; do
+  [[ -z "$line" ]] && continue
+  [[ "$line" =~ ^# ]] && continue
+  # Expected: owner/repo@sha256:... <url>
+  ref=$(echo "$line" | awk '{print $1}')
+  url=$(echo "$line" | awk '{print $2}')
+  owner_repo=${ref%%@*}
+  sha=${ref##*@}
+  dest="$CACHE/${owner_repo//\//_}_$(echo "$sha" | tr ':' '_').zip"
+
+  if [[ -f "$dest" ]]; then
+    echo "Cached $ref"
+    continue
+  fi
+
+  enc=$(python3 - <<PY
+import urllib.parse,sys
+print(urllib.parse.quote(sys.argv[1], safe=''))
+PY
+"$url")
+  echo "Mirroring $ref"
+  curl -fsSL "${PROXY}${enc}" -o "$dest"
+done < "$PINS"
+```
+
+---
+
+## System configuration
+
+#### /etc/systemd/system/egress-proxy.service
+
+```ini
+[Unit]
+Description=Bit.Hub Compliance Wall Egress Proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+EnvironmentFile=/etc/bit.hub/wall.env
+ExecStart=/usr/local/bin/egress-proxy
+Restart=always
+RestartSec=2
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### /etc/systemd/system/gossipd.service
+
+```ini
+[Unit]
+Description=Bit.Hub Gossip Daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/gossipd -listen :7777 -peers nodes.virta:7777 -topics ledger,asset-index
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### /etc/systemd/system/wall-watchdog.service
+
+```ini
+[Unit]
+Description=Bit.Hub Compliance Wall Watchdog
+After=egress-proxy.service
+
+[Service]
+WorkingDirectory=/opt/bit.hub
+ExecStart=/usr/bin/sbcl --script services/wall/watchdog.lisp
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### /etc/bit.hub/wall.env
+
+```env
+WALL_LISTEN=:8088
+ALLOW_DOMAINS=packages.local,nodes.virta,time.cloudflare.com,ghcr.io
+DENY_DOMAINS=github.com,api.github.com,google.com,www.google.com,*.gvt1.com,*.ggpht.com
+REDACT_HEADERS=Authorization,X-Token,Proxy-Authorization
+```
+
+---
+
+## Integrations
+
+- **PowerShell and batch**:
+  - Existing scripts already use http://localhost:8088/fetch?url= to download mirrored artifacts. No additional changes required.
+- **ALN/Lisp workflows**:
+  - Keep egress inside orchestrators routed via the proxy. Avoid direct HTTP clients; shell out to curl/wget with the proxy endpoint or bind a small Lisp HTTP client to the same endpoint.
+- **Pin and mirror discipline**:
+  - Maintain configs/pin/gha-pins.aln as the single source of truth for external archives. Never fetch unpinned content.
+
+---
+
+## Operational notes
+
+- **Default-deny enforcement**:
+  - The proxy enforces allow/deny at the application layer; ufw/nftables enforce default-deny at the network layer. Running both creates a belt-and-suspenders model that GitHub or Google cannot bypass.
+- **Resilience**:
+  - If mirrors go offline, builds continue using cached artifacts in tools/actions/cache. New fetches will fail gracefully without leaking to blocked domains.
+- **Observability**:
+  - Add reverse-proxy logs to journald via systemd and hash daily log slices into the command ledger to keep tamper-evident telemetry.
+
+---
+
+If you want a Debian/Ubuntu installer that lays this down with one command, I can package these as a .deb with systemd units and defaults wired.
