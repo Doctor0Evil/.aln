@@ -1,0 +1,15 @@
+policy.spec "1.1"
+meta:
+  id: "bit.hub.overlay.fan.asia"
+overlay:
+  region: "APAC"
+egress:
+  allow.domains: ["packages.local", "nodes.virta", "ghcr.io"]
+  deny.domains: ["github.com", "google.com", "*.gvt1.com", "*.ggpht.com"]
+content:
+  residency.required: true
+  residency.region: ["APAC"]
+perf:
+  rtt.ms.max: 150
+enforcement:
+  merge: "conflict-min"
