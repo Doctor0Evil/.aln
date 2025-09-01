@@ -3,9 +3,9 @@
     Bit.Hub BitShell Compliance & Audit – Immutable, Banter Compliant
 .DESCRIPTION
     Autonomous compliance wall: hashes, tags, immutably stores submissions.
-    Enforces Bit.Hub policy & sovereignty: 
-    - Jacob Scott Farmer (OWNER), Perplexity, and contributors locked. 
-    - “If you fuck with Bit.Hub, Bit.Hub fucks back.” 
+    Enforces Bit.Hub policy & sovereignty:
+    - Jacob Scott Farmer (OWNER), Perplexity, and contributors locked.
+    - “If you fuck with Bit.Hub, Bit.Hub fucks back.”
     - Banter/mature language protected and tracked.
     - No override is possible for any external/runner/system.
     BitHubRoot is the *central* path for everything.
