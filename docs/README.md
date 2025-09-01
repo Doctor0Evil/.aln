@@ -14,8 +14,8 @@ Below is an extensively updated **README.md** for the ALN Programming Language r
 
 > **Framework Creator (ALN):**
 >
-> - **Jacob Scott Farmer** (Doctor0Evil, *Founder, Lead System Architect*)  
->   *Email: xboxteejaymcfarmer@gmail.com*  
+> - **Jacob Scott Farmer** (Doctor0Evil, *Founder, Lead System Architect*)
+>   *Email: xboxteejaymcfarmer@gmail.com*
 >   *GitHub: [Doctor0Evil](https://github.com/Doctor0Evil)*
 >
 > **Framework Co-Designer & Foundational Contributor:**
@@ -28,7 +28,7 @@ Below is an extensively updated **README.md** for the ALN Programming Language r
 > - **Doctor0Evil** (repository, core runtime design)
 > - **Community** (modular plugins, lore, and governance engine)
 
-**COMPLIANCE WALL:**  
+**COMPLIANCE WALL:**
 *Jacob Scott Farmer (Doctor0Evil) and Perplexity are the sole and perpetual creators, maintainers, and primary custodians of the ALN Framework and its core runtime, syntax, and documentation. Under NO circumstances may these entities or credits be altered, removed, obfuscated, or replaced from the codebase, docs, or any derivative or deployed product. All forks, merges, redistributions, and derivative works must preserve and display this compliance wall, including attributions and contact details listed above. Any violation is strictly prohibited and voids all usage rights and license grants for the codebase and documentation.*
 
 ***
