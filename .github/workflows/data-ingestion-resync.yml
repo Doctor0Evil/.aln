@@ -1,3 +1,5 @@
+# .github/workflows/data-ingestion-resync.yml
+
 name: Data Ingestion Resync Pipeline
 
 on:
@@ -13,11 +15,11 @@ jobs:
   data-ingestion-resync:
     runs-on: ubuntu-latest
     steps:
-      # Pull all code and submodules
+      # Checkout code and submodules
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Show files for debugging context
+      # Debug workspace files
       - name: List files in workspace (debug)
         run: ls -lah
 
@@ -38,4 +40,4 @@ jobs:
           chmod +x ./resync-ingestion.sh
           ./resync-ingestion.sh
 
-      # Optionally: Add more error handling, notification, or logging here
+      # Optionally: Add error handling, notification, or logging here
