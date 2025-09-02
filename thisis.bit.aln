@@ -36,7 +36,7 @@ warn[msg] {
 # Forbid legacy actions/checkout versions
 deny[msg] {
   some i
-  input.uses[i] == "actions/checkout@v1" 
+  input.uses[i] == "actions/checkout@v1"
   msg := "Outdated actions/checkout version (v1) detected; upgrade to v4"
 }
 deny[msg] {
