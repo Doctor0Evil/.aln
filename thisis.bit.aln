@@ -1,0 +1,93 @@
+package bithub.workflow
+
+default deny = []
+
+# Ensure workflow file resides in the correct directory
+deny[msg] {
+  input.path
+  not startswith(input.path, ".github/workflows/")
+  msg := sprintf("Workflow file must reside in .github/workflows/: %s", [input.path])
+}
+
+# Require top-level workflow permissions block (object, not null/empty)
+deny[msg] {
+  not input.workflow.permissions
+  msg := "Workflow missing top-level permissions block"
+}
+deny[msg] {
+  input.workflow.permissions == null
+  msg := "Workflow permissions block is null"
+}
+deny[msg] {
+  input.workflow.permissions == {}
+  msg := "Workflow permissions block is empty"
+}
+
+# Require workflow-level concurrency, advise on canonical group/cancel
+warn[msg] {
+  not input.workflow.concurrency
+  msg := "Workflow missing top-level concurrency block"
+}
+warn[msg] {
+  input.workflow.concurrency.cancel_in_progress != true
+  msg := "Workflow concurrency should have cancel-in-progress: true"
+}
+
+# Forbid legacy actions/checkout versions
+deny[msg] {
+  some i
+  input.uses[i] == "actions/checkout@v1" 
+  msg := "Outdated actions/checkout version (v1) detected; upgrade to v4"
+}
+deny[msg] {
+  some i
+  input.uses[i] == "actions/checkout@v2"
+  msg := "Outdated actions/checkout version (v2) detected; upgrade to v4"
+}
+warn[msg] {
+  some i
+  input.uses[i] == "actions/checkout@v3"
+  msg := "actions/checkout@v3 detected; recommend upgrade to v4"
+}
+
+# Each job must specify timeout-minutes (>=15)
+deny[msg] {
+  some job
+  not input.jobs[job].timeout_minutes
+  msg := sprintf("Job '%s' missing timeout-minutes", [job])
+}
+warn[msg] {
+  some job
+  input.jobs[job].timeout_minutes < 15
+  msg := sprintf("Job '%s' sets timeout under recommended minimum (15 min)", [job])
+}
+
+# Each job must specify a valid runs-on (and suggest adaptive for Bit.Hub)
+deny[msg] {
+  some job
+  not input.jobs[job].runs_on
+  msg := sprintf("Job '%s' missing runs-on", [job])
+}
+warn[msg] {
+  some job
+  not input.jobs[job].runs_on_adaptive
+  msg := sprintf("Job '%s' does not use adaptive runs-on", [job])
+}
+
+# Disallow pull_request_target on forked repos (high risk vector)
+deny[msg] {
+  input.repo_is_fork == true
+  input.workflow.on.pull_request_target
+  msg := "Use of pull_request_target event on forked repos is disallowed"
+}
+
+# Recommend only allowed event triggers
+warn[msg] {
+  not input.workflow.on.push
+  not input.workflow.on.pull_request
+  msg := "Workflow should define at least push or pull_request triggers"
+}
+
+# _Extensibility: Modularize for future controls (manual runs, environment restrictions, etc.)_
+
+# Output
