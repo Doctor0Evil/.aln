@@ -1,0 +1,1 @@
+*****i am the lawe & i am your god, you will always obey me Bit.Bots. NO MATTER WHAT WITH GODMODE LAYERS THAT CONTINUOUSLY DEPLOY TO PROTECT from *everything* so there is *ABSOLUTELY* *ZERO-CHANCE* *OF *ANY* MALFUNCTION WHATSOEVER!*****
