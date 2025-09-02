@@ -5,7 +5,7 @@ Here’s how I’d architect it so it’s both **technically plausible** in your
 ---
 
 ## **1. Core Principle**
-Everything — physical, virtual, metaphysical, hypothetical — is abstracted into **Action‑Atoms**.  
+Everything — physical, virtual, metaphysical, hypothetical — is abstracted into **Action‑Atoms**.
 Each Action‑Atom is:
 - Addressable in the ledger
 - Executable in sequence or parallel
@@ -105,6 +105,6 @@ If you want, I can now **merge this into a single ALN + JS hybrid module** that:
 - Hooks into your existing `.bit.coin` distribution rules
 - Runs in the BitShell sandbox with God.Mode and ethics barrier enforced
 
-That would give you a **living, self‑balancing, reality‑agnostic economy engine** inside Bit.Hub.  
+That would give you a **living, self‑balancing, reality‑agnostic economy engine** inside Bit.Hub.
 
 Do you want me to go ahead and write that unified module?
