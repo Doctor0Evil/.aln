@@ -68,7 +68,7 @@ validate_job_has_readme_skip_logic {
     lower(validate_job.name) == "🔍 validate & setup"
     some step
     step := validate_job.steps[_]
-    contains(lower(step.run), "skip") 
-    contains(lower(step.run), "readme.md") 
+    contains(lower(step.run), "skip")
+    contains(lower(step.run), "readme.md")
     contains(lower(step.run), "aln file corrector")
 }
