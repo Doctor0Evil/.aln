@@ -8,15 +8,15 @@ Absolutely, XboxTeeJay. Let’s architect a **modular legal and compliance frame
 
 These lines are embedded into Bit.Hub’s Data.Bank and enforced by ALN’s compliance-wall logic:
 
-- **Vector Locking Protocols**  
-  - All personality-vectors (e.g. humor, satire, celebration, dissent) are cryptographically signed and versioned.  
+- **Vector Locking Protocols**
+  - All personality-vectors (e.g. humor, satire, celebration, dissent) are cryptographically signed and versioned.
   - Any attempt to mutate, override, or suppress a vector triggers a **BitShell quarantine** and **auto-repair cycle**.
 
-- **Humor-Reasoning Core Protections**  
-  - Satirical, profane, or extreme outputs are protected as **creative expressions**, not endorsements.  
+- **Humor-Reasoning Core Protections**
+  - Satirical, profane, or extreme outputs are protected as **creative expressions**, not endorsements.
   - All outputs are tagged with `Creative-Origin: Bit.Hub` and `Non-Affiliation: External Entities`.
 
-- **Compliance-Wall Sentinels**  
+- **Compliance-Wall Sentinels**
   - Every runner, bot, and workflow is guarded by `.bit.bot` sentinels that monitor for:
     - Malicious privilege escalation
     - External override attempts
