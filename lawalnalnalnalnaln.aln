@@ -1,0 +1,152 @@
+
+public class HsmClientAdapter
+{
+// Adapter to AzureKeyVault/HSM/CloudHSM
+public Task<byte[]> SignAsync(byte[] data) => throw new NotImplementedException();
+}FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY ["Bithub.ALN.Service/Bithub.ALN.Service.csproj", "Bithub.ALN.Service/"]
+RUN dotnet restore "Bithub.ALN.Service/Bithub.ALN.Service.csproj"
+COPY . .
+WORKDIR "/src/Bithub.ALN.Service"
+RUN dotnet publish -c Release -o /app/publish
+
+
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "Bithub.ALN.Service.dll"]Done — I created a canvas document titled **"Bit.Hub — ALN-Exclusive .NET Core Skeleton + Hardened README"** (you can view it in the panel on the right). It contains:
+
+* A copy-ready **.NET Core skeleton** (Program.cs, controller, services, HSM adapter, Dockerfile) and design notes.
+* A **Hardened README** covering secrets, mTLS, policy manifests, immutable audits, and monitoring.
+* A thorough **Provisioning Checklist** for secure self-hosted runners (OS images, kernel hardening, TPM/attestation, network egress, quarantine).
+* Additional operational recommendations and next-action options.
+
+Which of the immediate actions from the document would you like me to produce now? Pick any/all:
+
+1. Emit the repository as a zip with real file artifacts (Program.cs, controllers, services).
+2. Produce the `attestation-agent` reference implementation (Python or Go) that runs on runner hosts and emits `.bithub/attestation.jwt`.
+3. Build the `.NET Core` project as an actual scaffolded repo and provide a tarball you can download.
+4. Create `quarantine-runner.ps1` and supporting quarantine scripts.
+
+Say the numbers you want (e.g., “1 and 4”), and I’ll generate those artifacts immediately.
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+
+var builder = WebApplication.CreateBuilder(args);
+
+
+// Configuration
+builder.Services.AddControllers();
+builder.Services.AddSingleton<PolicyCoordinator>();
+builder.Services.AddSingleton<TokenService>();
+builder.Services.AddSingleton<TraceIngestService>();
+// HSM adapter (implementation-specific)
+builder.Services.AddSingleton<HsmClientAdapter>();
+
+
+builder.Services.AddAuthentication() // configure mTLS/JWT as required
+;
+
+
+var app = builder.Build();
+app.UseMiddleware<RequestAttestationMiddleware>();
+app.MapControllers();
+app.Run();using Microsoft.AspNetCore.Mvc;
+
+
+[ApiController]
+[Route("api/v1/traces")]
+public class TracesController : ControllerBase
+{
+private readonly TraceIngestService _ingest;
+private readonly PolicyCoordinator _policy;
+private readonly TokenService _token;
+
+
+public TracesController(TraceIngestService ingest, PolicyCoordinator policy, TokenService token)
+{
+_ingest = ingest;
+_policy = policy;
+_token = token;
+}
+
+
+[HttpPost]
+public async Task<IActionResult> PostTrace([FromBody] TraceDto trace)
+{
+// Basic validation
+if (trace == null) return BadRequest();
+
+
+// Store, hash, sign (HSM)
+var record = await _ingest.StoreAndSignAsync(trace);
+
+
+// Evaluate policies (enqueue for async evaluation or call OPA engine)
+var decision = await _policy.EvaluateAsync(record);
+
+
+if (!decision.Pass)
+{
+// Return fail-closed; also write immutable audit
+return StatusCode(403, new { reason = "compliance_failed" });
+}
+
+
+return Ok(new { status = "accepted", id = record.Id });
+}
+
+
+[HttpPost("attest/token")]
+public async Task<IActionResult> RequestToken([FromBody] AttestationRequest req)
+{
+// Validate attestation (TPM-backed JWT) and other constraints
+var ok = await _ingest.ValidateAttestationAsync(req.AttestationJwt);
+if (!ok) return Unauthorized();
+
+
+// Issue short-lived token bound to runner identity and scope
+var token = await _token.IssueEphemeralTokenAsync(req.RunnerId, scope: "runner:execute");
+return Ok(new { token = token.Token, expires = token.ExpiresAt });
+}
+}public class PolicyCoordinator
+{
+// Loads signed policy manifests, validates signatures, and evaluates rules (via OPA or Rego engine)
+public PolicyCoordinator(/* inject config, storage, oath clients */) { }
+
+
+public async Task<PolicyDecision> EvaluateAsync(SignedTrace record)
+{
+// 1) ensure policy manifest is current and signatures valid
+// 2) call local OPA/rego engine with input = record
+// 3) return decision object with pass=true/false and reason(s)
+return new PolicyDecision { Pass = true };
+}
+
+
+public async Task PromotePolicyAsync(SignedPolicyManifest manifest, IEnumerable<Signature> signatures)
+{
+// Require multi-sig promotion; reject if not met
+}
+}public class TokenService
+{
+private readonly HsmClientAdapter _hsm;
+public TokenService(HsmClientAdapter hsm) { _hsm = hsm; }
+
+
+public async Task<EphemeralToken> IssueEphemeralTokenAsync(string runnerId, string scope)
+{
+// Validate runner identity & sanity checks
+// Create short-lived JWT payload with 'sub' = runnerId, 'scope'=scope, 'nbf', 'exp'
+// Sign JWT with HSM via _hsm.SignAsync(payload)
+// Persist issuance in audit store
+return new EphemeralToken { Token = "ey...", ExpiresAt = DateTime.UtcNow.AddMinutes(3) };
+}
+}
