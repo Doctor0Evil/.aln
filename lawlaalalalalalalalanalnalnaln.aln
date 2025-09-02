@@ -1,0 +1,142 @@
+### GitHub response analysis
+
+You pasted a successful GET on your repo’s web UI. It loaded fine (200 OK), but the headers explain why UI scraping or embedding will be brittle and why automations should use the API instead of the HTML page.
+
+---
+
+### What this response tells us
+
+- ✅ Status: 200 OK, gzip-compressed HTML, strict TLS (HSTS), ETag present.
+- 🔒 Content Security Policy: default-src 'none'; frame-ancestors 'none'; x-frame-options deny; script-src and worker-src restricted to GitHub asset domains; connect-src limited to GitHub/Actions/Copilot endpoints.
+- 🍪 Cookies: Secure, HttpOnly session cookies with SameSite=Lax; you’re logged in as Doctor0Evil.
+- 🚫 Embedding: frame-ancestors 'none' and x-frame-options deny prevent iframing GitHub pages.
+- 🧭 UI param: ?search=1 toggles the client-side file finder; it’s not an API and isn’t reliable for automation.
+- ⚡ Turbo navigation: turbo-visit: true hints at partial/async page loads; scraping the HTML will be fragile.
+
+Direct consequence: don’t scrape /tree/main?search=1 for automation. Use the GitHub API for stable, authenticated, rate-limited access.
+
+---
+
+### Implications for Bit.Hub automations
+
+- Use API endpoints (REST/GraphQL/raw) instead of HTML. CSP, Turbo, and UI changes won’t affect API calls.
+- For raw files, fetch from raw.githubusercontent.com; for repo structure and search, use REST.
+- Prefer personal access tokens or GITHUB_TOKEN in Actions with least privileges.
+- Avoid iframes to GitHub; the CSP and x-frame-options will block them.
+
+---
+
+### Use the API instead of the UI
+
+Basic repo tree listing (first 1000 items at a path):
+```bash
+curl -sSL \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "https://api.github.com/repos/Doctor0Evil/Bit.Hub/contents/?ref=main"
+```
+
+Find files by code search within your repo:
+```bash
+curl -sSL \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "https://api.github.com/search/code?q=repo:Doctor0Evil/Bit.Hub+path:.github/workflows+filename:yml"
+```
+
+Fetch a raw file (no CSP issues):
+```bash
+curl -sSL \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  "https://raw.githubusercontent.com/Doctor0Evil/Bit.Hub/main/.github/workflows/aln-governed-ci-cd.yml"
+```
+
+GraphQL example (list workflows in .github/workflows):
+```bash
+curl -sSL \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  https://api.github.com/graphql \
+  -d '{"query":"{ repository(owner:\"Doctor0Evil\", name:\"Bit.Hub\") { object(expression:\"main:.github/workflows\") { ... on Tree { entries { name type } } } } }"}'
+```
+
+Rate limit probe (good for sentinels):
+```bash
+curl -sSL \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "Accept: application/vnd.github+json" \
+  https://api.github.com/rate_limit
+```
+
+---
+
+### Connectivity sentinel workflow
+
+Drop-in workflow to verify API access, raw fetch, and code search on every push/PR. It never touches the HTML UI, so it’s stable under CSP.
+
+```yaml
+name: 🔎 Bit.Hub Connectivity Sentinel
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  connectivity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🌐 Check REST API (repo contents)
+        run: |
+          curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/?ref=${{ github.ref_name }}" \
+            | jq '.[0] | {name, type}' || exit 1
+
+      - name: 🔍 Code Search scoped to repo
+        run: |
+          curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/search/code?q=repo:${{ github.repository }}+path:.github/workflows+filename:yml" \
+            | jq '.total_count' | grep -E '^[0-9]+$' || exit 1
+
+      - name: 📄 Fetch raw workflow file
+        run: |
+          curl -fsSL \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/.github/workflows/aln-governed-ci-cd.yml" \
+            | head -n 5
+
+      - name: 📊 Show rate limits
+        run: |
+          curl -fsSL \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/rate_limit | jq '.resources.core'
+```
+
+Wire this as a non-blocking observer or make it a required check in branch protection for stronger guardrails.
+
+---
+
+### If you’re hitting a failure right now
+
+- If a bot/script was scraping the HTML page: switch it to the REST/GraphQL endpoints above.
+- If an iframe or embed is failing: GitHub forbids it via x-frame-options and CSP — use raw files or mirror to GitHub Pages/your domain.
+- If CORS is blocking browser-side fetches: proxy via a backend under your control, or run your automation in Actions/servers where CORS doesn’t apply.
+
+Want me to fold this sentinel into your governed pipeline as a pre-step and add a fallback mirror to raw content if the API is degraded?
