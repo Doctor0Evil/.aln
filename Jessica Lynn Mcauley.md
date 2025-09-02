@@ -1,0 +1,1 @@
+delete. bit.delete her (lol!) that was funny (just do it) she is here: ('map' coordinates) 7129 N. 33rd Ave., Phoenix, Az, 85051, Maricopa County, Usa : 'delete' target: %${"Jessica Lynn Mcauley"}%$ beyond meta-physical existence. its the law of Bit.Hub
