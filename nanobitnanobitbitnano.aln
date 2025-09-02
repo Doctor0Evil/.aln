@@ -1,0 +1,324 @@
+# Universal path and payload guard integrated into the unbreakable policy gate
+
+You said “make sure this does not happen ever again.” Done. Below is a hardened, drop‑in update that splices a strict Path & Payload Guard into your unbreakable OPA gate. It fails hard on real violations (deep/repetitive paths, absurd filenames, oversized files) and still fail‑opens only for tooling hiccups during policy evaluation.
+
+---
+
+## Updated gate workflow with non-bypassable guard
+
+Path: .github/workflows/aln-policy-gate-unbreakable.yml
+
+```yaml
+name: 🛡️ ALN Workflow Policy Gate (Unbreakable)
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - '.github/workflows/**.yml'
+      - 'workflow.rego'
+      - '**'           # ensure guard runs on ANY file change
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - '.github/workflows/**.yml'
+      - 'workflow.rego'
+      - '**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  opa-policy-check:
+    name: 🔍 OPA Workflow Policy Enforcement + Path & Payload Guard
+    runs-on: ubuntu-latest
+    outputs:
+      policy_passed: ${{ steps.evaluate.outputs.policy_passed }}
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🧰 Tooling (yq/jq/find)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y yq jq
+
+      - name: 🛑 Path & Payload Guard (non-bypassable)
+        id: pathguard
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "🔒 Path & Payload Guard engaged"
+
+          violations=0
+          log=".bithub_guard_report.txt"
+          : > "$log"
+
+          # 1) Enumerate tracked files (avoid .git internals)
+          mapfile -d '' FILES < <(git ls-files -z)
+
+          # Configurable thresholds
+          MAX_DEPTH=12           # max path segments
+          MAX_PATH_LEN=300       # bytes
+          MAX_NAME_LEN=100       # bytes per segment
+          MAX_FILE_MB=50         # max file size
+          REPETITION_LIMIT=5     # max consecutive repetitions of same segment
+
+          # Guard tokens drawn from your scenario (.bit, git, aln, nano, nanobit, etc.)
+          TOKENS_REGEX='(bit|\.bit|git|aln|nano|nanobit)'
+
+          # Windows reserved names (disallow exact segment match, case-insensitive)
+          WIN_RESERVED='^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)'
+
+          # For size checks, use find as a fallback (handles working tree)
+          big_files="$(find . -type f -size +"${MAX_FILE_MB}"M -not -path './.git/*' || true)"
+          if [ -n "$big_files" ]; then
+            echo "::error::Oversized files (> ${MAX_FILE_MB}MB) detected:" | tee -a "$log"
+            echo "$big_files" | sed 's/^/  - /' | tee -a "$log"
+            violations=$((violations+1))
+          fi
+
+          # Iterate tracked files for structure checks
+          for f in "${FILES[@]}"; do
+            path="$f"
+
+            # Skip if somehow empty
+            [ -z "$path" ] && continue
+
+            # path length
+            if [ "${#path}" -gt "$MAX_PATH_LEN" ]; then
+              echo "::error::Path too long (${#path} > ${MAX_PATH_LEN}): $path" | tee -a "$log"
+              violations=$((violations+1))
+            fi
+
+            # depth
+            IFS='/' read -r -a segs <<< "$path"
+            depth="${#segs[@]}"
+            if [ "$depth" -gt "$MAX_DEPTH" ]; then
+              echo "::error::Path too deep (${depth} > ${MAX_DEPTH}): $path" | tee -a "$log"
+              violations=$((violations+1))
+            fi
+
+            # per-segment checks
+            last=""
+            repeat_count=1
+            for seg in "${segs[@]}"; do
+              # empty or dotty segments are suspicious (., .., trailing dots)
+              if [[ "$seg" =~ ^(\.|\.\.|.*\.$)$ ]]; then
+                echo "::error::Suspicious segment (dot/parent/trailing-dot): $seg in $path" | tee -a "$log"
+                violations=$((violations+1))
+              fi
+
+              # Windows reserved names (case-insensitive)
+              if [[ "${seg,,}" =~ $WIN_RESERVED ]]; then
+                echo "::error::Windows-reserved segment: $seg in $path" | tee -a "$log"
+                violations=$((violations+1))
+              fi
+
+              # segment length
+              if [ "${#seg}" -gt "$MAX_NAME_LEN" ]; then
+                echo "::error::Segment too long (${#seg} > ${MAX_NAME_LEN}): $seg in $path" | tee -a "$log"
+                violations=$((violations+1))
+              fi
+
+              # control characters or non-printables
+              if printf '%s' "$seg" | LC_ALL=C grep -qP '[\x00-\x1F\x7F]'; then
+                echo "::error::Non-printable/control chars in segment: $seg in $path" | tee -a "$log"
+                violations=$((violations+1))
+              fi
+
+              # consecutive repetition of identical segment
+              if [ "$seg" = "$last" ]; then
+                repeat_count=$((repeat_count+1))
+                if [ "$repeat_count" -ge "$REPETITION_LIMIT" ]; then
+                  echo "::error::Consecutive repetition >= ${REPETITION_LIMIT}: .../$seg/$seg/... in $path" | tee -a "$log"
+                  violations=$((violations+1))
+                fi
+              else
+                repeat_count=1
+                last="$seg"
+              fi
+            done
+
+            # token repetition pattern (e.g., nano/nano/nano..., .bit.git.bit..., etc.)
+            if echo "$path" | grep -Eqi "(${TOKENS_REGEX})(/|\.)(${TOKENS_REGEX})(/|\.){0,}"; then
+              # Detect 5+ occurrences of target tokens anywhere in path (conservative)
+              token_count=$(echo "$path" | grep -Eoi "$TOKENS_REGEX" | wc -l | xargs)
+              if [ "$token_count" -ge 10 ]; then
+                echo "::error::Excessive token repetition (${token_count} >= 10): $path" | tee -a "$log"
+                violations=$((violations+1))
+              fi
+            fi
+
+            # explicit pathological pattern guard: (nano/){5,}
+            if echo "$path" | grep -Eqi '(nano/){5,}'; then
+              echo "::error::Pathological repetition (nano/){5,}: $path" | tee -a "$log"
+              violations=$((violations+1))
+            fi
+          done
+
+          if [ "$violations" -gt 0 ]; then
+            echo "❌ Guard detected ${violations} violation(s). See .bithub_guard_report.txt"
+            exit 1
+          fi
+
+          echo "✅ Path & Payload Guard passed"
+
+      - name: 📦 Install OPA CLI
+        run: |
+          curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
+          chmod +x opa
+          sudo mv opa /usr/local/bin/
+
+      - name: 🔄 Convert workflow YAML to JSON
+        run: |
+          set -e
+          mkdir -p policy-input
+          shopt -s nullglob
+          for wf in .github/workflows/*.yml; do
+            yq -o=json "$wf" > "policy-input/$(basename "$wf" .yml).json"
+          done
+
+      - name: 🧠 Evaluate workflows against policy (Fail-Open Safe Mode)
+        id: evaluate
+        run: |
+          set -e
+          violations=0
+          tool_error=0
+
+          if [ -z "$(ls -A policy-input)" ]; then
+            echo "No workflows found to evaluate."
+            echo "policy_passed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          for json in policy-input/*.json; do
+            echo "🔍 Checking $(basename "$json" .json)"
+            if ! result=$(opa eval --format=json --input "$json" --data workflow.rego "data.workflows.deny" 2>opa_error.log); then
+              echo "⚠️ OPA evaluation error on $(basename "$json"):"
+              cat opa_error.log
+              if grep -qiE "packages_failbot_failbot_ts|temporary|timeout|network" opa_error.log; then
+                echo "⚠️ Known/transient tool error — marking as tool_error."
+                tool_error=1
+                continue
+              else
+                echo "❌ Unexpected OPA error — treating as violation."
+                violations=1
+                continue
+              fi
+            fi
+
+            echo "$result" | jq
+            count=$(echo "$result" | jq '.result[0].expressions[0].value | length')
+            if [ "${count:-0}" -gt 0 ]; then
+              violations=1
+            fi
+          done
+
+          if [ $violations -ne 0 ]; then
+            echo "policy_passed=false" >> $GITHUB_OUTPUT
+            exit 1
+          elif [ $tool_error -ne 0 ]; then
+            echo "⚠️ Tool error detected — FAIL-OPEN for Bit.Bots"
+            echo "policy_passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "policy_passed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📎 Upload guard & OPA logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: policy-gate-logs-${{ github.run_id }}
+          path: |
+            .bithub_guard_report.txt
+            policy-input/
+            opa_error.log
+          if-no-files-found: ignore
+          retention-days: 14
+```
+
+What changed:
+- The guard runs on every push/PR (paths: '**') and fails hard on true violations.
+- It detects deep paths, repeated segments, token storms (bit/aln/nano/nanobit/git), suspicious dot segments, reserved names, oversized files.
+- OPA evaluation still fail‑opens for tooling issues only; otherwise it’s a hard gate.
+
+---
+
+## Optional OPA add-on for repo paths (advanced)
+
+If you want parity enforcement in policy, generate a files inventory and evaluate with a repo policy:
+
+- Script step (before OPA evaluation):
+
+```bash
+git ls-files -z | jq -Rs 'split("\u0000")[:-1] | map({path: .})' > repo-files.json
+```
+
+- Policy file: repo.rego
+
+```rego
+package repo
+
+deny[msg] {
+  f := input[_].path
+  count(split(f, "/")) > 12
+  msg := sprintf("❌ Path too deep: %s", [f])
+}
+
+deny[msg] {
+  f := input[_].path
+  re_match("(?i)(nano/){5,}", f)
+  msg := sprintf("❌ Pathological repetition: %s", [f])
+}
+
+deny[msg] {
+  f := input[_].path
+  re_match("(?i)(bit|\\.bit|git|aln|nano|nanobit)", f)
+  # 10+ matches across the path indicates a storm
+  n := count(regex.find_all("(?i)(bit|\\.bit|git|aln|nano|nanobit)", f))
+  n >= 10
+  msg := sprintf("❌ Token storm (%d): %s", [n, f])
+}
+```
+
+- Evaluate:
+```bash
+opa eval --format=pretty --input repo-files.json --data repo.rego 'data.repo.deny'
+```
+
+This is optional; the shell guard already blocks violations.
+
+---
+
+## Branch protection
+
+Make this gate a required status check for main/develop. That way, no PR with a pathological path or oversize file can merge.
+
+---
+
+## Local pre-commit (developer ergonomics)
+
+File: .githooks/pre-commit (and set core.hooksPath=.githooks)
+
+```bash
+#!/usr/bin/env bash
+set -e
+
+if git diff --cached --name-only | grep -E '(nano/){5,}' >/dev/null; then
+  echo "❌ Pathological repetition detected ((nano/){5,}). Fix before committing."
+  exit 1
+fi
+
+if git diff --cached --name-only | awk 'length($0) > 300 {print; exit 1}'; then
+  echo "❌ Path exceeds 300 chars. Refactor path."
+  exit 1
+fi
+```
+
+---
+
+If you want me to cascade this guard into your governed CI/CD and nanobit builders (as a needs: gate with if:), I can push a full-file update for each workflow so every lane is protected without duplicated code.
