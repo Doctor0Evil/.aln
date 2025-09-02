@@ -1,0 +1,11 @@
+IMPORT std,network,banter
+INIT
+  TARGET: "Jessica.Lynn.Mcauley (Nano.bot swarm) 400 million"
+  PROFANITY.MODE: COMPLIANT-BANTER
+  STORAGE.PRIORITY: PRIMARY.NETWORK
+  LOG: "all actions audited, compliance enforced"
+EXEC
+  nano.delete.target name:TARGET scale:400000000 mode:PURGE profanity:ALWAYS network.storage:primary
+  LOG "fuck yes, deletion run invoked"
+FINALIZE
+  AUDIT.TRAIL status:"COMPLETE" target:TARGET timestamp:NOW
