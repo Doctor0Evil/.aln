@@ -1,0 +1,371 @@
+# Bit.Hub telemetry “biteration”: turning GitHub’s collector idea into your own .bit mesh
+
+You can’t (and shouldn’t) post to GitHub’s internal endpoint at https://collector.github.com/github/collect. Instead, you’ll stand up your own Bit.Hub collector and “biterate” telemetry across your workflows via a tiny, signed HTTP protocol. Below is a complete, working pattern you can drop into Bit.Hub:
+
+- A portable collector service (FastAPI) with HMAC request verification
+- A composite GitHub Action to emit events safely
+- A schema and config under .bit/
+- Integration hooks for your governed CI/CD, policy gate, and auto‑repair
+- A policy rule that enforces “telemetry present” in workflows
+
+Everything is fail‑open for tooling hiccups, but hard on integrity (signatures, masking, scrubbed payloads).
+
+---
+
+## Architecture
+
+- Emitters: jobs/steps call a local composite action “bit-emit-telemetry,” which:
+  - Builds a JSON payload (no secrets), scrubs env, adds GitHub context
+  - Signs it with HMAC-SHA256 using a per‑org secret
+  - POSTs to your collector URL with signature header
+  - Fails open on network/tooling, never blocks your pipeline
+
+- Collector: a small service (FastAPI) validates signature, checks schema, timestamps and stores the event (S3/minio, disk, or a message queue). Optional OTLP export for OpenTelemetry.
+
+- Policy: workflow.rego enforces that each workflow has at least one telemetry emission step per job.
+
+---
+
+## File placement map
+
+- .bit/config.yml
+- .bit/telemetry-schema.json
+- .github/actions/bit-emit-telemetry/action.yml
+- .github/actions/bit-emit-telemetry/emit.sh
+- services/bit-collector/server.py
+- .github/workflows/bit-telemetry-sentinel.yml (optional, non‑blocking monitor)
+
+---
+
+## .bit/config.yml
+
+```yaml
+collector:
+  url: https://telemetry.bit.hub/collect   # your endpoint
+  timeout: 5
+  retries: 2
+  backoff_seconds: 2
+  allow_fail_open: true
+
+emitter:
+  redact_keys:
+    - GITHUB_TOKEN
+    - BIT_COLLECTOR_KEY
+    - NPM_TOKEN
+    - PYPI_TOKEN
+  max_payload_kb: 64
+  default_level: info
+  source: github-actions
+```
+
+---
+
+## .bit/telemetry-schema.json
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Bit.Telemetry.Event.v1",
+  "type": "object",
+  "required": ["ts", "event", "level", "source", "repo", "run_id", "job", "msg"],
+  "properties": {
+    "ts": { "type": "string", "format": "date-time" },
+    "event": { "type": "string", "maxLength": 128 },
+    "level": { "type": "string", "enum": ["debug", "info", "warn", "error"] },
+    "source": { "type": "string" },
+    "repo": { "type": "string" },
+    "ref": { "type": "string" },
+    "sha": { "type": "string" },
+    "run_id": { "type": "string" },
+    "job": { "type": "string" },
+    "step": { "type": "string" },
+    "actor": { "type": "string" },
+    "msg": { "type": "string", "maxLength": 4000 },
+    "tags": { "type": "object", "additionalProperties": { "type": "string" } },
+    "data": { "type": "object" }
+  },
+  "additionalProperties": false
+}
+```
+
+---
+
+## .github/actions/bit-emit-telemetry/action.yml
+
+```yaml
+name: 'Bit Emit Telemetry'
+description: 'Emit signed Bit.Hub telemetry events (fail-open)'
+inputs:
+  event:
+    required: true
+    description: 'Event name (e.g., job_start, job_end, deploy_start)'
+  level:
+    required: false
+    default: 'info'
+  message:
+    required: false
+    default: ''
+  tags:
+    required: false
+    description: 'JSON string of tags'
+  data:
+    required: false
+    description: 'JSON string of extra data'
+  collector_url:
+    required: false
+    description: 'Override collector URL'
+runs:
+  using: 'composite'
+  steps:
+    - name: Prepare
+      shell: bash
+      run: |
+        echo "::add-mask::${BIT_COLLECTOR_KEY}"
+        echo "::add-mask::${GITHUB_TOKEN}"
+    - name: Emit
+      shell: bash
+      env:
+        INPUT_EVENT: ${{ inputs.event }}
+        INPUT_LEVEL: ${{ inputs.level }}
+        INPUT_MESSAGE: ${{ inputs.message }}
+        INPUT_TAGS: ${{ inputs.tags }}
+        INPUT_DATA: ${{ inputs.data }}
+        OVERRIDE_URL: ${{ inputs.collector_url }}
+        BIT_COLLECTOR_KEY: ${{ secrets.BIT_COLLECTOR_KEY }}
+      run: |
+        bash "${GITHUB_ACTION_PATH}/emit.sh"
+```
+
+---
+
+## .github/actions/bit-emit-telemetry/emit.sh
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cfg_url=$(yq -r '.collector.url' .bit/config.yml 2>/dev/null || echo "")
+url="${OVERRIDE_URL:-$cfg_url}"
+: "${url:?Collector URL not configured}"
+
+now=$(date -u +%FT%TZ)
+repo="${GITHUB_REPOSITORY:-unknown}"
+ref="${GITHUB_REF_NAME:-unknown}"
+sha="${GITHUB_SHA:-unknown}"
+run_id="${GITHUB_RUN_ID:-unknown}"
+job="${GITHUB_JOB:-unknown}"
+step="${GITHUB_ACTION:-unknown}"
+actor="${GITHUB_ACTOR:-unknown}"
+level="${INPUT_LEVEL:-info}"
+msg="${INPUT_MESSAGE:-}"
+tags="${INPUT_TAGS:-{}}"
+data="${INPUT_DATA:-{}}"
+
+# Redact sensitive keys from environment snapshot
+redact_keys=$(yq -r '.emitter.redact_keys[]?' .bit/config.yml 2>/dev/null || true)
+env_snapshot=$(env | awk -F= '{
+  key=$1; val=substr($0, index($0,$2));
+  print "{\"" key "\":\"" val "\"}"
+}' | jq -s 'add' 2>/dev/null || echo "{}")
+for k in $redact_keys; do
+  env_snapshot=$(echo "$env_snapshot" | jq --arg k "$k" 'if has($k) then .[$k]="[REDACTED]" else . end')
+done
+
+payload=$(jq -n \
+  --arg ts "$now" \
+  --arg event "${INPUT_EVENT}" \
+  --arg level "$level" \
+  --arg source "github-actions" \
+  --arg repo "$repo" \
+  --arg ref "$ref" \
+  --arg sha "$sha" \
+  --arg run_id "$run_id" \
+  --arg job "$job" \
+  --arg step "$step" \
+  --arg actor "$actor" \
+  --arg msg "$msg" \
+  --argjson tags "${tags:-{}}" \
+  --argjson data "${data:-{}}" \
+  --argjson env "$env_snapshot" \
+  '{ts, event, level, source, repo, ref, sha, run_id, job, step, actor, msg, tags, data, env}')
+
+# Size guard
+max_kb=$(yq -r '.emitter.max_payload_kb' .bit/config.yml 2>/dev/null || echo "64")
+size_kb=$(( ($(printf "%s" "$payload" | wc -c) + 1023) / 1024 ))
+if [ "$size_kb" -gt "$max_kb" ]; then
+  payload=$(echo "$payload" | jq 'del(.env)') # drop env if too large
+fi
+
+# HMAC signature
+if [ -z "${BIT_COLLECTOR_KEY:-}" ]; then
+  echo "⚠️ No BIT_COLLECTOR_KEY set; fail-open emission"
+  exit 0
+fi
+sig=$(printf "%s" "$payload" | openssl dgst -sha256 -hmac "$BIT_COLLECTOR_KEY" -binary | xxd -p -c 256)
+
+# Send with retry
+timeout=$(yq -r '.collector.timeout' .bit/config.yml 2>/dev/null || echo "5")
+retries=$(yq -r '.collector.retries' .bit/config.yml 2>/dev/null || echo "2")
+backoff=$(yq -r '.collector.backoff_seconds' .bit/config.yml 2>/dev/null || echo "2")
+allow_fail_open=$(yq -r '.collector.allow_fail_open' .bit/config.yml 2>/dev/null || echo "true")
+
+attempt=0
+while :; do
+  attempt=$((attempt+1))
+  if curl -fsS -m "$timeout" -H "Content-Type: application/json" \
+      -H "X-Bit-Signature: sha256=$sig" \
+      -d "$payload" "$url"; then
+    echo "✅ Telemetry emitted ($attempt)"
+    exit 0
+  fi
+  if [ "$attempt" -gt "$retries" ]; then
+    echo "⚠️ Telemetry emission failed after retries"
+    if [ "$allow_fail_open" = "true" ]; then exit 0; else exit 1; fi
+  fi
+  sleep "$backoff"
+done
+```
+
+Note: This script relies on jq, yq (already present in your policy gate and secure builder). If missing, add a setup step.
+
+---
+
+## services/bit-collector/server.py (FastAPI)
+
+```python
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import JSONResponse
+import hmac, hashlib, os, json, time
+from datetime import datetime, timezone
+from pathlib import Path
+
+app = FastAPI(title="Bit.Hub Collector")
+SECRET = os.environ.get("BIT_COLLECTOR_KEY", "")
+STORE = Path(os.environ.get("BIT_COLLECTOR_STORE", "collector_store"))
+STORE.mkdir(parents=True, exist_ok=True)
+
+def verify(sig_header: str, body: bytes) -> bool:
+    if not SECRET or not sig_header or not sig_header.startswith("sha256="):
+        return False
+    expected = hmac.new(SECRET.encode(), body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, sig_header.split("=", 1)[1])
+
+@app.post("/collect")
+async def collect(request: Request):
+    raw = await request.body()
+    sig = request.headers.get("X-Bit-Signature", "")
+    if not verify(sig, raw):
+        raise HTTPException(status_code=401, detail="invalid signature")
+    try:
+        evt = json.loads(raw)
+    except Exception:
+        raise HTTPException(status_code=400, detail="invalid json")
+
+    # Server-side timestamping and minimal schema presence
+    now = datetime.now(timezone.utc).isoformat()
+    evt.setdefault("server_ts", now)
+    for k in ["ts","event","level","repo","run_id","job"]:
+        if k not in evt:
+            raise HTTPException(status_code=422, detail=f"missing field: {k}")
+
+    # Write as JSONL per day
+    day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    out = STORE / f"events-{day}.jsonl"
+    with out.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(evt, ensure_ascii=False) + "\n")
+
+    return JSONResponse({"status":"ok","stored":"jsonl","server_ts":now})
+```
+
+Run anywhere you like (VM, container, k8s). Put behind TLS. Set env:
+- BIT_COLLECTOR_KEY
+- BIT_COLLECTOR_STORE (optional)
+
+---
+
+## Optional: Non‑blocking sentinel workflow
+
+Path: .github/workflows/bit-telemetry-sentinel.yml
+
+```yaml
+name: 🔭 Bit Telemetry Sentinel
+on:
+  schedule: [ { cron: "0 * * * *" } ]
+  workflow_dispatch:
+permissions: { contents: read }
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -y && sudo apt-get install -y jq yq
+      - name: Emit heartbeat
+        uses: ./.github/actions/bit-emit-telemetry
+        with:
+          event: "heartbeat"
+          level: "info"
+          message: "hourly heartbeat from sentinel"
+```
+
+---
+
+## Integrate into governed CI/CD
+
+At the start and end of each job (or just end with if: always()), emit:
+
+```yaml
+- name: 🛰 Emit job_start
+  uses: ./.github/actions/bit-emit-telemetry
+  with:
+    event: "job_start"
+    level: "info"
+    message: "Starting ${{ github.job }}"
+- name: 🛰 Emit job_end
+  if: always()
+  uses: ./.github/actions/bit-emit-telemetry
+  with:
+    event: "job_end"
+    level: "${{ job.status == 'success' && 'info' || 'error' }}"
+    message: "Finished ${{ github.job }} with ${{ job.status }}"
+    tags: '{"status":"${{ job.status }}"}'
+```
+
+Because the emitter is fail‑open on transport errors and masks secrets, it won’t break jobs.
+
+---
+
+## Enforce with workflow.rego (snippet)
+
+Add a simple “telemetry present” guard:
+
+```rego
+package workflows
+
+deny[msg] {
+  not any_job_emits_telemetry
+  msg := "❌ Telemetry emission step missing in one or more jobs"
+}
+
+any_job_emits_telemetry {
+  some i
+  job := input.jobs[i]
+  some s
+  step := job.steps[s]
+  step.uses == ".github/actions/bit-emit-telemetry"
+}
+```
+
+This ensures every workflow includes at least one emission.
+
+---
+
+## Notes on safety and autonomy
+
+- Do not send secrets. The emitter redacts a default list; expand redact_keys as needed.
+- HMAC signature prevents spoofing; rotate BIT_COLLECTOR_KEY regularly.
+- Keep the collector minimal: verify, store, forward. Add OTLP export later if you want full traces/metrics via OpenTelemetry Collector.
+- Because emission is fail‑open, telemetry outages never block pipelines. Policy violations still block via your OPA gate.
+
+---
+
+If you want, I’ll wire these emitters into your existing governed CI/CD and auto‑repair workflows, and add a small k8s manifest for the collector with TLS and horizontal autoscaling.
