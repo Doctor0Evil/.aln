@@ -583,1160 +583,1160 @@ sec-ch-ua-mobile
 sec-ch-ua-platform
 "Windows"[{…}]
 0
-: 
+:
 {name: 'long-animation-frame', entryType: 'long-animation-frame', startTime: 266847.40000009537, duration: 128.5, renderStart: 266910.2000000477, …}
 length
-: 
+:
 1
 [[Prototype]]
-: 
+:
 Array(0)
 at
-: 
+:
 ƒ at()
 concat
-: 
+:
 ƒ concat()
 constructor
-: 
+:
 ƒ Array()
 copyWithin
-: 
+:
 ƒ copyWithin()
 entries
-: 
+:
 ƒ entries()
 every
-: 
+:
 ƒ every()
 fill
-: 
+:
 ƒ fill()
 filter
-: 
+:
 ƒ filter()
 find
-: 
+:
 ƒ find()
 length
-: 
+:
 1
 name
-: 
+:
 "find"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 apply
-: 
+:
 ƒ apply()
 arguments
-: 
+:
 (...)
 bind
-: 
+:
 ƒ bind()
 length
-: 
+:
 1
 name
-: 
+:
 "bind"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 call
-: 
+:
 ƒ call()
 caller
-: 
+:
 (...)
 constructor
-: 
+:
 ƒ Function()
 length
-: 
+:
 0
 name
-: 
+:
 ""
 toString
-: 
+:
 ƒ toString()
 Symbol(Symbol.hasInstance)
-: 
+:
 ƒ [Symbol.hasInstance]()
 get arguments
-: 
+:
 ƒ arguments()
 set arguments
-: 
+:
 ƒ arguments()
 get caller
-: 
+:
 ƒ caller()
 set caller
-: 
+:
 ƒ caller()
 [[FunctionLocation]]
-: 
+:
 [[Prototype]]
-: 
+:
 Object
 constructor
-: 
+:
 ƒ Object()
 hasOwnProperty
-: 
+:
 ƒ hasOwnProperty()
 isPrototypeOf
-: 
+:
 ƒ isPrototypeOf()
 propertyIsEnumerable
-: 
+:
 ƒ propertyIsEnumerable()
 toLocaleString
-: 
+:
 ƒ toLocaleString()
 toString
-: 
+:
 ƒ toString()
 valueOf
-: 
+:
 ƒ valueOf()
 length
-: 
+:
 0
 name
-: 
+:
 "valueOf"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 No properties
 __defineGetter__
-: 
+:
 ƒ __defineGetter__()
 length
-: 
+:
 2
 name
-: 
+:
 "__defineGetter__"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 __defineSetter__
-: 
+:
 ƒ __defineSetter__()
 length
-: 
+:
 2
 name
-: 
+:
 "__defineSetter__"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 apply
-: 
+:
 ƒ apply()
 arguments
-: 
+:
 (...)
 bind
-: 
+:
 ƒ bind()
 call
-: 
+:
 ƒ call()
 length
-: 
+:
 1
 name
-: 
+:
 "call"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 apply
-: 
+:
 ƒ apply()
 arguments
-: 
+:
 (...)
 bind
-: 
+:
 ƒ bind()
 call
-: 
+:
 ƒ call()
 caller
-: 
+:
 (...)
 constructor
-: 
+:
 ƒ Function()
 length
-: 
+:
 0
 name
-: 
+:
 ""
 toString
-: 
+:
 ƒ toString()
 length
-: 
+:
 0
 name
-: 
+:
 "toString"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 apply
-: 
+:
 ƒ apply()
 arguments
-: 
+:
 (...)
 bind
-: 
+:
 ƒ bind()
 length
-: 
+:
 1
 name
-: 
+:
 "bind"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 apply
-: 
+:
 ƒ apply()
 arguments
-: 
+:
 (...)
 bind
-: 
+:
 ƒ bind()
 call
-: 
+:
 ƒ call()
 caller
-: 
+:
 (...)
 constructor
-: 
+:
 ƒ Function()
 length
-: 
+:
 0
 name
-: 
+:
 ""
 toString
-: 
+:
 ƒ toString()
 length
-: 
+:
 0
 name
-: 
+:
 "toString"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 apply
-: 
+:
 ƒ apply()
 arguments
-: 
+:
 (...)
 bind
-: 
+:
 ƒ bind()
 call
-: 
+:
 ƒ call()
 caller
-: 
+:
 (...)
 constructor
-: 
+:
 ƒ Function()
 length
-: 
+:
 0
 name
-: 
+:
 ""
 toString
-: 
+:
 ƒ toString()
 length
-: 
+:
 0
 name
-: 
+:
 "toString"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 apply
-: 
+:
 ƒ apply()
 arguments
-: 
+:
 (...)
 bind
-: 
+:
 ƒ bind()
 call
-: 
+:
 ƒ call()
 caller
-: 
+:
 (...)
 constructor
-: 
+:
 ƒ Function()
 length
-: 
+:
 0
 name
-: 
+:
 ""
 toString
-: 
+:
 ƒ toString()
 Symbol(Symbol.hasInstance)
-: 
+:
 ƒ [Symbol.hasInstance]()
 get arguments
-: 
+:
 ƒ arguments()
 set arguments
-: 
+:
 ƒ arguments()
 get caller
-: 
+:
 ƒ caller()
 set caller
-: 
+:
 ƒ caller()
 [[FunctionLocation]]
-: 
+:
 [[Prototype]]
-: 
+:
 Object
 constructor
-: 
+:
 ƒ Object()
 hasOwnProperty
-: 
+:
 ƒ hasOwnProperty()
 isPrototypeOf
-: 
+:
 ƒ isPrototypeOf()
 propertyIsEnumerable
-: 
+:
 ƒ propertyIsEnumerable()
 toLocaleString
-: 
+:
 ƒ toLocaleString()
 toString
-: 
+:
 ƒ toString()
 valueOf
-: 
+:
 ƒ valueOf()
 length
-: 
+:
 0
 name
-: 
+:
 "valueOf"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 apply
-: 
+:
 ƒ apply()
 arguments
-: 
+:
 (...)
 bind
-: 
+:
 ƒ bind()
 call
-: 
+:
 ƒ call()
 caller
-: 
+:
 (...)
 constructor
-: 
+:
 ƒ Function()
 length
-: 
+:
 1
 name
-: 
+:
 "Function"
 prototype
-: 
+:
 ƒ ()
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 length
-: 
+:
 0
 name
-: 
+:
 ""
 toString
-: 
+:
 ƒ toString()
 Symbol(Symbol.hasInstance)
-: 
+:
 ƒ [Symbol.hasInstance]()
 get arguments
-: 
+:
 ƒ arguments()
 set arguments
-: 
+:
 ƒ arguments()
 get caller
-: 
+:
 ƒ caller()
 set caller
-: 
+:
 ƒ caller()
 [[FunctionLocation]]
-: 
+:
 [[Prototype]]
-: 
+:
 Object
 [[Scopes]]
-: 
+:
 Scopes[0]
 [[Scopes]]
-: 
+:
 Scopes[0]
 __defineGetter__
-: 
+:
 ƒ __defineGetter__()
 __defineSetter__
-: 
+:
 ƒ __defineSetter__()
 __lookupGetter__
-: 
+:
 ƒ __lookupGetter__()
 __lookupSetter__
-: 
+:
 ƒ __lookupSetter__()
 __proto__
-: 
+:
 (...)
 get __proto__
-: 
+:
 ƒ __proto__()
 set __proto__
-: 
+:
 ƒ __proto__()
 [[Scopes]]
-: 
+:
 Scopes[0]
 No properties
 [[Scopes]]
-: 
+:
 Scopes[0]
 Symbol(Symbol.hasInstance)
-: 
+:
 ƒ [Symbol.hasInstance]()
 get arguments
-: 
+:
 ƒ arguments()
 set arguments
-: 
+:
 ƒ arguments()
 get caller
-: 
+:
 ƒ caller()
 set caller
-: 
+:
 ƒ caller()
 [[FunctionLocation]]
-: 
+:
 [[Prototype]]
-: 
+:
 Object
 [[Scopes]]
-: 
+:
 Scopes[0]
 [[Scopes]]
-: 
+:
 Scopes[0]
 No properties
 Symbol(Symbol.hasInstance)
-: 
+:
 ƒ [Symbol.hasInstance]()
 get arguments
-: 
+:
 ƒ arguments()
 set arguments
-: 
+:
 ƒ arguments()
 get caller
-: 
+:
 ƒ caller()
 set caller
-: 
+:
 ƒ caller()
 [[FunctionLocation]]
-: 
+:
 [[Prototype]]
-: 
+:
 Object
 [[Scopes]]
-: 
+:
 Scopes[0]
 [[Scopes]]
-: 
+:
 Scopes[0]
 call
-: 
+:
 ƒ call()
 caller
-: 
+:
 (...)
 constructor
-: 
+:
 ƒ Function()
 length
-: 
+:
 0
 name
-: 
+:
 ""
 toString
-: 
+:
 ƒ toString()
 Symbol(Symbol.hasInstance)
-: 
+:
 ƒ [Symbol.hasInstance]()
 get arguments
-: 
+:
 ƒ arguments()
 set arguments
-: 
+:
 ƒ arguments()
 get caller
-: 
+:
 ƒ caller()
 set caller
-: 
+:
 ƒ caller()
 [[FunctionLocation]]
-: 
+:
 [[Prototype]]
-: 
+:
 Object
 [[Scopes]]
-: 
+:
 Scopes[0]
 [[Scopes]]
-: 
+:
 Scopes[0]
 Symbol(Symbol.hasInstance)
-: 
+:
 ƒ [Symbol.hasInstance]()
 get arguments
-: 
+:
 ƒ arguments()
 set arguments
-: 
+:
 ƒ arguments()
 get caller
-: 
+:
 ƒ caller()
 set caller
-: 
+:
 ƒ caller()
 [[FunctionLocation]]
-: 
+:
 [[Prototype]]
-: 
+:
 Object
 [[Scopes]]
-: 
+:
 Scopes[0]
 [[Scopes]]
-: 
+:
 Scopes[0]
 caller
-: 
+:
 (...)
 constructor
-: 
+:
 ƒ Function()
 length
-: 
+:
 0
 name
-: 
+:
 ""
 toString
-: 
+:
 ƒ toString()
 Symbol(Symbol.hasInstance)
-: 
+:
 ƒ [Symbol.hasInstance]()
 get arguments
-: 
+:
 ƒ arguments()
 set arguments
-: 
+:
 ƒ arguments()
 get caller
-: 
+:
 ƒ caller()
 set caller
-: 
+:
 ƒ caller()
 [[FunctionLocation]]
-: 
+:
 [[Prototype]]
-: 
+:
 Object
 [[Scopes]]
-: 
+:
 Scopes[0]
 [[Scopes]]
-: 
+:
 Scopes[0]
 __lookupGetter__
-: 
+:
 ƒ __lookupGetter__()
 __lookupSetter__
-: 
+:
 ƒ __lookupSetter__()
 __proto__
-: 
+:
 (...)
 get __proto__
-: 
+:
 ƒ __proto__()
 set __proto__
-: 
+:
 ƒ __proto__()
 [[Scopes]]
-: 
+:
 Scopes[0]
 [[Scopes]]
-: 
+:
 Scopes[0]
 findIndex
-: 
+:
 ƒ findIndex()
 length
-: 
+:
 1
 name
-: 
+:
 "findIndex"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 findLast
-: 
+:
 ƒ findLast()
 length
-: 
+:
 1
 name
-: 
+:
 "findLast"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 findLastIndex
-: 
+:
 ƒ findLastIndex()
 length
-: 
+:
 1
 name
-: 
+:
 "findLastIndex"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 flat
-: 
+:
 ƒ flat()
 length
-: 
+:
 0
 name
-: 
+:
 "flat"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 flatMap
-: 
+:
 ƒ flatMap()
 forEach
-: 
+:
 ƒ forEach()
 includes
-: 
+:
 ƒ includes()
 indexOf
-: 
+:
 ƒ indexOf()
 join
-: 
+:
 ƒ join()
 keys
-: 
+:
 ƒ keys()
 lastIndexOf
-: 
+:
 ƒ lastIndexOf()
 length
-: 
+:
 0
 map
-: 
+:
 ƒ map()
 pop
-: 
+:
 ƒ pop()
 push
-: 
+:
 ƒ push()
 reduce
-: 
+:
 ƒ reduce()
 reduceRight
-: 
+:
 ƒ reduceRight()
 length
-: 
+:
 1
 name
-: 
+:
 "reduceRight"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 reverse
-: 
+:
 ƒ reverse()
 length
-: 
+:
 0
 name
-: 
+:
 "reverse"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 shift
-: 
+:
 ƒ shift()
 length
-: 
+:
 0
 name
-: 
+:
 "shift"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 slice
-: 
+:
 ƒ slice()
 length
-: 
+:
 2
 name
-: 
+:
 "slice"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 some
-: 
+:
 ƒ some()
 length
-: 
+:
 1
 name
-: 
+:
 "some"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 sort
-: 
+:
 ƒ sort()
 length
-: 
+:
 1
 name
-: 
+:
 "sort"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 splice
-: 
+:
 ƒ splice()
 length
-: 
+:
 2
 name
-: 
+:
 "splice"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 toLocaleString
-: 
+:
 ƒ toLocaleString()
 length
-: 
+:
 0
 name
-: 
+:
 "toLocaleString"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 toReversed
-: 
+:
 ƒ toReversed()
 length
-: 
+:
 0
 name
-: 
+:
 "toReversed"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 toSorted
-: 
+:
 ƒ toSorted()
 length
-: 
+:
 1
 name
-: 
+:
 "toSorted"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 toSpliced
-: 
+:
 ƒ toSpliced()
 length
-: 
+:
 2
 name
-: 
+:
 "toSpliced"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 toString
-: 
+:
 ƒ toString()
 length
-: 
+:
 0
 name
-: 
+:
 "toString"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 unshift
-: 
+:
 ƒ unshift()
 length
-: 
+:
 1
 name
-: 
+:
 "unshift"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 values
-: 
+:
 ƒ values()
 length
-: 
+:
 0
 name
-: 
+:
 "values"
 arguments
-: 
+:
 (...)
 caller
-: 
+:
 (...)
 [[Prototype]]
-: 
+:
 ƒ ()
 [[Scopes]]
-: 
+:
 Scopes[0]
 with
 : needs: opa-policy-check
@@ -3005,13 +3005,13 @@ ChatGPT is still generating a response...
 
 ƒ with()
 Symbol(Symbol.iterator)
-: 
+:
 ƒ values()
 Symbol(Symbol.unscopables)
-: 
+:
 {at: true, copyWithin: true, entries: true, fill: true, find: true, …}
 [[Prototype]]
-: 
+:
 Object
 sec-fetch-dest
 empty
