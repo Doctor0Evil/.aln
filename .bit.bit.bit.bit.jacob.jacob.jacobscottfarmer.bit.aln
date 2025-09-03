@@ -1,0 +1,28 @@
+textfield {vertilow: hidden; vertical-align: bottom;}
+.ͼ1 .s.cm-gutters-before {background: var(--codeMirror-gutters-bgColor, var(--color-codemirror-gutters-bg)); border-right-width: 0;}
+.ͼ5 .cm-lineNumbers .cm-gutterElement {color: var(--codeMirror-lineNumber-fgColor, var(--color-codemirror-linenumber-text)); font-family: var(--fontStack-monospace); font-size: var(--codeMirror-gutter-fontSize, var(--codeMirror-content-fontSize, 12px)); line-height: 20px; padding: 0 16px 0 16px;}
+.ͼ5 .cm-content {caret-color: var(--codeMirror-cursor-fgColor, var(--color-codemirror-cursor)); font-family: var(--fontStack-monospace); font-size: var(--codeMirror-content-fontSize, 12px); background: var(--codeMirror-lines-bgColor, var(--color-codemirror-lines-bg)); line-height: 20px; padding-top: 8px;}
+.ͼ5.cm-foccm-widgetButtom {display: block;}
+.ͼ5.hide-help-until-focus .cm-panels-bottom onmatchingBracket {background-color: #bb555544;}
+.ͼ6 {color: var(-{display: none;}background-color: #ff332255;}
+.ͼ1 .cm-buinffer {vertical-align: text-top; height: 1em; width: 0; display: inline;}
+.ͼ1 .cm-placehocal-align: middle; color: inherit; font-size: 70%; border: 1px solid silver; padding: .2em .5em;}
+.ͼ2 .cm-textfield {background-color: white;}
+.ͼ3 .cm-textfield {bordchingBracket {background-color: #328c8252;}
+.ͼ1.cm-focused .cm-nertical-align: middle; color: inherit; font-size: 70%; padding: .2em 1em; border-radius: 1px;}
+.ͼ2 .cm-button:active {background-image: linear-gradient(#b4b4b4,tSpace {background-image: radial-gradient(cirrrorvar(--codeMirror-syntacle at 50% 55%, #aaa 20%, transparent 5%); background-position: center;}
+.ͼ1 .cm-highlightTab {background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="20"><path stroke="%23888" stroke-width="1" fill="none" d="M1 10H196L190 5M190 15L196 10M197 4L197 16"/></svg>'); background-size: auto 100%; background-position: right 90%; background-repeat: no-repeat;}
+.ͼ1 .cm-trailingSpace {odeMirror-syntax-fgColor-variable, var(--color-codemirror-syntax-variable));}
+.ͼe {color: in #d0d3d6);}-codeMirror-syntax-fgColor-keyword, var(--color-codemirror-syntax-keyword));}
+.ͼ7 {color: var(--codeMix-fgColor-string, var(--color-codemirror-syntax-string));}
+.ͼa {color: var(--codeMirror-syntax-fgColor-constant, var(--color-codemirror-syntax-constant));}
+.ͼb {color: var(--codeMirror-syntax-fgColor-constant, var(--color-codemirror-syntax-constant));}
+.ͼc {color: var(--codeMirror-syntax-fgColor-entity, var(--color-codemirror-syntax-entity));}ror-bgColor, var(--color-codemirror-bg)); color: var(--codeMirror-fgColor, var(--color-codemirror-text)); cursor: text;}
+.ͼ5 .cm-gutters, .ͼ5 .cm-gutterused .cm-selectionBackground, .ͼ5 .cm-selectionBackground, .ͼ5 .cm-content ::selection {background-color: var(--codeMirror-selection-bgColor, var(--color-codemirror-selection-bg, #d7d4f0));}
+.ͼ5.cm-focused {outline: none;}
+.ͼ5.hide-help-until-focus.cm-focused .cm-paneltton {v
+.ͼ2 .cm-button {background-image: linear-gradient(#eff1f5, #derElement tant; flex-direction: column; flex-shrink: 0; box-sizing: border-box; min-height: 100%; overflow: hidden;}
+.ͼ1 .cm-guttpadds-boposition: absolute; top: 3px; right: 4px; background-color: inherit; border: none; font: inherit; font-size: 14px; padding: 0;}
+.ͼ1 .cm-tab {display: inline-block; overflder {color: #888; display: inline-block; vertical-align: top; user-select: none;}
+.ͼ1 .cm-highli{box-sizing: border-box;}
+.ͼ1 .cm-lineNumbers .cm-gutterElement {padding: 0 3px 
