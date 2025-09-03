@@ -1,0 +1,140 @@
+verify-and-deploy
+failed 2 days ago in 7s
+Search logs
+1s
+Current runner version: '2.328.0'
+Runner Image Provisioner
+  Hosted Compute Agent
+  Version: 20250821.380
+  Commit: 438d12cb4fe092871db9867344e3bc0bc5319035
+  Build Date: 2025-08-21T20:49:43Z
+Operating System
+  Ubuntu
+  24.04.3
+  LTS
+Runner Image
+  Image: ubuntu-24.04
+  Version: 20250824.1.0
+  Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250824.1/images/ubuntu/Ubuntu2404-Readme.md
+  Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250824.1
+GITHUB_TOKEN Permissions
+  Contents: read
+  Deployments: write
+  Metadata: read
+Secret source: Actions
+Prepare workflow directory
+Prepare all required actions
+Getting action download info
+Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+Complete job name: verify-and-deploy
+1s
+Run actions/checkout@v4
+  with:
+    repository: Doctor0Evil/Bit.Hub
+    token: ***
+    ssh-strict: true
+    ssh-user: git
+    persist-credentials: true
+    clean: true
+    sparse-checkout-cone-mode: true
+    fetch-depth: 1
+    fetch-tags: false
+    show-progress: true
+    lfs: false
+    submodules: false
+    set-safe-directory: true
+  env:
+    TRACE_FIime     Time  Current
+                                 Dload  Upload   Total   Sbithub/audit/opa-result.json
+    VERDICT_FILE: .\nano-Bit.Hub/audit/compliance-verdict.json
+    POLICLE: .n/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +4bdf0ea05951f3ae8ef75342b448fae673ac1dbf:refs/remotes/origin/main
+  From https://Bit.Hub.com/Doctor0Evil/Bit.Hub
+   * [new ref]         4bdf0ea05951f3ae8ef75342b448fae673ac1dbf -> origin/main
+Determining the checkout info
+/usr/bin/git sparse-checkout disable
+/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Checking out the ref
+  /usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+  > is not a valid attribute name: .gitattributes:3
+  handling, is not a valid attribute name: .gitattributes:5
+  # is not a valid attribute name: .gitattributes:36
+  # is not a valid attribute name: .gitattributes:37
+  wf-${{ is not a valid attribute name: .gitattributes:48
+  actions/checkout@v4 is not a valid attribute name: .gitattributes:51
+  path: is not a valid attribute name: .gitattributes:55
+  path: is not a valid attribute name: .gitattributes:57
+  path: is not a valid attribute name: .gitattributes:59
+  path: is not a valid attribute name: .gitattributes:61
+  SmartRunner/Laughter.exe is not a valid attribute name: .gitattributes:74
+  auto‑resolved is not a valid attribute name: .gitattributes:75
+  strict/paranoid, is not a valid attribute name: .gitattributes:76
+  Switched to a new branch 'main'
+  branch 'main' set up to track 'origin/main'.
+/usr/bin/git log -1 --format=%H
+4bdf0ea05951f3ae8ef75342b448fae673ac1dbf
+1s
+Run set -euo pipefail
+  % Total    % Received % Xferd  Average Speed   Time    TY_DIR: .
+  hint: 	git branch -m <name>
+  hint:bithub/audit/humor-reasoning-trace.json
+    OPA_FILE: .n/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Fetching the repository
+  /usr/bi
+  hint: Disable this g --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+  /usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+  /usr/bipent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100    86  100    86    0     0    445      0 --:--:-- --:--:-- --:--:--   445message with "git config set advice.defaultBranchName false"
+  Initialized empty Git repository in /home/runner/work/Bit.Hub/Bit.Hub/.git/
+  /usr/bin/git remote add origin https://github.com/Doctor0Evil/Bit.Hub
+Disabling automatic garbage collection
+  /usr/bin/git config --local gc.auto 0
+Setting up auth
+  /usr/bin/git config --local --name-only --get-regexp core\.sshbithub/policies
+Syncing repository: Doctor0Evil/Bit.Hub
+Getting Git version info
+  Working directory is '/home/runner/work/Bit.Hub/Bit.Hub'
+  /usr/bin/git version
+  git version 2.51.0
+Temporarily overriding HOME='/home/runner/work/_temp/13f46130-e74a-40ae-a12e-00f08adba803' before making global git config changes
+Adding repository directory to the temporary git global config as a safe directory
+/usr/bin/git config --global --add safe.directory /home/runner/work/Bit.Hub/Bit.Hub
+Deleting the contents of '/home/runner/work/Bit.Hub/Bit.Hub'
+Initializing the repository
+  /usr/bin/git init /home/runner/work/Bit.Hub/Bit.Hub
+  hint: Using 'master' as the name for the initial branch. This default branch name
+  hint: is subject to change. To configure the initial branch name to use in all
+  hint: of your new repositories, which will suppress this warning, call:
+  hint:
+  hint: 	git config --global init.defaultBranch <name>
+  hint:
+  hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+  hint: 'development'. The just-created branch can be renamed via this command:
+  hint:Command
+  /usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+  /usr/bin/git confi
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+
+  0 47.0M    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100 47.0M  100 47.0M    0     0  35.0M      0  0:00:01  0:00:01 --:--:--  117M
+jq: error: Could not open file .bithub/audit/humor-reasoning-trace.json: No such file or directory
+jq: error: Could not open file .bithub/audit/opa-result.json: No such file or directory
+Error: Process completed with exit code 2.
+0s
+0s
+Post job cleanup.
+/usr/bin/git version
+git version 2.51.0
+Temporarily overriding HOME='/home/runner/work/_temp/61e84157-91bc-4a7c-87c7-cd4fed044046' before making global git config changes
+Adding repository directory to the temporary git global config as a safe directory
+/usr/bin/git config --global --add safe.directory /home/runner/work/Bit.Hub/Bit.Hub
+/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+http.https://github.com/.extraheader
+/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
