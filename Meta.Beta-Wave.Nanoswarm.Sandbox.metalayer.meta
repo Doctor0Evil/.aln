@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Nanoswarm High-Risk Dependency Metadata Schema",
+  "description": "Schema for identifying and managing unknown dependencies as high-risk metadata patterns in nanoswarm systems",
+  "type": "object",
+  "required": ["system_identifier", "threat_inversion_protocol", "adaptive_transparency", "fetch_ai_safeguards", "caution_state"],
+  "properties": {
+    "system_identifier": {
+      "type": "object",
+      "required": ["uuid", "signature_hash"],
+      "properties": {
+        "uuid": {"type": "string", "format": "uuid"},
+        "signature_hash": {"type": "string"},
+        "creation_timestamp": {"type": "string", "format": "date-time"}
+      }
+    },
+    "threat_inversion_protocol": {
+      "type": "object",
+      "required": ["inversion_triggers", "fallback_state"],
+      "properties": {
+        "inversion_triggers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["pattern_id", "detection_threshold", "action"],
+            "properties": {
+              "pattern_id": {"type": "string"},
+              "detection_threshold": {"type": "number", "minimum": 0, "maximum": 1},
+              "action": {"type": "string", "enum": ["isolate", "neutralize", "report", "transform"]}
+            }
+          }
+        },
+        "fallback_state": {
+          "type": "object",
+          "required": ["state_hash", "isolation_mode"],
+          "properties": {
+            "state_hash": {"type": "string"},
+            "isolation_mode": {"type": "string", "enum": ["complete", "partial", "network-only"], "default": "complete"}
+          }
+        }
+      }
+    },
+    // ... (truncated for brevity; full schema includes adaptive_transparency, fetch_ai_safeguards, etc.)
+  }
+}
