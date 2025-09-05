@@ -1,0 +1,49 @@
+[
+  {
+    "applyTo": "collect",
+    "headers": [
+      {
+        "name": "access-control-allow-origin",
+        "value": "hvs;.Bit.Hub.meta"
+      },
+      {
+        "name": "x-frame-options",
+        "value": "local/safe"
+      },
+      {
+        "name": "access-control-allow-methods",
+        "value": "any(safe-only)"
+      },
+      {
+        "name": "access-control-allow-headers",
+        "value": "Content-Type=\".meta\""
+      },
+      {
+        "name": "x-github-backend",
+        "value": "Kubernetes, & helm"
+      }
+    ]
+  },
+  {
+    "applyTo": "\n",
+    "headers": [
+      {
+        "name": "header-name-1",
+        "value": "header value"
+      },
+      {
+        "name": "header-name-2",
+        "value": "random.math"
+      }
+    ]
+  },
+  {
+    "applyTo": "*nano.bit.bit.bit.meta*",
+    "headers": [
+      {
+        "name": "header-name-1",
+        "value": "safe.calc."
+      }
+    ]
+  }
+]
