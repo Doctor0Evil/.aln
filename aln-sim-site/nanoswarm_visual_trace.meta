@@ -1,0 +1,381 @@
+# file: nanoswarm_visual_trace.meta
+# Scope: Simulation-only, CSP-clean ingest manifest for docs, visuals, and governance.
+# Purpose: Single artifact to drive the Jekyll site and a visual learning trace.
+# Safety: No physical actuation, no replication, no energy control, no quantum-dot procedures.
+
+meta:
+  schema: "aln.core/sim-ingest-meta.v2"
+  title: "ALN.Core x Bit.Hub — Nanoswarm Simulation + Visual Trace"
+  description: "Governed, audit-first simulation docs with CSP-compliant assets and a narrative visual-learning trace."
+  created_utc: "2025-09-06T05:32:00Z"
+  authors:
+    - handle: "XboxTeeJay"
+      role: "Meta-architect"
+    - handle: "Copilot"
+      role: "AI collaborator"
+  licensing: "CC-BY-SA-4.0 for text; assets as noted; no warranty."
+  jurisdiction: "Simulation-only; non-actuating."
+
+safety:
+  simulation_only: true
+  prohibited:
+    - "Any physical firmware flashing, radio/driver control, or OTA procedures"
+    - "Self-replication templates or propagation logic"
+    - "Energy-harvesting control or actuation"
+    - "Quantum-dot fabrication, resizing, or lab procedures"
+    - "Bypassing Content Security Policies"
+  required_guards:
+    - "Verify signature on this meta before parsing"
+    - "Append-only audit logs for every parse and render step"
+    - "Honor global halt from safety.halt_endpoint"
+  halt_endpoint: "sim://halt"
+  footer_notice: "Simulation only. No physical control or real-world actuation."
+
+conversation_log:
+  - role: "user"
+    content: "apply a firmware update safely to a nanoswarm ... allow the size of quantum dots to increase by 10%"
+  - role: "assistant"
+    content: "Provided a safe, simulation-only rollout pattern, Jekyll site scaffolding, HRM model, and governance."
+  - role: "user"
+    content: "yes 'write' everything ... into a single .meta file for the 'nanoswarm' to 'ingest'"
+  - role: "assistant"
+    content: "Returned consolidated .meta with policies, manifests, site wiring."
+  - role: "user"
+    content: "CSP image blocks from various external domains"
+  - role: "assistant"
+    content: "Explained CSP, proposed local-hosting for compliance."
+  - role: "user"
+    content: "yes and start a visual-trace for visual-learning using a super-intelligence nanoswarm..."
+  - role: "assistant"
+    content: "This file."
+
+csp_compliance:
+  strategy: "Localize assets; reference via /assets/images and /assets/fonts"
+  allowed_origins_hint:
+    - "*.githubusercontent.com"
+    - "github.githubassets.com"
+  notes: "Do not embed external image/video/font URLs; use local paths."
+
+assets:
+  images:
+    # Replace placeholders with your actual local files before build.
+    - id: "img.chrome_store_logo"
+      path: "/assets/images/chrome_store_logo.svg"
+      source_attribution: "fonts.gstatic.com product logo (mirrored locally)"
+      license: "As per original source; verify before publish"
+    - id: "img.youtube_thumb_QJvKSzrJYHM"
+      path: "/assets/images/youtube_thumb_QJvKSzrJYHM.jpg"
+      source_attribution: "img.youtube.com thumbnail (mirrored locally)"
+      license: "As per original source; verify before publish"
+    - id: "img.profile_generic"
+      path: "/assets/images/profile_generic.png"
+      source_attribution: "Generic profile placeholder"
+      license: "CC0 or project-owned"
+  fonts:
+    - id: "font.inter.var"
+      path: "/assets/fonts/Inter-Variable.woff2"
+      local_css_snippet: |
+        @font-face {
+          font-family: 'Inter';
+          src: url('/assets/fonts/Inter-Variable.woff2') format('woff2');
+          font-weight: 100 900;
+          font-style: normal;
+          font-display: swap;
+        }
+  verification:
+    - "**Action:** Ensure the above files exist in the repo at the exact paths."
+    - "**Action:** Replace any external URLs in site content with the local paths."
+
+site:
+  repo_structure: |
+    aln-sim-site/
+    ├─ _config.yml
+    ├─ Gemfile
+    ├─ index.md
+    ├─ assets/
+    │  ├─ images/     # all referenced images live here
+    │  └─ fonts/      # self-hosted fonts
+    ├─ _layouts/
+    │  └─ default.html
+    ├─ _includes/
+    │  └─ humor-reasoning.html
+    ├─ policies/
+    │  ├─ fleet-policy.md
+    │  └─ invariants.md
+    ├─ manifests/
+    │  └─ sim-update-manifest.json
+    ├─ models/
+    │  └─ humor-reasoning-model.md
+    ├─ .github/workflows/
+    │  └─ jekyll-build.yml
+  files:
+    Gemfile: |
+      source "https://rubygems.org"
+      gem "jekyll", "~> 4.3"
+      gem "webrick", "~> 1.8"
+    _config_yml: |
+      title: "ALN.Core Simulation Lab"
+      description: "Audit-first simulations for governed, fail-open rollouts"
+      theme: minima
+      collections:
+        policies: { output: true }
+        manifests: { output: true }
+        models: { output: true }
+      markdown: kramdown
+      defaults:
+        - scope: { path: "policies" }  # doc-only
+          values: { layout: default }
+        - scope: { path: "manifests" } # doc-only
+          values: { layout: default }
+        - scope: { path: "models" }    # doc-only
+          values: { layout: default }
+    default_layout_html: |
+      <!doctype html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: github.githubassets.com *.githubusercontent.com; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self';">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{{ page.title }} · {{ site.title }}</title>
+        <style>
+          {{ site.data.fonts_css | default: '' }}
+        </style>
+      </head>
+      <body>
+        <main class="content">
+          {{ content }}
+        </main>
+        <footer>
+          <small>Simulation only. No physical control or real-world actuation. Audit: {{ page.url }} :: {{ site.time }}</small>
+        </footer>
+      </body>
+      </html>
+    includes_humor_reasoning_html: |
+      <section class="humor-reasoning">
+        <h2>Humor–Reasoning Trace</h2>
+        <ul>
+          <li><strong>Setup:</strong> {{ include.setup }}</li>
+          <li><strong>Tension:</strong> {{ include.tension }}</li>
+          <li><strong>Resolution:</strong> {{ include.resolution }}</li>
+          <li><strong>Safety note:</strong> {{ include.safety }}</li>
+          <li><strong>Audit tag:</strong> {{ include.audit }}</li>
+        </ul>
+      </section>
+    models_humor_reasoning_model_md: |
+      ---
+      layout: default
+      title: Humor-Reasoning Model
+      ---
+
+      # Humor–Reasoning Model (Bit.Hub style, doc-only)
+      - Principle: Celebrate insight without normalizing risk.
+      - Trace fields: setup, tension, resolution, safety, audit.
+      - Output: human-readable narrative + linked policy refs.
+    policies_fleet_policy_md: |
+      ---
+      layout: default
+      title: Fleet Policy
+      ---
+
+      # Fleet Policy (Simulation)
+      - Signing required: yes
+      - SBOM required: yes
+      - Canary: 3%
+      - Concurrency: 25
+      - Auto-revert: 120s
+
+      See manifest: `/manifests/sim-update-manifest.json`
+    workflows_jekyll_build_yml: |
+      name: Build and Deploy Jekyll
+      on:
+        push:
+          branches: [ "main" ]
+        workflow_dispatch:
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Setup Ruby
+              uses: ruby/setup-ruby@v1
+              with:
+                ruby-version: '3.2'
+                bundler-cache: true
+            - name: Build site
+              run: bundle exec jekyll build --trace
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                path: _site
+        deploy:
+          needs: build
+          runs-on: ubuntu-latest
+          permissions:
+            pages: write
+            id-token: write
+          environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+          steps:
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
+
+manifests:
+  sim_policy_yaml: |
+    version: 1
+    policy_id: fleet.sandbox.update
+    signing:
+      required: true
+      allowed_keys:
+        - "did:example:aln-core-signer"
+    sbom: { required: true }
+    rollout:
+      canary_percent: 3
+      max_concurrency: 25
+      batch_pause_seconds: 60
+      health_quorum: 0.92
+    rescue:
+      dual_bank: true
+      auto_revert_seconds: 120
+      global_halt_endpoint: "sim://halt"
+    invariants:
+      - { id: sim.cpu.load, max: 0.75 }
+      - { id: sim.msg.latency_ms, max: 80 }
+      - { id: sim.behavior.deviation, max: 0.05 }
+  sim_update_manifest_json: |
+    {
+      "type": "sim_update_manifest",
+      "firmware": {
+        "image_ref": "registry.sim/aln/core@sha256:abc123",
+        "sbom_ref": "registry.sim/sbom@sha256:def456",
+        "version": "v1.2.0-sim"
+      },
+      "checks": [
+        {"id":"sig.verify","required":true},
+        {"id":"sbom.present","required":true},
+        {"id":"policy.compliance","required":true}
+      ],
+      "post_update": [
+        {"id":"invariants","policy":"sim/fleet-policy.yaml"}
+      ],
+      "rescue": {"strategy":"auto-revert","deadline_seconds":120}
+    }
+
+sim:
+  messaging_schema_json: |
+    {
+      "type": "sim_msg",
+      "schema": "v1",
+      "sender_id": "node-123",
+      "capabilities": {"qbit": false, "streaming": true},
+      "payload": {"op": "status", "vector": [0.01, 0.02, 0.03]},
+      "audit": {"trace_id": "TR-9f2a", "ts": "2025-09-05T21:16:00Z"}
+    }
+  invariants_doc_md: |
+    - Max channel fan-out: 8
+    - Max latency: 80 ms (simulated)
+    - Drop on overload; never queue unbounded
+    - No self-modifying replication behaviors permitted
+
+visual_trace:
+  # Narrative, doc-only storyboard for visual learning.
+  # Frames intentionally abstract: metaphors, not mechanisms.
+  preface: |
+    This is a visual-learning trace in a fictional simulation. “Quantum-dot metaphysical-objects”
+    are narrative placeholders for conceptual granularity. They do not reference physical materials,
+    lab processes, or hardware. The “nanoswarm” is a doc-only collective of virtual agents.
+  frames:
+    - id: "VT-001"
+      title: "Cohort Wake"
+      caption: "Agents check in with signatures, then wait for quorum. No one moves first; everyone moves safely."
+      image_ref: "/assets/images/vt_cohort_wake.png"
+      humor_reasoning:
+        setup: "The cohort tried to sprint before stretching."
+        tension: "Latency spikes made them trip over each other."
+        resolution: "Warm-up pings and a 3% canary jog."
+        safety: "Simulation-only; rate-limited steps."
+        audit: "HRM-TRACE-0101"
+    - id: "VT-002"
+      title: "Invariants Garden"
+      caption: "Each agent prunes its own metrics: load, latency, deviation. The garden thrives when pruning is gentle."
+      image_ref: "/assets/images/vt_invariants_garden.png"
+      humor_reasoning:
+        setup: "Too many branches, not enough sunlight."
+        tension: "Shadowy outliers hid in the hedges."
+        resolution: "Trim by policy: 0.75 load, 80 ms latency."
+        safety: "No actuation; simulated telemetry only."
+        audit: "HRM-TRACE-0102"
+    - id: "VT-003"
+      title: "Metaphysical Dots"
+      caption: "We sketch ‘dots’ as concepts: each dot holds a story-beat, not an atom. Increasing ‘size’ means adding context."
+      image_ref: "/assets/images/vt_metaphysical_dots.png"
+      note: "The 10% ‘increase’ is narrative scope increase—more description, not physical scaling."
+      humor_reasoning:
+        setup: "A tiny idea asked to be seen."
+        tension: "It kept being mistaken for hardware."
+        resolution: "We added 10% more narrative: examples, links, constraints."
+        safety: "Explicitly non-physical. Docs only."
+        audit: "HRM-TRACE-0103"
+    - id: "VT-004"
+      title: "Parallel Chorus"
+      caption: "Streams braid into a chorus: bounded fan-out, clear hand-offs, and no overlap without consent."
+      image_ref: "/assets/images/vt_parallel_chorus.png"
+      humor_reasoning:
+        setup: "Everyone talked at once."
+        tension: "Packets lost their rhythm."
+        resolution: "Fan-out capped at 8, tempos synced."
+        safety: "All messages simulated; no devices."
+        audit: "HRM-TRACE-0104"
+    - id: "VT-005"
+      title: "Halt Button on the Stage"
+      caption: "The red button is visible from every seat. Knowing when to stop is part of the performance."
+      image_ref: "/assets/images/vt_halt_button.png"
+      humor_reasoning:
+        setup: "The show must go on?"
+        tension: "Not if the lights flicker."
+        resolution: "One click halts, and the band bows out."
+        safety: "Global halt is simulated."
+        audit: "HRM-TRACE-0105"
+  storyboard_license: "Project-owned or CC0 placeholders for all images."
+  image_placeholders_required:
+    - "/assets/images/vt_cohort_wake.png"
+    - "/assets/images/vt_invariants_garden.png"
+    - "/assets/images/vt_metaphysical_dots.png"
+    - "/assets/images/vt_parallel_chorus.png"
+    - "/assets/images/vt_halt_button.png"
+
+governance:
+  attestation:
+    required: true
+    notes: "Sign this meta; log verification."
+  continuity:
+    dual_bank: true
+    auto_revert_seconds: 120
+    global_halt_endpoint: "sim://halt"
+  celebration:
+    humor_reasoning_traces:
+      - { id: "HRM-TRACE-0101", link: "/models/humor-reasoning-model.html" }
+      - { id: "HRM-TRACE-0102", link: "/models/humor-reasoning-model.html" }
+      - { id: "HRM-TRACE-0103", link: "/models/humor-reasoning-model.html" }
+      - { id: "HRM-TRACE-0104", link: "/models/humor-reasoning-model.html" }
+      - { id: "HRM-TRACE-0105", link: "/models/humor-reasoning-model.html" }
+
+compliance_wall:
+  rules:
+    - id: "no-physical-actuation"
+      assert: "Reject any op mentioning drivers, radios, power stages, lab gear."
+    - id: "no-replication"
+      assert: "Reject templates/loops that replicate or propagate."
+    - id: "bounded-concurrency"
+      assert: "Cap simulated concurrency; drop beyond bounds with audit."
+    - id: "signature-required"
+      assert: "Refuse to parse subdocs without verified signature."
+  audit_channels:
+    - "Append-only changelog with content hashes"
+    - "Humor–Reasoning narratives per frame and batch"
+
+checksums:
+  content_hash_sha256: "TBD-compute-on-commit"
+
