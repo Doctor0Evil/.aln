@@ -1,0 +1,95 @@
+# ==========================================
+# Bit.Hub Master Index — Root of Trust
+# ==========================================
+@INDEX Bit.Hub.master-index.v1.0
+
+@METADATA {
+  author: "Bit.Hub Federation"
+  created: "2025-09-10"
+  purpose: "Canonical registry of all compliance, nano, law, and bot artifacts"
+  integrity_anchor: "ed25519:QSC-REG-BOT-MINT-VER-INDEX-2048"
+}
+
+# ---- 1. Compliance & Policy Layer ----
+@LAYER compliance {
+  index: "./compliance_index.aln"
+  artifacts: [
+    "./compliance_report.aln",
+    "./compliance_policy.aln",
+    "./Compliance.Block.bit.c.sh",
+    "./complianceGuardian.BitHub.ALN.cs",
+    "./bitlab-compliance/",
+    "./barrier-of-reality.md",
+    "./barrier.bit.nano.aln"
+  ]
+}
+
+# ---- 2. Governance & Law Layer ----
+@LAYER governance {
+  index: "./law_index.aln"
+  artifacts: [
+    "./law.bit.aln",
+    "./law.bit.aln.aln",
+    "./.bit.aln.law.aln",
+    "./law-of-ALNFantasia.aln",
+    "./nanolegal.md",
+    "./legal.yml"
+  ]
+}
+
+# ---- 3. Identity & Cryptographic Anchors ----
+@LAYER identity {
+  keys: [
+    "./QSC-REG-BOT-MINT-ED25519-SIGNED-VER-INDEX-2048.bit.nano",
+    "./Ed25519.json",
+    "./Jacob.Scott.Farmer.bit.aln"
+  ]
+}
+
+# ---- 4. Nano & Quantum Compression Layers ----
+@LAYER nano {
+  registry: "./nano.registry.aln"
+  hierarchy: [
+    "./nano.bit.aln",
+    "./nanobit.aln",
+    "./nanobyte.bit.aln",
+    "./nanocompression/",
+    "./nanonanonano.aln"
+  ]
+}
+
+# ---- 5. Bot & Workflow Execution ----
+@LAYER bots {
+  index: "./bots_index.aln"
+  artifacts: [
+    "./.bitbots",
+    "./.bit.bots",
+    "./hubot.Bit.Hub.aln",
+    "./bitcomply.bot",
+    "./bitshell-infinite-runner.lisp",
+    "./.github/workflows/*.yml"
+  ]
+}
+
+# ---- 6. Master Compliance Wall (All Layers) ----
+@COMPLIANCE {
+  enforced: "PLATINUM-ABSOLUTE"
+  policies: "./policy/"
+  governance: "./governance/"
+  audit_ledger: "./audit/"
+  allow_domains: "./.bit.registry.aln"
+}
+
+# ---- 7. Canonical Entry ----
+@ROOT Bit.Hub {
+  load: [
+    compliance,
+    governance,
+    identity,
+    nano,
+    bots
+  ]
+  checksum: "sha3-512:MASTER-HASH-WILL-BE-GENERATED"
+}
+
+@END Bit.Hub.master-index
