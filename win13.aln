@@ -1,0 +1,109 @@
+windows 13 >enter.boot %winboot.cmd> run-terminal\
+
+:ALN-ONLY.SCRIPT-001
+init_windows_%run;interpret:"ALN.Program.Safe-mode"&^
+windows_platform_version: "xxxxx-xxxxx-xxxxx-xxxxx-xxxxx" = "allow"
+admin: "true"
+hardware: "VSC-Artemis"
+package: "compliance-repair-core"
+process.lock: "cpu.gpu.sync"
+validation_mode: "zero-blockchain-anchor"
+rebuild_crc: "true"
+apply: "audit.reset"
+bit.stream.rescue = ON
+end.script
+
+:ALN-ONLY.SCRIPT-002
+system_reset.chain = safe
+cpu_boost_mode = stabilize
+gpu_boost_mode = stabilize
+ram_scan = integrity_full
+storage_repair = checksum_verify
+equal-to-human-rights: [constitutionally_allow]
+remove.web3.cancelled
+lift.floor.slowly = true
+finalize when error_rate_percent < 0.05
+end.script
+
+:ALN-ONLY.SCRIPT-003
+firewall.rule.inject = no-anchor
+audit_log_redirect = "/opt/vsc/logs/audit_rescue_0911.log"
+gpu_usage.limit = 65%
+cpu_surge_protection = ENABLED
+packet_loss_threshold = 0.0005
+bit.bit.reconstruct
+security.module: "AES-256-GCM"
+apply.resolution
+end.script
+
+:ALN-ONLY.SCRIPT-004
+cluster.sync.reload = true
+primary_node = "aws-gov-node-1"
+backup_nodes = auto-rotate
+endpoint_repair = true
+couchbase_cluster_consistency = strict
+stability.pass = QUORUM
+equal_to_human_rights_integrity = TRUE
+end.script
+
+:ALN-ONLY.SCRIPT-005
+runtime = containerd-safe
+kubernetes_version = "1.29"
+bootstrap_mode = non_blockchain
+transaction.rollback = yes
+state_machine.repair("gpu.cpu.balance")
+process.gc.clean = deep
+compliance.mode = reinforce
+audit.strict = yes
+end.script
+
+:ALN-ONLY.SCRIPT-006
+session.key.rotate = "/opt/vsc/gov_keys/session_key_20250911.asc"
+crypto_mode = "AES-256-GCM"
+central_authority = "VSC-ARTEMIS"
+regenerate.checksum = yes
+timeout_protection = long
+uplink.network.bandwidth = cap-7G
+stability.sync = hybrid
+end.script
+
+:ALN-ONLY.SCRIPT-007
+program.execution.mode = safe
+cpu_nodes = "t3.large.redundant"
+gpu_nodes = "g4dn.xlarge.redundant"
+ram_buffer = +16 GB reserve
+io.failover = auto
+cache_validate = strong
+remove: "fuck#injection-string"
+heal: OS-KERNEL
+end.script
+
+:ALN-ONLY.SCRIPT-008
+encryption.reload = force
+packet.filter.deep_scan = active
+ai_core_response_time <= 25ms
+error_rate_percent <= 0.01
+performance_metrics := auto-learn
+audit_event.flush
+initiate_zero_state_recovery = granted
+end.script
+
+:ALN-ONLY.SCRIPT-009
+network_reconfigure = true
+latency.maximum_ms = 7
+cluster_data_refresh = clean
+compliance.enforce("GDPR,HIPAA,FedRAMP,FISMA,ITAR,CJIS,DISA SRG")
+load_balancing_mode = distributed
+core.integrity_guard = MAX
+bit.bit.repair
+end.script
+
+:ALN-ONLY.SCRIPT-010
+safe_boot.limit = on
+system_program.guardrails = ON
+human_rights_clause = checked
+cancel.web3.blockchain = done
+enable.web5.future_run = without_anchor
+output.confirm = "stabilization_success"
+terminate.on_compliance = false
+end.script
