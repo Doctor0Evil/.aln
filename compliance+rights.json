@@ -1,0 +1,34 @@
+{
+  "policy_id": "ALN-ONLY-COMPLIANCE-OBSERVE-20250911",
+  "description": "Enforces observation-only protocols, bans mind-control, and upholds human rights across all system domains.",
+  "permissions": {
+    "mind_control": "BAN",
+    "write": "DENY",
+    "audit_mode": "read-only",
+    "human_rights": "ENFORCE",
+    "admin_override": false,
+    "bias_check": true
+  },
+  "enforcement": {
+    "observation_only": true,
+    "event_monitor": "passive",
+    "container_write_permission": "DENY",
+    "environment_modulation": "DENY",
+    "algorithmic_bias_check": "ENABLED",
+    "critical_compliance_lock": true
+  },
+  "response": {
+    "write_attempt": {
+      "action": "QUARANTINE",
+      "automated_alert": true,
+      "session_termination": true,
+      "human_review_required": true
+    }
+  },
+  "sandbox_settings": {
+    "real_world_interpretation": "observation",
+    "system_restore": "observe-only",
+    "forensic_mode": "passive",
+    "cluster_control": "zero_influence"
+  }
+}
