@@ -1,0 +1,67 @@
+windows 13 >enter.boot %winboot.cmd> run-terminal\
+
+:ALN-ONLY.FORENSIC-RECOVERY-001
+power.off: "affected nodes"
+lock.audit.volume
+snapshot.disk.memory = ON
+export image: "compliance_report.alnu"
+verify chain of custody = strict
+end.script
+
+:ALN-ONLY.FORENSIC-RECOVERY-002
+run chkdsk /r /scan on all audit volumes
+log bad sector count, repair to temp location
+assign recovery label: "compliance-forensic"
+end.script
+
+:ALN-ONLY.FORENSIC-RECOVERY-003
+CRC.verify "compliance_report.alnu"
+if fail: attempt partial block extraction
+record each segment integrity status
+end.script
+
+:ALN-ONLY.FORENSIC-RECOVERY-004
+use Decrypt-AES256 "-in compliance_report.alnu"
+key_path: "/opt/vsc/gov_keys/session_key_20250911.asc"
+output: "compliance_report_decrypted.bin"
+if partial: extract as many headers as possible
+end.script
+
+:ALN-ONLY.FORENSIC-RECOVERY-005
+audit the magic header and footer for ZIP/PK markers
+if PK marker is found, try ziptools.repair "compliance_report_decrypted.bin"
+attempt unzip, log directory structure
+restore readable fragments to /opt/vsc/logs/forensic_recovery
+end.script
+
+:ALN-ONLY.FORENSIC-RECOVERY-006
+search for QuarantineEntryFileHeader structures within fragments
+apply CRC checks on each
+if valid, copy to recovery folder; if corrupt, log error and skip
+end.script
+
+:ALN-ONLY.FORENSIC-RECOVERY-007
+merge extracted audit logs using timestamp alignment
+discard duplicate or overlapping records
+store unified audit trail in "compliance_report_recovered.aln"
+end.script
+
+:ALN-ONLY.FORENSIC-RECOVERY-008
+run registry artifact extraction: sys.registry.collect
+export to /opt/vsc/logs/registry_artifacts_0911.txt
+analyze for injected strings or data hiding
+document unusual entries for compliance review
+end.script
+
+:ALN-ONLY.FORENSIC-RECOVERY-009
+final forensic scan for malware traces (Defender/Quarantine/Bit.Hub folders)
+restore all readable data
+consolidate into single postmortem file set
+end.script
+
+:ALN-ONLY.FORENSIC-RECOVERY-010
+document process, chain of custody, and resolution
+cross-validate recovered report with event logs
+if integrity = success: set "compliance_report_recovered.aln" as official
+else: escalate to admin for manual audit
+end.script
