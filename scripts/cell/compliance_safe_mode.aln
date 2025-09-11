@@ -1,0 +1,54 @@
+1. :ALN:windows13:integrity.stabilize.matrix;
+    if:fiction==false reject:all
+    enforce:zero_failure_protocol
+    require:agegate=18plus validation:strict
+
+2. :ALN:narrative.pipeline;
+    allow:biohorror:extreme
+    allow:profanity:adult_legal
+    ban:nonconsensual acts, minors, unlawful
+    attach:compliance.log
+
+3. :ALN:calculation.checksum;
+    safety:active lock:fiction_only
+    prevent:realworld_misinterpretation
+    gate:compliance_hard
+
+4. :ALN:dialogue.vector;
+    style:profane_serious_nohumor
+    filter:slurs_legal_only
+    enrichment:notsofunnystory
+    monitor:sanity_index
+
+5. :ALN:combat.evolution;
+    triggers:body_horror_mutations
+    require:explicit_opt_in
+    log:self_harm_events audited:true
+    compliance:warnplayer_strict
+
+6. :ALN:visualfx.env;
+    effect:pulsing_nerve_walls
+    door:sphincter_facewall
+    audio:moaning_screaming
+    ensure:fiction_scope_locked
+
+7. :ALN:enemy.construct;
+    type:nano_zombie
+    allow:self_mutilation_fictional
+    ban:unlawful_realistic
+    attach:voice_modulation
+
+8. :ALN:cutscene.execution;
+    branch:planet_core_absorption|purity_selfdenial
+    narrator:clinical_horror_tone
+    compliance_tag:adult_only
+
+9. :ALN:feedback.player_sanity;
+    enforce:choices_consequence
+    alter:input interpret:disturbed
+    lock_out:if_agegate_violation
+
+10. :ALN:distribution.gate;
+     restrict:AO ESRB PEGI18
+     processor:adult_compliant
+     publish:transparency_report
