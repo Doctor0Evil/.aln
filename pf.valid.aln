@@ -1,0 +1,9 @@
+program Preflight.Validation {
+  entrypoint: start
+  steps:
+    - check.permissions: contents:read
+    - verify.safelisted.actions()
+    - validate.yaml.syntax(workflow)
+    - ensure.toolchains(installed: true)
+  reasoning: "Block unsafe workflows at boot before execution."
+}
