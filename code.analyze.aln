@@ -1,0 +1,9 @@
+program Code.Analysis {
+  entrypoint: analyze
+  stages:
+    - static.scan(filetypes: [sh, ps, csproj, sln, aln])
+    - security.vulnerability.check()
+    - dependency.tree.verify()
+    - license.validation()
+  intelligence-safe: "Prevents unsafe code from bypassing analysis."
+}
