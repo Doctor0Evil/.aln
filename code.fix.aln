@@ -1,0 +1,9 @@
+program Code.Fixer {
+  entrypoint: auto_correct
+  tasks:
+    - apply.patches()
+    - update.versions(whitelisted: true)
+    - resolve.permission.issues()
+    - normalize.configs()
+  notes: "Ensure compatibility without enabling unsafe features."
+}
