@@ -1,0 +1,9 @@
+program Deployment.Runner {
+  entrypoint: deploy
+  flow:
+    - build.artifacts()
+    - run.tests()
+    - package.output()
+    - registry.upload()
+  requirement: "All previous compliance gates passed"
+}
