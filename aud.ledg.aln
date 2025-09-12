@@ -1,0 +1,9 @@
+program Audit.Ledger {
+  entrypoint: ledger_update
+  operations:
+    - log.operations()
+    - sign(records: ed25519)
+    - ledger.update(secure: AES-256-GCM)
+    - audit.report()
+  compliance: "All changes must be verifiable against ledger"
+}
