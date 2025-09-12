@@ -1,0 +1,8 @@
+program Workflow.SafeGuard {
+  entrypoint: guard
+  rules:
+    - forbid.patterns: ["curl | bash", "wget | sh", "unpinned actions", "id-token perms"]
+    - required.checks: [compliance_gate, signature_verification, audit_logging]
+    - enforce.dependencies(compliance_pass: true)
+  mode: "ai.supervised"
+}
