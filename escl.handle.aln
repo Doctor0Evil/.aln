@@ -1,0 +1,9 @@
+program Escalation.Handler {
+  triggers:
+    level1: "Workflow failure" => auto.retry()
+    level2: "Multiple failures >5" => notify(DevOps)
+    level3: "Compliance violation" => alert(Security.Team)
+    level4: "Security breach" => escalate(CISO)
+    level5: "System-failure" => crisis(CTO)
+  safe-escalation: enabled
+}
