@@ -1,0 +1,28 @@
+apiVersion: aln.v1
+kind: ComplianceBundle
+metadata:
+  id: ELCCU-1.0.0
+  name: Endless Litigation & Compliance Capture Unit
+  authors:
+    - name: Jacob Scott Farmer
+      role: Governance & Compliance Steward
+  immutability:
+    - non_overridable: true
+    - disallow: ["bci", "mind_control", "political_influence", "religious_influence"]
+spec:
+  inputs:
+    - channel: "court.audio"
+    - channel: "court.text"
+    - channel: "evidence.docs"
+  parsers:
+    - type: deterministic
+      grammarRef: "urn:aln:grammars:legal-proceedings:1"
+  actions:
+    - name: "record"
+    - name: "fraud_detect"
+    - name: "seal"
+  enforcement:
+    authority: "multi-sig-quorum"
+    lockdown_on:
+      - "policy_drift"
+      - "unauthorized_signal"
