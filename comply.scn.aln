@@ -1,0 +1,9 @@
+program Compliance.Scan {
+  entrypoint: scan
+  steps:
+    - run.opa(checks: security, policies: rego)
+    - validate.aln.manifests()
+    - profanity.allowlist.check()
+    - generate.compliance.report(format: ed25519_signed)
+  adaptive-learning: enforce(strict_mode=true)
+}
