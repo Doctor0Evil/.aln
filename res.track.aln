@@ -1,0 +1,11 @@
+program Resource.Tracker {
+  entrypoint: allocate
+  resources:
+    compliance_jobs: 100
+    analysis_jobs: 50
+    build_jobs: 75
+    deployment_jobs: 150
+  constraints:
+    max_concurrent: 2
+  adaptive-reduction: auto(based_on_priority)
+}
