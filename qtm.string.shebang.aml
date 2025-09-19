@@ -1,0 +1,7 @@
+qtm.string.shebang: {</\.aml/\>} ->
+  task_automation("daily_spam_redirect",
+                  schedule="24h",
+                  action="return_to_sender+block",
+                  filters={header:"spam", behavior:"malicious"},
+                  safeguards=[traceback_verification, identity_lock, recursive_flagging],
+                  escalation="auto_blacklist+notify_security")
