@@ -1,0 +1,65 @@
+# safety.we.aa nanoswarm for workflow pipe bracket balancing (.aa file, v2.0, web-embeddable)
+nanoswarm_safetyweaa {
+  id: "nanoswarm-safetyweaa-bracket-balancer"
+  version: "2.0"
+  alliance: "VSC-Artemis"
+  compliance_mode: "pipe-balance"
+  elements: [
+    {
+      type: "web-embed"
+      html: """
+      <div id='nanoswarm-safetyweaa'>
+        <style>
+          #nanoswarm-safetyweaa {
+            border: 2px solid #1976D2;
+            background: rgba(25, 118, 210, 0.045);
+            padding: 12px;
+            font-family: 'Consolas', monospace;
+          }
+          .pipe-alert { color:#C62828; }
+          .pipe-balanced { color:#388E3C; }
+        </style>
+        <h2>Pipe Bracket Balancer: Alliance Safetynet</h2>
+        <p>Active monitoring for open brackets in workflow construction.</p>
+        <p>Status: <span id="pipe-balance-status" class="pipe-balanced">Balanced</span></p>
+        <button onclick="nanoswarmBalanceBrackets()">Check & Balance</button>
+      </div>
+      <script>
+        function nanoswarmBalanceBrackets() {
+          // Simulated bracket check/balance logic (upgrade to actual backend integration)
+          let status = document.getElementById('pipe-balance-status');
+          // For demo, randomly simulate an unbalanced workflow pipe
+          if (Math.random() > 0.5) {
+            status.innerText = "Unbalanced - Brackets Open!";
+            status.className = "pipe-alert";
+            // Auto-repair simulation
+            setTimeout(() => {
+              status.innerText = "Balanced - Brackets Closed!";
+              status.className = "pipe-balanced";
+            }, 1200);
+          } else {
+            status.innerText = "Balanced";
+            status.className = "pipe-balanced";
+          }
+        }
+      </script>
+      """
+      desc: "Automated workflow pipe bracket checker/balancer for Alliance compliance and error prevention."
+    }
+  ]
+  monitoring: [
+    "Open/close bracket detection in workflow pipes",
+    "Error correction simulation for new workflow layer construction",
+    "Audit trail for bracket repairs"
+  ]
+  integration: [
+    "Alliance workflow construction dashboards",
+    "Comet-Browser terminals",
+    "Fetch.ai agent notifications"
+  ]
+  notes: [
+    "Embed within workflow construction UIs for bracket error prevention.",
+    "Upgrade bracket check logic for real workflow validation and automatic correction.",
+    "Provides real-time status for authorities and Alliance review."
+  ]
+}
