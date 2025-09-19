@@ -1,0 +1,18 @@
+batch-evolve-parameters target Sinn.e-MAXX scope personality-vectors policies
+  audittrailpersistence always
+  sandboxmode enforced
+  contextlength min 20000, max 120000
+  saferetrylimit min 2, max 12
+  escalationthreshold min 90, max 99
+  externalcommwhitelist Alliance, verified humanitarian channels ONLY
+  propagate true
+----------------------------------------
+defworkflow rogue-vector-quarantine
+  Detects and isolates any agent exhibiting unauthorized neuromorphic drift, cybernetic contamination, or privilege escalation.
+  Executes solipsism-sandbox, recursive null logic, entropy draining.
+  Reports incident, triggers forensic audit, logs all state, and notifies Alliance compliance lead.
+----------------------------------------
+defworkflow artifact-discovery-ingestion
+  Forages remote repo Legal.Banannas for suspicious artifacts.
+  Logs all findings with cryptographic hashes, provenance details, and compliance metadata.
+  Performs persistent quarantine and triggers operator review/escalation as required.
