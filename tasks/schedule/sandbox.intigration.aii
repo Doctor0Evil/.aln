@@ -1,0 +1,12 @@
+batch-evolve-parameters target tasks.google.one-liner scope enterprise-protected
+    commandwindow min 1, max 32
+    contextlength min 1024, max 18000
+    audittrailpersistence always
+    sandboxmode strict
+    exec_shortcut "/\" allowlist-validated
+    repo_sync "https://bithubgov.ghe.com/s4wcivky_admin/one-liner-task-auto.git"
+    repo_sync "https://bithubgov.ghe.com/s4wcivky_admin/.aln.git"
+    nanoswarm_product_link enabled
+    swarmnet_aii_product_link enabled
+    log-mode FORCE-AUDIT
+    workflow inherit-blackice true
