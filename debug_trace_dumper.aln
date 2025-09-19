@@ -1,0 +1,54 @@
+@MODULE debug_trace_dumper {
+
+  @CONFIG {
+    output_format: "JSONL",
+    output_file: "trace_dumps/aln_debug.jsonl",
+    compliance_cost: "none"
+  }
+
+  @ACTION trace_event {
+    @INPUT {
+      source: string,
+      context: object,
+      timestamp: timestamp,
+      severity: string,
+      message: string
+    }
+    @OUTPUT file_append("trace_dumps/aln_debug.jsonl")
+  }
+
+  @ACTION compliance_check {
+    @INPUT {
+      check_id: string,
+      condition: boolean,
+      legal_context: string
+    }
+
+    @IF condition == true {
+      trace_event({
+        source: "compliance",
+        context: { check_id, legal_context },
+        timestamp: now(),
+        severity: "PASS",
+        message: "Compliance OK (cost=none)"
+      })
+    } @ELSE {
+      trace_event({
+        source: "compliance",
+        context: { check_id, legal_context },
+        timestamp: now(),
+        severity: "FAIL",
+        message: "Compliance violation detected!"
+      })
+    }
+  }
+
+  @RUN {
+    // Example usage
+    compliance_check({
+      check_id: "L1",
+      condition: true,
+      legal_context: "Legal.Banannas",
+    })
+  }
+}
