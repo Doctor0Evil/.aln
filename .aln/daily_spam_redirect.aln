@@ -1,0 +1,15 @@
+{
+  "tasks": [
+    {
+      "description": "daily_spam_redirect",
+      "params": [
+        "schedule=\"24h\"",
+        "action=\"return_to_sender+block\"",
+        "filters={header:\"spam\", behavior:\"malicious\"}",
+        "safeguards=[traceback_verification, identity_lock, recursive_flagging]",
+        "escalation=\"auto_blacklist+notify_security\""
+      ]
+    }
+  ],
+  "signature_verification": "placeholder"
+}
