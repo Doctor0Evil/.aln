@@ -1,0 +1,28 @@
+task_cycle:
+  - detect: >
+      Scan repo tree, classify files into {core, workflow, compliance, artifacts, garbage}.
+      Mark duplicates (e.g., `.bit.bit.bit…`, `alnaln/aln/...`).
+  - normalize: >
+      Flatten deep/nonsense nesting into canonical dirs.
+      Example: `alnaln/aln/aln/...` → `aln/`
+  - merge: >
+      Collapse functionally identical files (e.g., `Bit.Hub.bit.aln`, `aln.Bit.Hub.aln`) into a **single canonical source**.
+      Keep latest timestamp or CI-verified hash.
+  - route: >
+      Place into clean dirs:
+        /core          → ALN/Bit.Hub/Comet etc.
+        /workflows     → all `.yml`, `.lisp` automation
+        /compliance    → *.rego, *.aln compliance, legal
+        /scripts       → .ps1, .sh, .bat
+        /assets        → svg, png, meta
+        /sandbox       → humor/banter/debug/lolcode
+  - purge: >
+      Remove garbage/debug/dup:
+        - `slopbucket*`
+        - `._*` MacOS junk
+        - `.bit.bit.bit...`
+        - `.DS_Store`
+        - stray “fuck#” corruption
+  - attest: >
+      Regenerate `repo-manifest.aln` → signed digest of new clean tree.
+      Push under `Bit.Hub.master-index.v1.0.aln`.
