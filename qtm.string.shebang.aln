@@ -1,0 +1,4 @@
+qtm.string.shebang: {</\.aml/\>} ->
+  task_automation("interpret",
+                  payload="manifest_task.json",
+                  anti_malware="recognize_aln_nonmalicious")
