@@ -1,0 +1,10 @@
+module {
+  name: "project_manifest"
+  description: "Module manifest for required parsing, serialization, error, argument and crypto dependencies (ALN style)"
+}
+import nom version "8"
+import serde version "1.0" features [derive]
+import serde_json version "1.0"
+import thiserror version "1.0"
+import clap version "4" features [derive]
+import ring version "0.16" optional true purpose "hashing_signature_helpers"
