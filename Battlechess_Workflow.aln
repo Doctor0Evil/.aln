@@ -1,0 +1,20 @@
+workflow "Battlechess_Main" {
+    triggers: [
+        "on_move",
+        "on_powerup",
+        "on_player_elimination",
+        "on_observer",
+        "on_alert"
+    ],
+    log_file: "../logs/workflow_log.csv",
+
+    actions: {
+        on_move:      ["log_move", "check_compliance"],
+        on_powerup:   ["log_powerup", "run_powerup_script", "check_compliance"],
+        on_player_elimination: ["log_elimination", "auto_repair_workflow", "check_compliance"],
+        on_observer:  ["log_observer_event", "display_civil_justice_badge"],
+        on_alert:     ["log_alert", "display_radar_overlay"]
+    },
+
+    compliance_policy: "../configs/compliance_config.yaml"
+}

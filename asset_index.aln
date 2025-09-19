@@ -1,0 +1,14 @@
+asset_index "Battlechess_PixelAssets" {
+    assets: [
+        "rook.gif",
+        "bishop.gif",
+        "knight.gif"
+    ],
+    description: "Animated pixel-art chess pieces for board display"
+}
+
+asset_animate "show_pixel_piece" {
+    piece: "name",
+    animation: "Battlechess_PixelAssets.assets[piece]",
+    trigger: "board_update"
+}
