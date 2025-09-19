@@ -1,0 +1,21 @@
+module {
+  name: "external_lib_demo"
+  description: "Demonstrates inclusion and usage of the external 'mathx' library"
+  author: "Alliance DevOps"
+  version: "1.0"
+}
+
+import mathx version "2.4" purpose "Advanced math functions"
+import jsonlite version "1.2" purpose "Lightweight JSON parsing"
+
+function calculateAndSerialize(input) {
+  let processed = mathx.square_root(input)
+  let output_json = jsonlite.serialize({result: processed})
+  return output_json
+}
+
+workflow {
+  action: "Run calculation on input"
+  input: 144
+  output: calculateAndSerialize(input)
+}
