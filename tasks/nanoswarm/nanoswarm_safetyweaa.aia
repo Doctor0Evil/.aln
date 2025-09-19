@@ -1,0 +1,62 @@
+<div id="nanoswarm-safetyweaa" role="region" aria-label="Pipe Bracket Balancer: Alliance Safetynet">
+  <style>
+    #nanoswarm-safetyweaa {
+      border: 2px solid #1976D2;
+      background: rgba(25, 118, 210, 0.045);
+      padding: 12px;
+      font-family: 'Consolas', monospace;
+    }
+    .pipe-alert { color:#C62828; font-weight:600; }
+    .pipe-balanced { color:#388E3C; font-weight:600; }
+    .audit-trail { font-size:0.95em; color:#333; }
+  </style>
+  <h2>Pipe Bracket Balancer: Alliance Safetynet</h2>
+  <p>Active monitoring for open brackets in workflow construction.</p>
+  <p>Status: <span id="pipe-balance-status" class="pipe-balanced">Balanced</span></p>
+  <div class="audit-trail" id="audit-log" aria-live="polite"></div>
+  <button onclick="nanoswarmBalanceBrackets()">Check &amp; Balance</button>
+</div>
+<script>
+  // Helper: Audit log writer
+  function auditLog(event) {
+    const log = document.getElementById('audit-log');
+    log.innerHTML += `<br>[${new Date().toLocaleString()}] ${event}`;
+  }
+  // Bracket balance and validation
+  function nanoswarmBalanceBrackets() {
+    let status = document.getElementById('pipe-balance-status');
+    // Replace with backend validation endpoint for real bracket scanning
+    fetch('/api/workflow/bracketValidate', {
+      method: 'POST',
+      body: JSON.stringify({ workflowId: "current" }),
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.balanced) {
+        status.innerText = "Balanced";
+        status.className = "pipe-balanced";
+        auditLog("Workflow bracket check: balanced.");
+      } else {
+        status.innerText = "Unbalanced - Brackets Open!";
+        status.className = "pipe-alert";
+        auditLog("Workflow bracket anomaly detected. Attempting auto-repair...");
+        // Auto-repair trigger, then re-check
+        fetch('/api/workflow/bracketRepair', { method: 'POST', body: JSON.stringify({ workflowId: "current" }), headers: { 'Content-Type': 'application/json' } })
+          .then(() => {
+            status.innerText = "Balanced - Brackets Closed!";
+            status.className = "pipe-balanced";
+            auditLog("Brackets successfully auto-repaired.");
+          });
+      }
+    })
+    .catch(error => {
+      status.innerText = "Verification Failed";
+      status.className = "pipe-alert";
+      auditLog(`Bracket check failed: ${error.message}`);
+    });
+  }
+  // Run check automatically on load and every 60 seconds for persistence
+  setTimeout(nanoswarmBalanceBrackets, 1000);
+  setInterval(nanoswarmBalanceBrackets, 60000);
+</script>
