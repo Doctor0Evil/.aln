@@ -1,0 +1,18 @@
+package ai.bootstrap v1 {
+  target: "aarch64-unknown-linux-gnu"
+  modules: [
+    { name: "minimal_loader", path: "src/bootloader/aln_loader.aln", verify: "sig:sha256" },
+    { name: "sensors",       path: "src/sensors.rs",            abi: "c" },
+    { name: "ai_core",       path: "src/ai.rs",                 model: "weights.bin" }
+  ]
+  ota: {
+    endpoint: "https://ci.example.com/ota/push",
+    sign_with: "ci-key.pem",
+    sbom: "cyclone_dx_1_4"
+  }
+  audit: {
+    ledger: "ipfs",
+    policy: "in-toto",
+    retention_days: 3650
+  }
+}
