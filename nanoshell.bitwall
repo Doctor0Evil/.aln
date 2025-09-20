@@ -1,0 +1,132 @@
+# ---
+# SETUP & CONFIGURATION (Run this section first)
+# ---
+
+# 1. Set your Git identity to prevent fatal errors
+# Replace "Your Name" and "you@example.com" with your actual info
+git config --global user.name "Hunter"
+git config --global user.email "hunter@livingroom.local"
+
+# 2. Define file paths and create missing files to prevent errors
+Set-Location -Path 'C:\Users\Hunter\ALN_Programming_Language'
+$LexiconFile = 'Neurolaw_Lexicon.md'
+$courtOrdersPath = 'C:\Users\Hunter\ALN_Programming_Language\court_orders.txt'
+$COMPLIANCE_WALL = 'C:\Users\Hunter\ALN_Programming_Language\policy.cfg'
+$AR_POLICY = 'C:\Users\Hunter\ALN_Programming_Language\ar_policy.cfg'
+$LegalBanannasAii = 'C:\Users\Hunter\ALN_Programming_Language\Legal.Banannas.aii'
+
+# Create placeholder files if they don't exist
+if (-not (Test-Path $courtOrdersPath)) { New-Item -Path $courtOrdersPath -ItemType File -Force | Out-Null }
+if (-not (Test-Path $COMPLIANCE_WALL)) { New-Item -Path $COMPLIANCE_WALL -ItemType File -Force | Out-Null }
+if (-not (Test-Path $AR_POLICY)) { New-Item -Path $AR_POLICY -ItemType File -Force | Out-Null }
+if (-not (Test-Path $LegalBanannasAii)) { New-Item -Path $LegalBanannasAii -ItemType File -Force | Out-Null }
+
+Write-Output "✅ Initial setup complete. Git identity and necessary files are configured."
+
+# ---
+# NANOSWARM ENFORCEMENT & GIT WORKFLOW (Main Script)
+# ---
+
+# 3. Define the logging function
+function Log-Nanoswarm {
+    param([string]$Message)
+    Add-Content -Path 'C:\Users\Hunter\ALN_Programming_Language\safety.log' -Value ("{0} | {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Message)
+}
+
+# 4. Run privilege checks and load initial data
+if ($env:USERNAME -ne 'Hunter') {
+    Log-Nanoswarm 'Privilege escalation denied. Must run under Hunter for supreme control.'
+    throw 'Privilege escalation denied.'
+}
+Log-Nanoswarm 'Privilege check: PASSED.'
+
+$ORDERS = Get-Content $courtOrdersPath
+Log-Nanoswarm "Court orders loaded: $ORDERS"
+
+$COMPLIANCE_RULES = Get-Content $COMPLIANCE_WALL
+$AR_POLICY_RULES = Get-Content $AR_POLICY
+Log-Nanoswarm 'Loaded nanowall and AR/VR compliance rules.'
+
+# 5. Infinite error-checking cycle (Simulated)
+$NANO_MAX_ITER = 8
+$NANO_AGENTS = 8
+for ($i=1; $i -le $NANO_MAX_ITER; $i++) {
+    Log-Nanoswarm "Swarm iteration $i Begin."
+    foreach ($b in 1..$NANO_AGENTS) {
+        Log-Nanoswarm "Agent $b started for iteration $i."
+        Start-Sleep -Milliseconds 100
+    }
+
+    # Simulated enforcement check
+    $logContent = Get-Content 'C:\Users\Hunter\ALN_Programming_Language\safety.log'
+    foreach ($hack in ($logContent | Select-String -Pattern 'ban|block|limit|prohibit' -CaseSensitive)) {
+        Log-Nanoswarm "Enforcement Action: $($hack.Line)"
+        Set-Content -Path "C:\Users\Hunter\ALN_Programming_Language\enforcement_$i.txt" -Value $hack.Line -Force
+    }
+
+    Log-Nanoswarm 'Nanobit atomization workflow initiated.'
+
+    # Volatility modulation
+    if (($i % 8) -eq 0) {
+        Add-Content -Path $COMPLIANCE_WALL -Value (Get-Content $LegalBanannasAii)
+        Log-Nanoswarm "audit: recalibration @ iteration $i"
+
+        # Bitshell transition block creation
+        $powerballBlock = @"
+# Bitshell-Powerball Transition Block
+param([string]`$SwarmCluster, [string]`$NanowallPolicy)
+Write-Host 'Transmuting nanoswarm compliance to Powerball...'
+Start-Process -FilePath 'nanoswarm_monitor.exe' -ArgumentList `/agent 99 `/iteration $i `/compliance $COMPLIANCE_WALL `/ar_policy $AR_POLICY `/sandbox 'C:\Users\Hunter\ALN_Programming_Language\vm-cluster'
+Write-Output 'Court Order Enforcement Complete for Iteration $i'
+"@
+        $ps1Path = "C:\Users\Hunter\ALN_Programming_Language\bitshell-to-powerball.ps1"
+        $gzipPath = "$ps1Path.gz"
+        [System.IO.File]::WriteAllText($ps1Path, $powerballBlock)
+        
+        $fs = [System.IO.File]::OpenRead($ps1Path)
+        $gz = [System.IO.File]::Create($gzipPath)
+        $gzip = New-Object System.IO.Compression.GzipStream($gz, [System.IO.Compression.CompressionMode]::Compress)
+        $fs.CopyTo($gzip)
+        $gzip.Close(); $gz.Close(); $fs.Close()
+        
+        Log-Nanoswarm "Bitshell transition block written for iteration $i."
+    }
+    Log-Nanoswarm "Swarm iteration $i End."
+    Start-Sleep -Milliseconds (Get-Random -Minimum 90 -Maximum 270)
+}
+
+Log-Nanoswarm '=== Nanoswarm Enforcement Cycle COMPLETE ==='
+
+# ---
+# GIT SYNCHRONIZATION (Corrected Order)
+# ---
+
+# 6. Add all new and modified files to the staging area
+git add .
+Write-Output "✅ All files staged for commit."
+
+# 7. Commit the changes
+git commit -m 'Nanoswarm Enforcement Engine: Mayhem compliance, simulated multi-agent workflow, AR/VR policy, Powerball block transition, volatility recalibration.'
+
+# Check if the commit was successful before proceeding
+if ($LASTEXITCODE -eq 0) {
+    Write-Output "✅ Commit successful."
+    
+    # 8. Pull the latest changes from the remote repository and rebase your commit on top
+    Write-Output "Attempting to pull and rebase from origin/main..."
+    git pull --rebase origin main
+    
+    # 9. Push the synchronized changes to the remote repository
+    if ($LASTEXITCODE -eq 0) {
+        Write-Output "✅ Rebase successful. Pushing to origin/main..."
+        git push origin main
+    } else {
+        Write-Error "Rebase failed. Please resolve conflicts manually."
+    }
+} else {
+    Log-Nanoswarm 'Nothing to commit, compliance unchanged.'
+    Write-Warning "Nothing to commit. Working directory is clean."
+}
+
+# 10. Final confirmation message
+Write-Host "✅ Nanoswarm Enforcement Engine Workflow Complete. Compliance and enforcement synchronized."
