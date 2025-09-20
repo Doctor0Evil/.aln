@@ -1,0 +1,119 @@
+1. party = [The entity entering into this contract];
+2. effective_date = [Date contract starts];
+3. recitals = [Why parties are making this agreement];
+4. definitions = [All key terms clarified];
+5. services_provided = [Exact description of what's delivered];
+6. payment_terms = [How and when payment occurs];
+7. confidentiality_clause = [No disclosure of secret info];
+
+8. intellectual_property_clause = [
+      All work produced is owned by the company;
+      employee hereafter assigns all rights to the company;
+      works made in scope of agreement are "works for hire";
+      employee must disclose inventions immediately;
+      employee executes documents to perfect rights;
+   ];
+
+9. warranty_clause = [
+      Provider guarantees no infringement of third-party IP;
+      disclaimer_of_implied_warranty = [Limits provider's liability];
+      knowledge_qualified_warranty = [Only covers known infringement];
+   ];
+
+10. indemnity_clause = [
+      provider_defends_against_ip_claims;
+      provider_pays_damages_costs_settlements;
+      scope_defined_as[trade_secret, patent, copyright, trademark];
+      events_trigger_indemnity = [third-party claim filed];
+      limit_indemnity = [No duty where customer misuses product];
+      max_liability_cap = [Dollar value];
+      notice_and_cooperation = [Customer promptly notifies];
+   ];
+
+11. license_rights = [
+      research_actual_owner;
+      negotiate_license_scope;
+      sign_and_record_license;
+      monitor_ongoing_compliance;
+   ];
+
+12. employee_obligations = [
+      must_promptly_disclose_inventions;
+      must_assign_all_rights_to_company;
+      must_sign_docs_to_effect_assignment;
+      must_warrant_no_conflict_with_other_agreements;
+      must_not_use_third_party_ip_unless_authorized;
+   ];
+
+13. termination_clause = [
+      How parties may end agreement;
+      Notice period required;
+      Post-termination survival clauses;
+   ];
+
+14. dispute_resolution = [
+      mediation_before_litigation;
+      jurisdiction_defined;
+      attorney_fees_awarded_to_winner;
+   ];
+
+15. amendment_procedure = [How changes are valid];
+
+16. force_majeure = [No liability for acts outside control];
+
+17. signatures = [Both parties sign and date below];
+
+18. jurisdiction = [Courts of a named location apply];
+
+19. remedies_for_breach = [
+      damages = [Money for loss];
+      specific_performance = [Court forces action];
+      contract_termination = [Ends agreement];
+   ];
+
+20. assignment_of_agreement = [Can transfer or not];
+
+21. notice_methods = [Email, physical mail, etc.];
+
+22. governing_law = [Which state/country law applies];
+
+23. attachments_and_exhibits = [Additional details];
+
+24. boilerplate_clauses = [
+      entire_agreement = [Supersedes all prior deals];
+      severability = [If one part fails, others stay];
+      headings = [Titles don't control agreement];
+   ];
+
+25. compliance_statement = [
+      Each party follows all relevant laws;
+      immediate notification of non-compliance;
+   ];
+
+26. audit_rights = [Company may inspect compliance];
+
+27. exclusivity_clause = [Supplier provides only to company];
+
+28. non-compete_clause = [Cannot work for competitors X years];
+
+29. IP_monitoring = [
+      automated_searches = [Track logos/text online];
+      google_alerts = [Set keywords and monitor];
+      social_profile_scanning = [Check Instagram, TikTok, LinkedIn];
+      takedown_requests = [Issue DMCA/cease & desist];
+   ];
+
+30. data_protection = [
+      all personal data handled as per law;
+      privacy_policy_linked;
+   ];
+
+31. trade_secret_provision = [
+      Secure storage required;
+      limit disclosure to “need to know”;
+      immediate remedy for breach;
+   ];
+
+...
+[line 100] contract_compliance_check = [Random audits scheduled];
+
