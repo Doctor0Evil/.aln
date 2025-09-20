@@ -1,0 +1,1 @@
+.aln-web-element { label: "CLUSTAL Alignment File (.aln)", role: "Plain text alignment data", compliance: "FAIRsharing / EMBL-EBI", legal: "Research & commercial use permitted with citation", governance: "Global data standards" }
