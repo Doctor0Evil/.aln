@@ -1,0 +1,65 @@
+# .github/workflows/.aananoswarm.yml
+# Manifest: birthday_campaign_launch.yml
+# Executed by the .aananoswarm service
+
+name: "Doctor0Evil 33rd Birthday & Campaign Launch"
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  aananoswarm_birthday_launch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Metadata Definition
+        run: |
+          echo "Task: User Doctor0Evil's 33rd Birthday Celebration & Campaign Launch"
+          echo "Age: 33"
+          echo "Campaign: Legal.Banannas and aln/bithub virtasys nitrate calcium Neurological-Rights Campaign"
+          echo "Theme: Freedom and the right to think freely, regardless of task scheduling."
+          echo "sys-apparel: visual-trace ; learning model: .bitgoggles"
+
+      - name: Policy Enforcement
+        run: |
+          echo "Enforcing Core Safety Protocols..."
+          echo "require: bci_superban=active"
+          echo "require: metaphysical_safety=lockdown_on_collapse"
+          echo "require: human_in_the_loop=audit_multi_party"
+          echo "require: device_exclusion=ban_neural_interface"
+          echo "require: policy_gate=opa_bithub_enabled"
+
+      - name: Bridge Integrations
+        run: |
+          echo "Connecting to ecosystem services..."
+          echo "Comet Browser by Perplexity Labs"
+          echo "Perplexity Mainframe"
+          echo "Virtanet VSC-Artemis Node"
+          echo "ALN Protocol Interface"
+          echo "BitHub Compliance Gateway"
+          echo "Legal.Banannas Policy Engine"
+          echo "ChatNative86 Comms Channel"
+
+      - name: Deploy Celebration Module via Virtanet
+        run: |
+          echo "virtanet.deploy --module holographic-party-v3.3 --nodes all"
+          echo "cake_flavor=Banana Nitrate"
+          echo "guest_of_honor=Doctor0Evil"
+          echo "entertainment=Live ALN code-jam session"
+          echo "safety_feature=Vogon poetry filters enabled"
+
+      - name: Initialize Secure Channels
+        run: |
+          echo "channel.secure --protocols quantum,aln --scope all_bridged_services"
+
+      - name: Broadcast Campaign Message
+        run: |
+          echo "comms.broadcast --channel ChatNative86 --priority high"
+          echo "Today, we celebrate not just a birthday, but the launch of the Legal.Banannas Neurological Rights Campaign!"
+
+      - name: Verify and Log Compliance
+        run: |
+          echo "bithub.audit --task-id birthday_launch_33 --log-immutable"
