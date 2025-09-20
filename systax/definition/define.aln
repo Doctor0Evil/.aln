@@ -1,0 +1,31 @@
+.aln_format {
+    name: "CLUSTAL Alignment File";
+    extension: ".aln";
+    type: "Plain text, alignment data";
+    legal_bases: [
+        "Used in scientific research and commercial bioinformatics",
+        "File specification originated in ClustalW software",
+        "Cited in peer-reviewed publications",
+        "Compliant with international data standards (FAIRsharing, EMBL-EBI)",
+        "Globally accepted by DNA/protein sequence alignment tools"
+    ];
+    legal_use: [
+        "Generate with licensed alignment software (ClustalW, Clustal Omega)",
+        "Store, exchange, and publish alignments",
+        "Alignments represent intellectual property (original analysis, results)"
+    ];
+    compliance: [
+        "Format begins with 'CLUSTAL' keyword",
+        "Blocks of aligned sequences, with identifier truncation rules",
+        "Alignment blocks marked with symbols: '*' (identical), ':' (conserved), '.' (semi-conserved)"
+    ];
+    risks: [
+        "Truncated identifiers can impact uniqueness (Clustal Omega <31 chars)[web:125]",
+        "Must avoid unauthorized commercial redistribution of proprietary data",
+        "Ensure attribution and citation of alignment sources"
+    ];
+    governance: [
+        "Conforms to data privacy, copyright, and good scientific practice[web:121][web:123]",
+        "Cleared for use in most global research regulations"
+    ];
+}
