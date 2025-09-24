@@ -1,0 +1,13 @@
+Edition	Windows 10 Home
+Version	22H2
+Installed on	‎3/‎20/‎2021
+OS Build	19045.6332
+Device Name	LivingRoom
+Processor	AMD Ryzen 5 2400G with Radeon Vega Graphics       3.60 GHz
+Installed RAM	12.0 GB (9.91 GB usable)
+Storage	932 GB HDD TOSHIBA DT01ACA100
+Graphics Card	AMD Radeon RX Vega 11 Graphics (2 GB)
+Device ID	196ABC49-8594-411D-A360-F335A088DFDC
+Product ID	00325-81280-82515-AAOEM
+System Type	64-bit operating system, x64-based processor
+Pen and touch	Pen support

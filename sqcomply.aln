@@ -1,0 +1,20 @@
+﻿windows 13 enter.boot winboot.cmd run-terminal
+bcdedit set current safeboot minimal
+set SYSTEMMODE=ALN.PROGRAM.SAFE
+echo System rebooted in ALN safe mode, hardware access hardened
+start B powershell -command Get-Content optvsclogsaudit*.log -Wait
+echo Real-time audit log active for compliance reporting review
+curl -X PATCH -H Authorization Bearer GITHUBTOKEN -d nodeaccess=g4dn.xlarge:authorized,t3.large:authorized
+echo Node access policy enforced
+bitshell QUANTUMCOMPLIANCEAUDITINIT
+ENFORCECHANNEL quantumencryption, PQCML-KEM
+AUDITLOG blockchainimmutable, retention=10yr
+bitshell QUANTUMCOMPLIANCEAUDITINIT
+ENFORCECHANNEL quantumencryption, PQCML-KEM
+AUDITLOG blockchainimmutable, retention=10yr
+bitshell Secure Government Bitshell - BlackICE Deployment
+runsecure
+...
+ALN CIA-Analyst Final Approval Layer
+enforcesafety=ALL_INPUTS_OUTPUTS_SANITIZED, Immutable logs
+gradualdeleverageweb3, legacy-chain migratetoweb5, Quantum-Safe Anchorage
