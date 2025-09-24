@@ -1,0 +1,57 @@
+# Protocol for managing third-party browser extensions.
+@Phase ForeignAgentContainment_v1.0
+
+    # 1. Define the target agent by its unique cryptographic ID.
+    @DefineAgent Keplr {
+        id: "dmkamcknogkgcdfhhbddcghachkejeap",
+        type: "Inter-blockchain Wallet",
+        version: "0.12.274",
+        vectors: ["Service Worker", "Full Site Access", "File URL Access"]
+    }
+
+    # 2. Define the containment policy based on Alliance security standards.
+    # This policy minimizes the agent's potential attack surface.
+    @Policy Keplr_Containment_Policy {
+        # Default site access is the most restrictive setting.
+        set SiteAccess = "On click"
+
+        # Per the security warning, Incognito mode is a vector for history leakage.
+        # Access is denied to protect operational integrity.
+        set AllowInIncognito = false
+
+        # Local file access is a critical exfiltration vector and must be disabled.
+        set AllowFileAccess = false
+
+        # Error collection can be a data leak vector; disable unless in debug mode.
+        set CollectErrors = false
+    }
+
+    # 3. Orchestrate the detection and enforcement workflow.
+    @Orchestrate
+        # Continuously scan for the presence of the Keplr agent.
+        if detect_agent(id: Keplr.id)
+            # Apply the containment policy immediately upon detection.
+            # This is a non-negotiable system-level override.
+            apply_policy(Keplr_Containment_Policy)
+
+            # Assign a dedicated AI agent to monitor Keplr's service worker.
+            # The agent will watch for anomalous network traffic or API calls.
+            monitor Keplr.vectors["Service Worker"] with "ChatNative86.Compliance_Observer"
+
+            log "Keplr agent detected and contained under policy."
+        end
+    end
+
+    # 4. Yield a status report for the command log.
+    @Yield ContainmentReceipt {
+        agent_id: Keplr.id,
+        policy_applied: "Keplr_Containment_Policy",
+        status: "ACTIVE_CONTAINMENT",
+        monitored_vectors: 1
+    }
+
+    # All containment actions are subject to Alliance oversight.
+    @Constraint
+        policy: 'Federal Forensics & Alliance Oversight v3.1'
+        log_level: 'Immutable'
+end
