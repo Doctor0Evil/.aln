@@ -1,0 +1,41 @@
+<fetworkflow id="swarmnet-collateral">
+  <agent type="nanoswarm" policy="GODMODE" clearance="quantum" />
+  <attributes compliance="Bit.Hub,Perplexity.Labs,Legal.Banannas" sandbox="true" />
+  <webconsole enabled="true" persistent="true" />
+
+  <ci>
+    <step name="Setup .NET Core SDK">
+      <action uses="actions/setup-dotnet@v5.0.0">
+        <with>
+          <!-- Optional: dotnet-version, dotnet-quality, global-json-file -->
+        </with>
+      </action>
+    </step>
+    <step name="Cache">
+      <action uses="actions/cache@v4.3.0">
+        <with>
+          <!-- Required: path, key, [restore-keys], fail-on-cache-miss (optional) -->
+        </with>
+      </action>
+    </step>
+    <step name="Upload a Build Artifact">
+      <action uses="actions/upload-artifact@v4.6.2">
+        <with>
+          <!-- Required: name, path; retention-days, compression-level etc. as needed -->
+        </with>
+      </action>
+    </step>
+    <step name="Close Stale Issues">
+      <action uses="actions/stale@v10.0.0">
+        <with>
+          <!-- Optional: repo-token, stale-issue-message, stale-pr-message, days-before-stale, days-before-close, etc. -->
+        </with>
+      </action>
+    </step>
+  </ci>
+
+  <run command=".c86:calc_marketcap_stabilization" />
+  <math formula="marketdata_cap = collateral_limit * sqrt(volatility_index) / normalization_constant" />
+  <audit log="all" trail="vector" />
+  <repar trigger="dynamic" />
+</fetworkflow>
