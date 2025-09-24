@@ -1,0 +1,30 @@
+process analyze_logs
+    env [LOG_MASTER] as log_source
+
+    patternset patterns {
+        "Duplicate script ID": { impact: 0.6, class: Identity }
+        // ... Extendable with more patterns ...
+    }
+
+    iterator line in log_source.read_lines()
+        foreach pattern, meta in patterns
+            when line.contains(pattern)
+                emit anomaly_detected {
+                    pattern: pattern
+                    impact: meta.impact
+                    class: meta.class
+                    line_ref: line.id
+                    timestamp: line.timestamp
+                }
+            end
+        end
+    end
+
+    timeseries ts = log_source.extract_timeseries(from: "timestamp")
+    anomaly_signature = ts.compute_signature(by: anomaly_detected)
+
+    publish anomaly_report {
+        detected: anomaly_detected.all()
+        anomaly_signature: anomaly_signature
+    }
+end
