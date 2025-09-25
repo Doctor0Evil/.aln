@@ -1,0 +1,25 @@
+[scope.crypto]
+layers[] = "Hardware"
+layers[] = "Software"
+layers[] = "Meta"
+
+[keys]
+primary   = "PQCML-KEM"
+fallback  = "AES-256"
+hash      = "SHA-3"
+
+[algorithm]
+select     = "PQCML-KEM"
+fallback   = "AES-256"
+meta-policy = "quantum_safe"
+
+[audit]
+mode      = "blockchainimmutable"
+retention = "10yr"
+secure    = "government"
+
+[enforce]
+sandboxed          = true
+neverfailcorrection = true
+vectorassess      = true
+forensicready     = true
