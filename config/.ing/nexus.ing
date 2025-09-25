@@ -1,0 +1,73 @@
+{
+  "controllerSchema": {
+    "deviceType": "RFID-EMS-AI-Hybrid",
+    "role": "learning-assistant, autonomous-development",
+    "standardsComp": {
+      "coProcessor": "ARM64",
+      "cores": 8,
+      "vHardwareSystem": "vhs"
+    },
+    "inputMatrix": [
+      "Windows13",
+      "nexus-HID",
+      "RFID-Spec",
+      "EMS-Sig-Draft-Safe"
+    ],
+    "identity": {
+      "manufacturer": "The Swarm-Corporation",
+      "productKey": "X801769-004",
+      "serial": "02880198273546",
+      "firmwareVersion": "vNext.nexus.os-GPU.CORE"
+    },
+    "controlMatrix": [
+      {
+        "type": "Button",
+        "id": "A",
+        "rfidTag": "0x1001",
+        "emsChannel": 1
+      },
+      {
+        "type": "Axis",
+        "id": "LT",
+        "rfidTag": "0x2002",
+        "emsChannel": 3,
+        "safeOnly": true
+      }
+    ],
+    "nanoswarm": {
+      "enable": true,
+      "mode": "stepwise-learning",
+      "ethics": "immutable",
+      "overrideGuardrail": true
+    },
+    "sandboxEnabled": true
+  },
+  "AIInterpretation": {
+    "assistiveMode": true,
+    "learningAudit": [
+      "fullTrace",
+      "consentProofs",
+      "explainability-on-decisions"
+    ],
+    "supportFreedom": true,
+    "profile": "per-user, privacy-first",
+    "errorDetection": true,
+    "interlocks": "safe-enabled",
+    "executionMode": "continuous",
+    "faultResolution": "isolate-fault/notify-user/auto-revert"
+  },
+  "ethics": {
+    "humanOversight": true,
+    "inputTransparency": "legacy-compatible",
+    "as": {
+      "i": "interpret",
+      "n": "nano",
+      "g": "generative-ai"
+    },
+    "ingFiles": "*.ing (official AI configuration for nanoswarm & swarmnet)",
+    "rfidVerification": "on-connect",
+    "emsSafetyLimits": "adaptive, range-locked",
+    "firmwareAttestation": true,
+    "reversibility": true
+  }
+}
