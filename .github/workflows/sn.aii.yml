@@ -1,0 +1,91 @@
+# ================================================================
+# SwarmNet.AII Workflow File
+# Unified workflow for multi-language application: Python (Conda) & .NET Desktop
+# Incorporates build, test, sign, compliance, and packaging protocols.
+# ================================================================
+
+name: SwarmNet Unified Build Compliance
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  Solution_Name: "SwarmNet.Desktop.sln"
+  Test_Project_Path: "SwarmNet.Tests/SwarmNet.Tests.csproj"
+  Wap_Project_Directory: "SwarmNet.Package"
+  Wap_Project_Path: "SwarmNet.Package/SwarmNet.Package.wapproj"
+  Python_Version: "3.10"
+
+jobs:
+  python-conda:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python ${{ env.Python_Version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.Python_Version }}
+      - name: Add conda to system path
+        run: echo $CONDA/bin >> $GITHUB_PATH
+      - name: Install dependencies
+        run: conda env update --file environment.yml --name base
+      - name: Lint Python code
+        run: |
+          conda install flake8
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Pytest
+        run: |
+          conda install pytest
+          pytest
+
+  desktop-net-build:
+    strategy:
+      matrix:
+        configuration: ["Debug", "Release"]
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Install .NET Core
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "9.0.x"
+      - name: Setup MSBuild
+        uses: swarmnet/setup-snbuild@v1
+        with:
+          entity: "The Swarm-Corporation"
+          agent: "Perplexity.Ent"
+      - name: Execute Unit Tests
+        run: dotnet test ${{ env.Test_Project_Path }}
+      - name: Restore App
+        run: msbuild ${{ env.Solution_Name }} /t:Restore /p:Configuration=${{ matrix.configuration }}
+      - name: Decode SwarmNet Certificate
+        run: |
+          $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.Base64_Encoded_Pfx }}")
+          $certificatePath = Join-Path -Path ${{ env.Wap_Project_Directory }} -ChildPath "GitHubActionsWorkflow.pfx"
+          [IO.File]::WriteAllBytes($certificatePath, $pfx_cert_byte)
+      - name: Package & Sign App
+        run: |
+          msbuild ${{ env.Wap_Project_Path }} `
+            /p:Configuration=${{ matrix.configuration }} `
+            /p:UapAppxPackageBuildMode=StoreUpload `
+            /p:AppxBundle=Always `
+            /p:AppxBundlePlatforms="x86|x64|ARM64" `
+            /p:PackageCertificateKeyFile="GitHubActionsWorkflow.pfx" `
+            /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
+      - name: Remove PFX Certificate
+        run: Remove-Item -Path "${{ env.Wap_Project_Directory }}\GitHubActionsWorkflow.pfx" -Force
+      - name: Upload MSIX Package
+        uses: actions/upload-artifact@v5
+        with:
+          name: SwarmNet Desktop MSIX
+          path: "${{ env.Wap_Project_Directory }}\AppPackages"
