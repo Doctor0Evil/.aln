@@ -1,20 +1,10 @@
 name: Deep AI Diagnostic Checks
-
 on:
   workflow_dispatch:
   workflow_run:
     workflows: ["Resilient Smart Work AI Pipeline", "Dynamic Resilient AI Pipeline"]
     types:
       - completed
-
-permissions:
-  contents: read
-  id-token: write
-
-env:
-  BITHUB_TRACE_FILE: trace.jsonl
-  BITHUB_AUDIT_DIR: .bit/audit
-  BITHUB_ARTIFACT: build.artifact.bit
 
 jobs:
   deep-ai-checks:
@@ -27,8 +17,8 @@ jobs:
         run: |
           echo "Performing deeper AI model validation and consistency verification..."
           if [[ ! -f ./deep-ai-diagnostics.sh ]]; then
-            echo "::warning::deep-ai-diagnostics.sh missing — generating placeholder diagnostic script."
-            cat <<'EOF' > ./deep-ai-diagnostics.sh
+            echo "::warning::deep-ai-diagnostics.sh missing—generating placeholder diagnostic script for human-like humor/reasoning test."
+cat <<'EOF' > ./deep-ai-diagnostics.sh
 #!/usr/bin/env bash
 echo "Deep Humor Reasoning AI Test:"
 echo "Why did the neural network refuse to cross the road? It couldn't find enough data on the other side!"
@@ -39,53 +29,14 @@ EOF
           fi
           ./deep-ai-diagnostics.sh || echo "::error::Deep AI checks detected inconsistencies"
 
-      - name: Prepare audit directory
-        run: mkdir -p "$BITHUB_AUDIT_DIR"
-
-      - name: Record diagnostic trace
-        run: |
-          {
-            echo "{"
-            echo "  \"run_id\": \"${GITHUB_RUN_ID}\","
-            echo "  \"ref\": \"${GITHUB_REF}\","
-            echo "  \"sha\": \"${GITHUB_SHA}\","
-            echo "  \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\","
-            echo "  \"diagnostic_status\": \"completed\""
-            echo "}"
-          } > "$BITHUB_TRACE_FILE"
-
-      - name: Upload Sticky Trigger Audit Trail
-        uses: actions/upload-artifact@v4
-        with:
-          name: sticky.trigger.audit.trail
-          path: ${{ env.BITHUB_TRACE_FILE }}
-
       - name: Parse Workload & Recovery Flow
         run: |
-          echo "Parsing workflow logs for failed steps..."
+          echo "Parsing workflow logs for failed steps and initiating recovery pipeline if load threshold exceeded..."
           ERROR_COUNT=$(grep -ri "error" .github/workflows/ | wc -l)
           echo "Errors found in workflow definitions: $ERROR_COUNT"
           if (( ERROR_COUNT > 0 )); then
             echo "::notice::Triggering recovery pipeline due to detected workload process errors."
-            echo "{\"trigger\":\"recovery\",\"errors\":$ERROR_COUNT}" >> "$BITHUB_AUDIT_DIR/recovery.json"
+            # Extension: trigger a recovery workflow or annotate for escalation
           else
             echo "::notice::All workload processes within baseline tolerances."
           fi
-
-      - name: Upload audit artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: bithub-audit-${{ github.run_id }}
-          path: ${{ env.BITHUB_AUDIT_DIR }}
-
-      - name: BitBot Orchestration Handoff
-        if: success() && env.BITBOT_TOKEN != ''
-        env:
-          BITBOT_TOKEN: ${{ secrets.BITBOT_TOKEN }}
-        run: |
-          echo "Handing off to BitBot for post-diagnostic orchestration..."
-          curl -sSL https://bithub.example.com/install-bitbot.sh | bash
-          bitbot orchestrate \
-            --artifact $BITHUB_ARTIFACT \
-            --trace $BITHUB_TRACE_FILE \
-            --sticky-trigger "github:${GITHUB_RUN_ID}"
