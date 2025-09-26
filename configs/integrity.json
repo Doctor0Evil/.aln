@@ -1,0 +1,9 @@
+{
+  "configs": [
+    { "name": "merchantSystem.ing", "sha256": "d41d8cd98f00b204e9800998ecf8427e" },
+    { "name": "directorAI.ing",     "sha256": "..." },
+    { "name": "virtualDesktop.ing", "sha256": "..." },
+    { "name": "operators.ing",      "sha256": "..." }
+  ],
+  "hmac": "optional_hex_hmac_over_configs_json"
+}
