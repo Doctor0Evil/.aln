@@ -1,0 +1,248 @@
+param(
+  [string]$Action,
+  [string]$User,
+  [string]$HostUrl = "http://localhost:7777"
+)
+
+# -------------------------------------------------------------------
+# CONFIG
+# -------------------------------------------------------------------
+$SwarmnetExe       = ".\swarmnet.exe"
+$RepoRoot          = Get-Location
+$ConfigsDir        = ".\configs"
+$LogsDir           = ".\logs"
+$HostAuditDir      = Join-Path $LogsDir "host"
+$AgentsAuditDir    = Join-Path $LogsDir "agents"
+$TasksDir          = ".vscode"
+$WorkspacePrefix   = "wd13-"
+$SeedEnvName       = "SWARMNET_SEED"
+$DefaultSeed       = (Get-Date).ToString("yyyyMMdd-HHmmss") + "-WOD"
+$StartupDir        = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Startup"
+$StartupShortcut   = Join-Path $StartupDir "Swarmnet Watchdog.lnk"
+$WatchdogLog       = Join-Path $LogsDir "watchdog.log"
+$WatchdogLoopName  = "SwarmnetWatchdogLoop"
+
+# Ensure directories
+foreach ($d in @($LogsDir,$HostAuditDir,$AgentsAuditDir,$TasksDir)) {
+  if (-not (Test-Path $d)) { New-Item -ItemType Directory -Path $d | Out-Null }
+}
+
+# Seed injection (deterministic per session unless overridden)
+if (-not $env:$SeedEnvName) {
+  $env:$SeedEnvName = $DefaultSeed
+  Write-Host ">>> Injected $SeedEnvName=$($env:$SeedEnvName)"
+} else {
+  Write-Host ">>> Using existing $SeedEnvName=$($env:$SeedEnvName)"
+}
+
+# -------------------------------------------------------------------
+# UTILITIES
+# -------------------------------------------------------------------
+function Assert-BinaryAndConfigs {
+  if (-not (Test-Path $SwarmnetExe)) {
+    Write-Host "ERROR: $SwarmnetExe not found in repo root." -ForegroundColor Red
+    return $false
+  }
+  $cfgs = @("merchantSystem.ing","directorAI.ing","virtualDesktop.ing","operators.ing") | ForEach-Object { Join-Path $ConfigsDir $_ }
+  foreach ($c in $cfgs) {
+    if (-not (Test-Path $c)) {
+      Write-Host "ERROR: Missing config: $c" -ForegroundColor Red
+      return $false
+    }
+  }
+  return $true
+}
+
+function Test-HostHealth {
+  param([string]$Url = $HostUrl)
+  try {
+    $resp = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 2
+    return $resp.StatusCode -ge 200 -and $resp.StatusCode -lt 400
+  } catch { return $false }
+}
+
+function Write-WatchdogLog {
+  param([string]$Message)
+  "[$(Get-Date -Format 's')] $Message" | Out-File $WatchdogLog -Append -Encoding utf8
+}
+
+# -------------------------------------------------------------------
+# ACTIONS
+# -------------------------------------------------------------------
+function Start-Host {
+  if (-not (Assert-BinaryAndConfigs)) { return }
+  Write-Host ">>> Starting Swarmnet Host..."
+  & $SwarmnetExe host `
+    --config (Join-Path $ConfigsDir "merchantSystem.ing") `
+    --config (Join-Path $ConfigsDir "directorAI.ing") `
+    --config (Join-Path $ConfigsDir "virtualDesktop.ing") `
+    --config (Join-Path $ConfigsDir "operators.ing") `
+    --seedStrategy run-scoped `
+    --audit $HostAuditDir
+}
+
+function Start-Agent {
+  param([Parameter(Mandatory=$true)][string]$UserId)
+  if (-not (Assert-BinaryAndConfigs)) { return }
+  $Workspace = "$WorkspacePrefix$UserId"
+  $UserAudit = Join-Path $AgentsAuditDir $UserId
+  if (-not (Test-Path $UserAudit)) { New-Item -ItemType Directory -Path $UserAudit | Out-Null }
+  Write-Host ">>> Starting Swarmnet Agent for $UserId in workspace $Workspace..."
+  & $SwarmnetExe agent `
+    --user $UserId `
+    --workspace $Workspace `
+    --connect $HostUrl `
+    --audit $UserAudit
+}
+
+function Attach-Host {
+  if (-not (Test-HostHealth)) {
+    Write-Host "WARN: Host not healthy or not reachable at $HostUrl" -ForegroundColor Yellow
+  }
+  Write-Host ">>> Attaching to Swarmnet Host at $HostUrl..."
+  & $SwarmnetExe attach --connect $HostUrl
+}
+
+function Generate-VSCodeTasks {
+  if (-not (Test-Path $TasksDir)) { New-Item -ItemType Directory -Path $TasksDir | Out-Null }
+  $scriptName = "swarmnet.magic" # change to swarmnet.ps1 if you prefer
+  $runner     = "powershell"
+
+  $tasks = @{
+    version = "2.0.0"
+    tasks   = @(
+      @{
+        label   = "Swarmnet: Start Host"
+        type    = "shell"
+        command = $runner
+        args    = @("-File", $scriptName, "host")
+        group   = "build"
+      }
+    )
+  }
+
+  for ($i=1; $i -le 8; $i++) {
+    $user = "user{0:D2}" -f $i
+    $tasks.tasks += @{
+      label   = "Swarmnet: Start Agent $user"
+      type    = "shell"
+      command = $runner
+      args    = @("-File", $scriptName, "agent", "-User", $user)
+      group   = "build"
+    }
+  }
+
+  $tasks.tasks += @{
+    label   = "Swarmnet: Attach Host"
+    type    = "shell"
+    command = $runner
+    args    = @("-File", $scriptName, "attach")
+    group   = "build"
+  }
+
+  $json = $tasks | ConvertTo-Json -Depth 5
+  $outFile = Join-Path $TasksDir "tasks.json"
+  $json | Out-File $outFile -Encoding utf8
+  Write-Host ">>> VS Code tasks.json generated: $outFile"
+}
+
+# User-mode watchdog: loops every 2 minutes, restarts host if needed (no admin)
+function Start-Watchdog {
+  # If an existing watchdog loop is running in this session, don't double-start
+  if (Get-Job -Name $WatchdogLoopName -ErrorAction SilentlyContinue) {
+    Write-Host ">>> Watchdog already running as job '$WatchdogLoopName'."
+    return
+  }
+  Write-Host ">>> Starting user-mode watchdog job '$WatchdogLoopName' (2-minute interval)..."
+  Start-Job -Name $WatchdogLoopName -ScriptBlock {
+    param($RepoRoot,$SwarmnetExe,$ConfigsDir,$HostAuditDir)
+    Set-Location $RepoRoot
+    $log = ".\logs\watchdog.log"
+    function WL($m){ "[$(Get-Date -Format 's')] $m" | Out-File $log -Append -Encoding utf8 }
+    while ($true) {
+      try {
+        $proc = Get-Process -Name "swarmnet" -ErrorAction SilentlyContinue
+        if (-not $proc) {
+          WL "Host absent. Starting..."
+          & $SwarmnetExe host `
+            --config (Join-Path $ConfigsDir "merchantSystem.ing") `
+            --config (Join-Path $ConfigsDir "directorAI.ing") `
+            --config (Join-Path $ConfigsDir "virtualDesktop.ing") `
+            --config (Join-Path $ConfigsDir "operators.ing") `
+            --seedStrategy run-scoped `
+            --audit $HostAuditDir
+        } else {
+          WL "Host running."
+        }
+      } catch {
+        WL "Error: $_"
+      }
+      Start-Sleep -Seconds 120
+    }
+  } -ArgumentList $RepoRoot,$SwarmnetExe,$ConfigsDir,$HostAuditDir | Out-Null
+  Write-WatchdogLog "User-mode watchdog started."
+}
+
+function Stop-Watchdog {
+  $job = Get-Job -Name $WatchdogLoopName -ErrorAction SilentlyContinue
+  if ($job) {
+    Stop-Job $job -Force
+    Remove-Job $job
+    Write-Host ">>> Watchdog job '$WatchdogLoopName' stopped."
+    Write-WatchdogLog "User-mode watchdog stopped."
+  } else {
+    Write-Host ">>> No watchdog job found."
+  }
+}
+
+# User startup persistence: register/remove shortcut (no admin)
+function Register-StartupShortcut {
+  # Ensure Startup dir exists
+  if (-not (Test-Path $StartupDir)) { New-Item -ItemType Directory -Path $StartupDir | Out-Null }
+
+  $shell = New-Object -ComObject WScript.Shell
+  $shortcut = $shell.CreateShortcut($StartupShortcut)
+  $shortcut.TargetPath = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+  $shortcut.Arguments  = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$($RepoRoot)\swarmnet.magic`" watchdog"
+  $shortcut.WorkingDirectory = "$RepoRoot"
+  $shortcut.WindowStyle = 7  # Minimized/hidden
+  $shortcut.Description = "Swarmnet Watchdog (User Startup)"
+  $shortcut.Save()
+  Write-Host ">>> Startup shortcut registered: $StartupShortcut"
+  Write-WatchdogLog "Startup shortcut registered."
+}
+
+function Unregister-StartupShortcut {
+  if (Test-Path $StartupShortcut) {
+    Remove-Item $StartupShortcut -Force
+    Write-Host ">>> Startup shortcut removed: $StartupShortcut"
+    Write-WatchdogLog "Startup shortcut removed."
+  } else {
+    Write-Host ">>> Startup shortcut not found."
+  }
+}
+
+# -------------------------------------------------------------------
+# DISPATCH
+# -------------------------------------------------------------------
+switch ($Action) {
+  "host"        { Start-Host }
+  "agent"       { if ($User) { Start-Agent -UserId $User } else { Write-Host "Please specify -User (e.g., user03)" } }
+  "attach"      { Attach-Host }
+  "tasks"       { Generate-VSCodeTasks }
+  "watchdog"    { Start-Watchdog }
+  "watchdog:stop"  { Stop-Watchdog }
+  "startup:register"   { Register-StartupShortcut }
+  "startup:unregister" { Unregister-StartupShortcut }
+  default {
+    Write-Host "Usage:"
+    Write-Host "  powershell -File .\swarmnet.magic host"
+    Write-Host "  powershell -File .\swarmnet.magic agent -User user03"
+    Write-Host "  powershell -File .\swarmnet.magic attach"
+    Write-Host "  powershell -File .\swarmnet.magic tasks"
+    Write-Host "  powershell -File .\swarmnet.magic watchdog          # user-mode loop"
+    Write-Host "  powershell -File .\swarmnet.magic watchdog:stop     # stop loop"
+    Write-Host "  powershell -File .\swarmnet.magic startup:register  # no admin"
+    Write-Host "  powershell -File .\swarmnet.magic startup:unregister"
+  }
+}
