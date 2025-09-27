@@ -1,0 +1,20 @@
+- name: Validate ALN manifests
+  shell: pwsh
+  run: |
+    $manifest = Get-Content "configs/integrity.json" -Raw | ConvertFrom-Json
+    foreach ($c in $manifest.configs) {
+      $path = Join-Path "configs" $c.name
+      if (-not (Test-Path $path)) { Write-Error "Missing config $($c.name)"; exit 1 }
+      $hash = (Get-FileHash -Algorithm SHA256 -Path $path).Hash.ToLower()
+      if ($c.sha256 -and $c.sha256.ToLower() -ne $hash) {
+        Write-Error "Hash mismatch for $($c.name)"
+        exit 1
+      }
+    }
+    # Attribution enforcement
+    $aln = Get-Content "configs/systems/ALN_QuantumSynergyPOS.aln" -Raw
+    if ($aln -notmatch "Jacob Scott Corey Farmer") {
+      Write-Error "Attribution missing in ALN manifest"
+      exit 1
+    }
+    Write-Host "ALN manifest validated and attribution confirmed."
