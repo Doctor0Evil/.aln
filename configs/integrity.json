@@ -1,9 +1,12 @@
 {
   "configs": [
-    { "name": "merchantSystem.ing", "sha256": "d41d8cd98f00b204e9800998ecf8427e" },
-    { "name": "directorAI.ing",     "sha256": "..." },
-    { "name": "virtualDesktop.ing", "sha256": "..." },
-    { "name": "operators.ing",      "sha256": "..." }
+    { "name": "swarmnet-combat-and-delivery.ing", "sha256": "<fill-after-commit>" },
+    { "name": "merchantSystem.ing", "sha256": "44cf3a90a82b3ce21dd9b734ba450ad3e400a88b2cfa81aa4a2ec0bd4ba3eeec" },
+    { "name": "directorAI.ing", "sha256": "<fill-after-commit>" },
+    { "name": "virtualDesktop.ing", "sha256": "<fill-after-commit>" },
+    { "name": "operators.ing", "sha256": "<fill-after-commit>" },
+    { "name": "systems/ALN_QuantumSynergyPOS.aln", "sha256": "<fill-after-commit>" }
   ],
-  "hmac": "optional_hex_hmac_over_configs_json"
+  "assets": [],
+  "hmac": "<optional_hex_hmac>"
 }
